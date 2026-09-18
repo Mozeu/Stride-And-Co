@@ -1,7 +1,7 @@
 // CREATE
 function create(req, res, next) {
     res.status(201).json({
-        message: "User Created", 
+        message: "Product Created", 
         data: {}
     });
 }
@@ -9,14 +9,14 @@ function create(req, res, next) {
 // READ
 function list (req, res, next) {
   res.json({
-    message: "Users List",
+    message: "Products List",
     data: []
   });
 }
 
 function find(req, res, next) {
     res.json({
-        message: "User by ID",
+        message: "Product by ID",
         data: {}
   });
 };
@@ -24,7 +24,7 @@ function find(req, res, next) {
 // UPDATE
 function update(req, res, next) {
     res.json({
-        message: "User Updated",
+        message: "Product Updated",
         data: {}
     });
 };
@@ -32,7 +32,7 @@ function update(req, res, next) {
 // DELETE
 function destroy(req, res, next){
     res.json({
-        message: "User Deleted",
+        message: "Product Deleted",
         data: {}
     });
 };
