@@ -10,6 +10,11 @@ var usersRouter = require('./routes/users');
 var rolesRouter = require('./routes/roles');
 var permissionsRouter = require('./routes/permissions');
 var productsRouter = require('./routes/products');
+var variantsRouter = require('./routes/variants');
+var inventoryRouter = require('./routes/inventory');
+var customersRouter = require('./routes/customers');
+var ordersRouter = require('./routes/orders');
+
 
 var app = express();
 
@@ -29,6 +34,11 @@ app.use('/api/users', usersRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/permissions', permissionsRouter);
 app.use('/api/products', productsRouter);
+app.use('/api/variants', variantsRouter);
+app.use('/api/inventory', inventoryRouter);
+app.use('/api/customers', customersRouter);
+app.use('/api/orders', ordersRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
