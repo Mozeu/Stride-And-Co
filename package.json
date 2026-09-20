@@ -18,7 +18,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.10.0"
+    "eslint": "^10.10.0",
+    "jest": "^30.5.2",
+    "supertest": "^7.2.2"
   },
   "allowScripts": {
     "core-js@2.6.12": true
