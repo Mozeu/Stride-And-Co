@@ -1,14 +1,6 @@
 # Stride & Co.
 
-Backend de la plataforma web de administración de Stride & Co.
-
-## Descripción
-
-Stride & Co. es una tienda deportiva que actualmente gestiona sus ventas y pedidos por medio de mensajes de WhatsApp y procesos manuales. El proyecto busca digitalizar la operación para centralizar el catálogo, controlar el inventario, registrar pedidos y mejorar la coordinación del equipo de ventas, operaciones y administración.
-
-Este proyecto corresponde al backend de la aplicación y tiene como objetivo proporcionar la estructura inicial de una API REST utilizando Node.js y Express.
-
-En este momento el sistema cuenta con rutas y controladores para los principales recursos de la aplicación, usando respuestas mock.
+## Datos académicos
 
 | Campo | Detalle |
 |---|---|
@@ -17,16 +9,36 @@ En este momento el sistema cuenta con rutas y controladores para los principales
 | **Carrera** | Ingeniería en Computación |
 | **Materia** | Desarrollo de Aplicaciones Web |
 | **Docente** | Mtro. Luis Antonio Ramírez Martínez |
-| **Actividad** | Proyecto 1: Configuración Inicial del Backend  |
-| **Alumnos**| Kevin Andrés Rosales Rodríguez |
-|| Edwin Noé Zaragoza Alvarado |
-|| Nohemí Posada Atayde |
-|| Manuel Ramirez Contreras |
+| **Actividad** | Proyecto Integrador — Entregable 1: Configuración Inicial del Backend |
+| **Equipo** | Equipo 3 |
+| **Alumnos** | Kevin Andrés Rosales Rodríguez |
+|  | Edwin Noé Zaragoza Alvarado |
+|  | Nohemí Posada Atayde |
+|  | Manuel Ramirez Contreras |
 | **Matrículas** | 385814 |
-| | 385609 |
-| | 385520 |
-| | 385703 |
+|  | 385609 |
+|  | 385520 |
+|  | 385703 |
 | **Fecha de entrega** | 20/09/2026 |
+
+## Descripción
+
+Stride & Co. es una tienda deportiva que actualmente gestiona parte de sus ventas y pedidos mediante mensajes de WhatsApp y procesos manuales.
+
+El proyecto busca digitalizar la operación de la tienda mediante una aplicación web que permita centralizar la información del catálogo, controlar el inventario, registrar pedidos y facilitar la administración de usuarios, roles, permisos, clientes y productos.
+
+Este repositorio corresponde al backend de la aplicación. En esta primera etapa se configuró la arquitectura inicial utilizando Node.js y Express, separando las rutas de los controladores y utilizando respuestas mock para comprobar el funcionamiento de la API.
+
+En este entregable todavía no se implementa persistencia en base de datos ni la lógica completa del negocio.
+
+## Objetivo
+
+Configurar la base técnica inicial del backend de Stride & Co. utilizando Node.js y Express.
+
+Se busca aplicar una arquitectura organizada basada en la separación de responsabilidades entre rutas y controladores, preparar los principales endpoints REST de la aplicación, incorporar logging de solicitudes HTTP, análisis de calidad de código, pruebas automatizadas y un flujo de trabajo colaborativo utilizando Git y GitHub.
+
+La arquitectura general utilizada es:
+HTTP Request -> Express -> Route -> Controller -> Response Mock
 
 ## Tecnologías utilizadas
 
@@ -56,49 +68,11 @@ npm install
 
 ## Scripts disponibles
 
-npm start
-
-Inicia el servidor.
-
-npm run dev
-
-Inicia el servidor en modo desarrollo.
-
-npm test
-
-Ejecuta las pruebas automatizadas con Jest.
-
-npm run lint
-
-Analiza el código con ESLint.
-
-## Estructura del proyecto
-
-Stride-And-Co/
-├── bin/
-│   └── www
-├── controllers/
-├── public/
-│   └── stylesheets/
-├── routes/
-├── tests/
-├── views/
-├── app.js
-├── eslint.config.js
-├── package.json
-├── package-lock.json
-├── .gitignore
-└── README.md
-
-La aplicación tiene el siguiente flujo:
-
-Request -> Route -> Controller -> Response
-
-Las rutas reciben las solicitudes HTTP y las dirigen al controlador correspondiente.
-
-Los controladores procesan la solicitud y generan la respuesta.
-
-En esta etapa del proyecto se utilizan respuestas mock y aun no se usa persistencia en base de datos.
+| -------------- | -------------------------------------------------- |
+| `npm start`    | Inicia el servidor de Express                      |
+| `npm run dev`  | Inicia el servidor en modo desarrollo              |
+| `npm test`     | Ejecuta las pruebas automatizadas con Jest         |
+| `npm run lint` | Ejecuta ESLint para analizar la calidad del código |
 
 ## Recursos de la API
 
@@ -113,7 +87,7 @@ Actualmente la API cuenta con los siguientes recursos:
 /api/customers
 /api/orders
 
-Cada recurso se encuentra en:
+Cada recurso se encuentra entre:
 
 routes/
 controllers/
@@ -122,25 +96,18 @@ controllers/
 
 La API puede utilizar las siguientes operaciones REST:
 
-GET    /api/resource
-GET    /api/resource/:id
-POST   /api/resource
-PUT    /api/resource/:id
-DELETE /api/resource/:id
 
-Ejemplo, para productos:
 
-GET    /api/products
-GET    /api/products/:id
-POST   /api/products
-PUT    /api/products/:id
-DELETE /api/products/:id
+| `GET`    | `/api/products`     |
+| `GET`    | `/api/products/:id` | 
+| `POST`   | `/api/products`     | 
+| `PUT`    | `/api/products/:id` | 
+| `DELETE` | `/api/products/:id` | 
+
 
 ## Pruebas
 
 Las pruebas automatizadas se realizan con Jest y Supertest.
-
-Para ejecutar todas las pruebas:
 
 npm test
 
@@ -161,7 +128,7 @@ También se puede ejecutar directamente la prueba de productos:
 
 El proyecto utiliza ESLint para mantener un estilo consistente y detectar posibles errores.
 
-Para ejecutar el análisis:
+Para ejecutar el análisis
 
 npm run lint
 
@@ -171,6 +138,24 @@ La aplicación utiliza Morgan para registrar las solicitudes HTTP realizadas al 
 
 GET /api/products 200
 POST /api/products 201
+
+## Estructura del proyecto
+
+Stride-And-Co/
+|-- bin/
+|   `-- www
+|-- controllers/
+|-- public/
+|   `-- stylesheets/
+|-- routes/
+|-- tests/
+|-- views/
+|-- app.js
+|-- eslint.config.js
+|-- package.json
+|-- package-lock.json
+|-- .gitignore
+`-- README.md
 
 ## Control de versiones
 
@@ -189,7 +174,7 @@ El proyecto se encuentra en la etapa inicial del backend.
 - Pruebas automatizadas.
 - Control de versiones con Git y GitHub.
 
-La persistencia mediante base de datos, autenticación, autorización y reglas de negocio todavia no se implementan.
+La persistencia mediante base de datos, autenticación, autorización y reglas de negocio todavia no se implementa.
 
 ## Equipo
 
