@@ -3,7 +3,7 @@ const js = require('@eslint/js');
 module.exports = [
   js.configs.recommended,
 
-  // App, routes, controllers, bin)
+  // App, routes, controllers, bin
   {
     files: ['**/*.js'],
     ignores: ['tests/**/*.js'],
