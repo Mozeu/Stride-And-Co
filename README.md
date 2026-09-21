@@ -9,16 +9,10 @@
 | **Carrera** | Ingeniería en Computación |
 | **Materia** | Desarrollo de Aplicaciones Web |
 | **Docente** | Mtro. Luis Antonio Ramírez Martínez |
-| **Actividad** | Proyecto Integrador — Entregable 1: Configuración Inicial del Backend |
+| **Actividad** | Proyecto 1: Configuración Inicial del Backend  |
 | **Equipo** | Equipo 3 |
-| **Alumnos** | Kevin Andrés Rosales Rodríguez |
-|  | Edwin Noé Zaragoza Alvarado |
-|  | Nohemí Posada Atayde |
-|  | Manuel Ramirez Contreras |
-| **Matrículas** | 385814 |
-|  | 385609 |
-|  | 385520 |
-|  | 385703 |
+| **Alumnos** | Kevin Andrés Rosales Rodríguez<br>Edwin Noé Zaragoza Alvarado<br>Nohemí Posada Atayde<br>Manuel Ramirez Contreras |
+| **Matrículas** | 385814<br>385609<br>385520<br>385703 |
 | **Fecha de entrega** | 20/09/2026 |
 
 ## Descripción
@@ -38,7 +32,10 @@ Configurar la base técnica inicial del backend de Stride & Co. utilizando Node.
 Se busca aplicar una arquitectura organizada basada en la separación de responsabilidades entre rutas y controladores, preparar los principales endpoints REST de la aplicación, incorporar logging de solicitudes HTTP, análisis de calidad de código, pruebas automatizadas y un flujo de trabajo colaborativo utilizando Git y GitHub.
 
 La arquitectura general utilizada es:
+
+```text
 HTTP Request -> Express -> Route -> Controller -> Response Mock
+```
 
 ## Tecnologías utilizadas
 
@@ -60,24 +57,26 @@ HTTP Request -> Express -> Route -> Controller -> Response Mock
 
 ## Instalación
 
+```bash
 git clone https://github.com/Mozeu/Stride-And-Co.git
-
 cd Stride-And-Co
-
 npm install
+```
 
 ## Scripts disponibles
 
-| -------------- | -------------------------------------------------- |
-| `npm start`    | Inicia el servidor de Express                      |
-| `npm run dev`  | Inicia el servidor en modo desarrollo              |
-| `npm test`     | Ejecuta las pruebas automatizadas con Jest         |
+| Comando | Descripción |
+|---|---|
+| `npm start` | Inicia el servidor de Express |
+| `npm run dev` | Inicia el servidor en modo desarrollo |
+| `npm test` | Ejecuta las pruebas automatizadas con Jest |
 | `npm run lint` | Ejecuta ESLint para analizar la calidad del código |
 
 ## Recursos de la API
 
 Actualmente la API cuenta con los siguientes recursos:
 
+```text
 /api/users
 /api/roles
 /api/permissions
@@ -86,30 +85,34 @@ Actualmente la API cuenta con los siguientes recursos:
 /api/inventory
 /api/customers
 /api/orders
+```
 
 Cada recurso se encuentra entre:
 
+```text
 routes/
 controllers/
+```
 
 ## Endpoints
 
 La API puede utilizar las siguientes operaciones REST:
 
-
-
-| `GET`    | `/api/products`     |
-| `GET`    | `/api/products/:id` | 
-| `POST`   | `/api/products`     | 
-| `PUT`    | `/api/products/:id` | 
-| `DELETE` | `/api/products/:id` | 
-
+| Método | Ruta |
+|---|---|
+| `GET` | `/api/products` |
+| `GET` | `/api/products/:id` |
+| `POST` | `/api/products` |
+| `PUT` | `/api/products/:id` |
+| `DELETE` | `/api/products/:id` |
 
 ## Pruebas
 
 Las pruebas automatizadas se realizan con Jest y Supertest.
 
+```bash
 npm test
+```
 
 Ahora mismo hay pruebas para los endpoints de productos que comprueban:
 
@@ -124,23 +127,32 @@ Ahora mismo hay pruebas para los endpoints de productos que comprueban:
 
 También se puede ejecutar directamente la prueba de productos:
 
+```bash
+npx jest test/products.test.js
+```
+
 ## Calidad de código
 
 El proyecto utiliza ESLint para mantener un estilo consistente y detectar posibles errores.
 
-Para ejecutar el análisis
+Para ejecutar el análisis:
 
+```bash
 npm run lint
+```
 
 ## Logging
 
 La aplicación utiliza Morgan para registrar las solicitudes HTTP realizadas al servidor.
 
+```text
 GET /api/products 200
 POST /api/products 201
+```
 
 ## Estructura del proyecto
 
+```text
 Stride-And-Co/
 |-- bin/
 |   `-- www
@@ -156,6 +168,7 @@ Stride-And-Co/
 |-- package-lock.json
 |-- .gitignore
 `-- README.md
+```
 
 ## Control de versiones
 
