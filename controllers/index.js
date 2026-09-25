@@ -1,5 +1,6 @@
-function home (res,req,next){
-    res.render('index',{title: 'Express'});
+
+function home (req, res, next) {
+  res.render('index', { title: 'Express' });
 }
 
 function healthCheck (res,req,next){
