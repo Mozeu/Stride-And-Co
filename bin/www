@@ -7,6 +7,7 @@
 const app = require('../app');
 const debug = require('debug')('stride-co:server');
 const http = require('http');
+const { sequelize } = require('../models/relationals');
 
 /**
  * Get port from environment and store in Express.
@@ -21,11 +22,19 @@ app.set('port', port);
 
 const server = http.createServer(app);
 
+async function start() {
+  await sequelize.authenticate();
+  // Crea las tablas si es que no existen
+  await sequelize.sync();
+  debug('Conexión a mysql generada correctamente.');
+  server.listen(port);
+}
+
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
+start();
 server.on('error', onError);
 server.on('listening', onListening);
 
