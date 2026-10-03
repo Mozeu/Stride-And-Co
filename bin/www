@@ -25,7 +25,7 @@ const server = http.createServer(app);
 async function start() {
   await sequelize.authenticate();
   // Crea las tablas si es que no existen
-  await sequelize.sync();
+  await sequelize.sync({ alter: true });
   debug('Conexión a mysql generada correctamente.');
   server.listen(port);
 }
