@@ -8,6 +8,7 @@ const app = require('../app');
 const debug = require('debug')('stride-co:server');
 const http = require('http');
 const { sequelize } = require('../models/relationals');
+const connectMongo = require('../config/mongoose');
 
 /**
  * Get port from environment and store in Express.
@@ -27,6 +28,10 @@ async function start() {
   // Crea las tablas si es que no existen
   await sequelize.sync();
   debug('Conexión a mysql generada correctamente.');
+
+  await connectMongo();
+  debug('Conexión a mongodb correcta');
+
   server.listen(port);
 }
 

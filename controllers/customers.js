@@ -1,39 +1,54 @@
+const { Customer } = require('../models/documents');
+
 // CREATE
-function create(req, res, next) {
+async function create(req, res, next) {
+     const customer = await Customer.create(req.body);
+
     res.status(201).json({
         message: "Customer Created", 
-        data: {}
+        data: customer
     });
 }
 
 // READ
-function list (req, res, next) {
+async function list (req, res, next) {
+  const customers = await Customer.find();
+
   res.json({
     message: "Customers List",
-    data: []
+    data: customers
   });
 }
 
-function find(req, res, next) {
+async function find(req, res, next) {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) res.status(404).json({ message: 'Customer not found' });
+
     res.json({
         message: "Customer by ID",
-        data: {}
+        data: customer
   });
 };
 
 // UPDATE
-function update(req, res, next) {
+async function update(req, res, next) {
+    const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!customer) res.status(404).json({ message: 'Customer not found' });
+
     res.json({
         message: "Customer Updated",
-        data: {}
+        data: customer
     });
 };
 
 // DELETE
-function destroy(req, res, next){
+async function destroy(req, res, next){
+    const customer = await Customer.findByIdAndDelete(req.params.id);
+    if (!customer) res.status(404).json({ message: 'Customer not found' });
+
     res.json({
         message: "Customer Deleted",
-        data: {}
+        data: customer._id
     });
 };
 
