@@ -1,7 +1,16 @@
 const Roles = require('../models/relationals/Roles');
+const Permission = require('../models/relationals/Permissions');
 
 // CREATE
 async function create(req, res, next) {
+    try {
+        const role = await Roles.create(req.body);
+        if(req.body.permissionIds) role.setPermissions(req.body.permissionIds);
+        res.status(201).json({message: 'Role Created', data: role});
+    } catch (error) {
+        next(error);
+    }
+    /*
     const name = req.body.name;
     const description = req.body.description;
 
@@ -14,11 +23,12 @@ async function create(req, res, next) {
         message: "Role Created", 
         data: role
     });
+    */
 }
 
 // READ
 async function list (req, res, next) {
-  const roles = await Roles.findAll();
+  const roles = await Roles.findAll({include: {model: Permission, as:'permissions'}});
   res.json({
     message: "Roles List",
     data: roles
@@ -26,7 +36,7 @@ async function list (req, res, next) {
 }
 
 async function find(req, res, next) {
-    const role = await Roles.findByPk(req.params.id);
+    const role = await Roles.findByPk(req.params.id, {include: {model: Permission, as:'permissions'}});
     res.json({
         message: "Role by ID",
         data: role
@@ -35,6 +45,18 @@ async function find(req, res, next) {
 
 // UPDATE
 async function update(req, res, next) {
+    try{
+        const role = await Roles.findByPk(req.params.id);
+        if(req.body.permissionIds) role.setPermissions(req.body.permissionIds);
+        if(!role) return res.status(404).json({ message: 'Role not found' });
+        await role.update(req.body);
+        if(req.body.permissionIds) role.setPermissions(req.body.permissionIds);
+        res.json({message: 'Role Updated', data: role});
+    }
+    catch(error){
+        next(error);
+    }
+    /*
     const id = req.params.id;
     const role = await Roles.findByPk(id);
     if(!role) res.status(404).json({ message: 'Role not found' });
@@ -49,6 +71,7 @@ async function update(req, res, next) {
         message: "Role Updated",
         data: role
     });
+    */
 };
 
 // DELETE

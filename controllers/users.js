@@ -1,16 +1,19 @@
 const User = require('../models/relationals/User');
+const Role = require('../models/relationals/Roles');
 
 // CREATE
 async function create(req, res, next) {
     const name = req.body.name;
     const lastName = req.body.lastName;
     const email = req.body.email;
+    const role_id = req.body.role_id;
     // aun faltan mas campos, se agregaran después
 
     const user = await User.create({
         first_name: name, 
         last_name: lastName, 
-        email: email
+        email: email,
+        role_id: role_id
     });
 
     res.status(201).json({
@@ -21,7 +24,7 @@ async function create(req, res, next) {
 
 // READ
 async function list (req, res, next) {
-  const users = await User.findAll(); 
+  const users = await User.findAll({include:{model: Role, as:'role'}}); 
 
   res.json({
     message: "Users List",
@@ -31,7 +34,7 @@ async function list (req, res, next) {
 
 async function find(req, res, next) {
     const id = req.params.id;
-    const user = await User.findByPk(id);
+    const user = await User.findByPk(id, {include:{model: Role, as:'role'}});
 
     res.json({
         message: "User by ID",
@@ -48,11 +51,13 @@ async function update(req, res, next) {
     const name = req.body.name;
     const lastName = req.body.lastName;
     const email = req.body.email;
+    const role_id = req.body.role_id;
     
     let changes = {};
     changes.first_name = name ? name : user.first_name;
     changes.last_name = lastName ? lastName : user.last_name;
     changes.email = email ? email : user.email;
+    changes.role_id = role_id ? role_id : user.role_id;
 
     await user.update(changes);
 
