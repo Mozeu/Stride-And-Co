@@ -3,6 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var {expressjwt} = require('express-jwt');
 
 //Router
 var indexRouter = require('./routes/index');
@@ -18,6 +19,9 @@ var authRouter = require('./routes/auth');
 
 
 var app = express();
+
+var secret = "05a2c1c1791fcfcd8451a7c84ae140d44950b22f";
+app.use(expressjwt({ secret, algorithms: ['HS256'] }).unless({ path: ['/api/auth/login'] }));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
