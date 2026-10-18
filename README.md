@@ -22,8 +22,9 @@ Stride & Co. es una tienda deportiva que actualmente gestiona parte de sus venta
 El proyecto busca digitalizar la operación de la tienda mediante una aplicación web que permita centralizar la información del catálogo, controlar el inventario, registrar pedidos y facilitar la administración de usuarios, roles, permisos, clientes y productos.
 
 Este repositorio corresponde al backend de la aplicación. En esta primera etapa se configuró la arquitectura inicial utilizando Node.js y Express, separando las rutas de los controladores y utilizando respuestas mock para comprobar el funcionamiento de la API.
+El repositorio contiene una aplicación desarrollada con Node.js y Express, organizada por módulos y rutas, con lógica de negocio separada en controladores y soporte para autenticación mediante JWT.
 
-En este entregable todavía no se implementa persistencia en base de datos ni la lógica completa del negocio.
+La aplicación está orientada a servir como base para un sistema de administración de una tienda deportiva y a facilitar operaciones como alta de usuarios, gestión de productos, control de inventario y registro de pedidos.
 
 ## Objetivo
 
@@ -39,21 +40,36 @@ HTTP Request -> Express -> Route -> Controller -> Response Mock
 
 ## Tecnologías utilizadas
 
+
+### Backend
 - Node.js
-- Express
+- Express.js
 - JavaScript
+
+### Base de datos
+- MySQL con Sequelize
+- MongoDB con Mongoose
+
+### Seguridad
+- JWT
+- express-jwt
+- bcrypt
+
+### Herramientas y calidad
 - Jest
 - Supertest
 - ESLint
 - Morgan
-- Git
-- GitHub
+- Supervisor
+- Docker
+
 
 ## Requisitos previos
-
-- Node.js
+- Node.js 18 o superior
 - npm
 - Git
+- MySQL local (para Sequelize)
+- MongoDB local (si se usa la configuración de Mongoose)
 
 ## Instalación
 
@@ -94,42 +110,207 @@ routes/
 controllers/
 ```
 
-## Endpoints
+## Endpoints principales
 
-La API puede utilizar las siguientes operaciones REST:
+La API expone recursos bajo el prefijo `/api`.
 
-| Método | Ruta |
-|---|---|
-| `GET` | `/api/products` |
-| `GET` | `/api/products/:id` |
-| `POST` | `/api/products` |
-| `PUT` | `/api/products/:id` |
-| `DELETE` | `/api/products/:id` |
+### Autenticación
 
+```text
+POST /api/auth/login
+GET  /api/auth/me
+```
+
+### Usuarios
+
+```text
+GET    /api/users
+GET    /api/users/:id
+POST   /api/users
+PUT    /api/users/:id
+DELETE /api/users/:id
+```
+
+### Roles
+
+```text
+GET    /api/roles
+GET    /api/roles/:id
+POST   /api/roles
+PUT    /api/roles/:id
+DELETE /api/roles/:id
+```
+
+### Permisos
+
+```text
+GET    /api/permissions
+GET    /api/permissions/:id
+POST   /api/permissions
+PUT    /api/permissions/:id
+DELETE /api/permissions/:id
+```
+
+### Productos
+
+```text
+GET    /api/products
+GET    /api/products/:id
+POST   /api/products
+PUT    /api/products/:id
+DELETE /api/products/:id
+```
+
+### Variantes
+
+```text
+GET    /api/variants
+GET    /api/variants/:id
+POST   /api/variants
+PUT    /api/variants/:id
+DELETE /api/variants/:id
+```
+
+### Inventario
+
+```text
+GET  /api/inventory
+GET  /api/inventory/:id
+PUT  /api/inventory/:id
+```
+
+### Clientes
+
+```text
+GET    /api/customers
+GET    /api/customers/:id
+POST   /api/customers
+PUT    /api/customers/:id
+DELETE /api/customers/:id
+```
+
+### Pedidos
+
+```text
+GET    /api/orders
+GET    /api/orders/:id
+POST   /api/orders
+PUT    /api/orders/:id
+```
+
+## Autenticacion
+
+La autenticación del backend usa `bcrypt` para proteger las contraseñas y `jsonwebtoken` para emitir y validar tokens JWT.
+
+### Metodo para proteger contraseñas
+
+En `utils/password.js` se usa `bcrypt.genSalt(10)` para crear un salt y luego `bcrypt.hash(password, saltKey)` para generar el `password_hash`. La validación se realiza con `bcrypt.compare(password, passwordHash)`.
+
+El modelo de usuario en `models/relationals/User.js` almacena estos campos:
+
+- `password_hash`
+- `salt_key`
+
+Esto permite conservar la contraseña protegida y verificarla sin exponer el valor original.
+
+### Librerias para JWT
+
+Se utiliza la librería `jsonwebtoken` para firmar tokens con:
+
+- `jwt.sign(...)`
+- `expiresIn: '15m'`
+- `issuer: 'stride-co'`
+- `audience: 'stride-co-api'`
+- `algorithm: 'HS256'`
+
+La verificación del token se realiza mediante `express-jwt` en `app.js`, con una clave secreta compartida para proteger rutas que requieren autenticación.
+
+### Endpoint de login
+
+```http
+POST /api/auth/login
+```
+
+Ejemplo de cuerpo esperado:
+
+```json
+{
+  "email": "usuario@correo.com",
+  "password": "123456"
+}
+```
+
+Respuesta esperada:
+
+```json
+{
+  "message": "Login successful",
+  "data": {
+    "token": "<jwt_token>",
+    "tokenType": "Bearer",
+    "expiresIn": "15m"
+  }
+}
+```
+
+### Endpoint `/api/auth/me`
+
+```http
+GET /api/auth/me
+```
+
+Este endpoint requiere autenticación y devuelve la información del usuario autenticado sin incluir el `password_hash` ni el `salt_key`.
+
+### Header de autorización
+
+Ejemplo del header enviado en peticiones protegidas:
+
+```http
+Authorization: Bearer <token>
+```
+
+### Tiempo de expiración configurado
+
+El token tiene una expiración de:
+
+```text
+15 minutos
+```
+
+### Variables de entorno requeridas
+
+El proyecto actualmente usa valores hardcodeados en `app.js` y `controllers/auth.js`, pero para un entorno más seguro y portable se recomienda definir estos valores en un archivo `.env`:
+
+```env
+JWT_SECRET=tu_clave_secreta
+JWT_ISSUER=stride-co
+JWT_AUDIENCE=stride-co-api
+JWT_EXPIRES_IN=15m
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=stride_co
+DB_USER=root
+DB_PASSWORD=abcd1234
+PORT=3000
+```
 ## Pruebas
 
-Las pruebas automatizadas se realizan con Jest y Supertest.
+El proyecto incluye pruebas automatizadas con Jest y Supertest para validar el comportamiento principal de los endpoints.
 
 ```bash
 npm test
 ```
 
-Ahora mismo hay pruebas para los endpoints de productos que comprueban:
+Archivos de pruebas actuales:
 
-- Código HTTP esperado.
-- Estructura de la respuesta.
-- Consulta por ID.
-- Creación de productos.
-- Actualización de productos.
-- Eliminación de productos.
-- Comportamiento ante IDs inexistentes.
-- Comportamiento ante solicitudes sin datos.
-
-También se puede ejecutar directamente la prueba de productos:
-
-```bash
-npx jest test/products.test.js
-```
+- `tests/products.test.js`
+- `tests/users.test.js`
+- `tests/roles.test.js`
+- `tests/permissions.test.js`
+- `tests/variants.test.js`
+- `tests/inventory.test.js`
+- `tests/customers.test.js`
+- `tests/orders.test.js`
 
 ## Calidad de código
 
@@ -154,40 +335,95 @@ POST /api/products 201
 
 ```text
 Stride-And-Co/
-|-- bin/
-|   `-- www
-|-- controllers/
-|-- public/
-|   `-- stylesheets/
-|-- routes/
-|-- tests/
-|-- views/
-|-- app.js
-|-- eslint.config.js
-|-- package.json
-|-- package-lock.json
-|-- .gitignore
-`-- README.md
+├── app.js
+├── Dockerfile
+├── eslint.config.js
+├── package.json
+├── README.md
+├── README_ACTUALIZADO.md
+├── bin/
+│   └── www
+├── config/
+│   ├── mongoose.js
+│   └── sequelize.js
+├── controllers/
+│   ├── auth.js
+│   ├── customers.js
+│   ├── index.js
+│   ├── inventory.js
+│   ├── orders.js
+│   ├── permissions.js
+│   ├── products.js
+│   ├── roles.js
+│   ├── users.js
+│   └── variants.js
+├── middleware/
+│   └── authenticate.js
+├── models/
+│   ├── documents/
+│   │   ├── customer.js
+│   │   ├── index.js
+│   │   └── order.js
+│   └── relationals/
+│       ├── index.js
+│       ├── Permissions.js
+│       ├── Roles.js
+│       └── User.js
+├── public/
+│   └── stylesheets/
+│       └── style.css
+├── routes/
+│   ├── auth.js
+│   ├── customers.js
+│   ├── index.js
+│   ├── inventory.js
+│   ├── orders.js
+│   ├── permissions.js
+│   ├── products.js
+│   ├── roles.js
+│   ├── users.js
+│   └── variants.js
+├── tests/
+│   ├── customers.test.js
+│   ├── inventory.test.js
+│   ├── orders.test.js
+│   ├── permissions.test.js
+│   ├── products.test.js
+│   ├── roles.test.js
+│   ├── users.test.js
+│   └── variants.test.js
+├── utils/
+│   └── password.js
+├── views/
+│   ├── error.pug
+│   ├── index.pug
+│   └── layout.pug
+└── .gitignore
 ```
+
 
 ## Control de versiones
 
 El proyecto utiliza Git y GitHub para el trabajo colaborativo, ademas los commits siguen la especificación Conventional Commits.
 
-## Estado actual
+## Estado actual del proyecto
 
-El proyecto se encuentra en la etapa inicial del backend.
+El backend ya se encuentra en una etapa funcional con estructura modular y rutas REST implementadas para los principales recursos del negocio.
 
-- Proyecto Express configurado.
-- Separación entre rutas y controladores.
-- Endpoints REST iniciales.
-- Respuestas mock.
-- Logging de solicitudes HTTP.
-- ESLint.
-- Pruebas automatizadas.
-- Control de versiones con Git y GitHub.
+Entre los elementos que están presentes en el proyecto se encuentran:
 
-La persistencia mediante base de datos, autenticación, autorización y reglas de negocio todavia no se implementa.
+- API REST con Express
+- Módulos de usuarios, roles y permisos
+- CRUD de productos y variantes
+- Gestión de inventario
+- Registro de clientes
+- Gestión de pedidos
+- Autenticación con JWT
+- Middlewares para protección de rutas
+- Configuración para MySQL y MongoDB
+- Pruebas automatizadas con Jest y Supertest
+- Linting con ESLint
+- Estructura de modelos y configuraciones separadas por responsabilidad
 
 ## Equipo
 
