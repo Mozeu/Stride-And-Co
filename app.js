@@ -20,6 +20,7 @@ var authRouter = require('./routes/auth');
 
 var app = express();
 
+
 var secret = "05a2c1c1791fcfcd8451a7c84ae140d44950b22f";
 app.use(expressjwt({ secret, algorithms: ['HS256'] }).unless({ path: ['/api/auth/login'] }));
 
