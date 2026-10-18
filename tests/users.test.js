@@ -49,6 +49,18 @@ describe('API /api/users', () => {
     expect(res.body.message).toBe('User Updated');
   });
 
+  test('PUT /api/users/:id actualiza la contraseña cifrada', async () => {
+    const res = await request(app)
+      .put('/api/users/1')
+      .send({
+        password: 'nuevaPassword123'
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('User Updated');
+    expect(res.body.data).toBeDefined();
+  });
+
   // DELETE
   test('DELETE /api/users/:id responde 200 con mensaje de eliminación', async () => {
     const res = await request(app).delete('/api/users/1');

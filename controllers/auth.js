@@ -2,12 +2,10 @@ const {User} = require('../models/relationals');
 const { verifyPassword } = require('../utils/password');
 const jwt = require('jsonwebtoken');
 
-
-
-const INVALID_CREDENTIALS = { message: 'Invalid credentials' }; 
+const INVALID_CREDENTIALS = { message: 'Invalid credentials' };
 
 function signToken(user) {
-    const secret = "05a2c1c1791fcfcd8451a7c84ae140d44950b22f";
+    const secret = process.env.JWT_SECRET;
 
     return jwt.sign(
         { sub: String(user.id) },

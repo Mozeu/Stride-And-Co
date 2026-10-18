@@ -52,18 +52,25 @@ async function find(req, res, next) {
 async function update(req, res, next) {
     const id = req.params.id;
     const user = await User.findByPk(id);
-    if (!user) res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const name = req.body.name;
     const lastName = req.body.lastName;
     const email = req.body.email;
     const role_id = req.body.role_id;
-    
+    const password = req.body.password;
+
     let changes = {};
     changes.first_name = name ? name : user.first_name;
     changes.last_name = lastName ? lastName : user.last_name;
     changes.email = email ? email : user.email;
     changes.role_id = role_id ? role_id : user.role_id;
+
+    if (password && password.trim() !== '') {
+        const passwordData = await hashPassword(password);
+        changes.password_hash = passwordData.securePassword;
+        changes.salt_key = passwordData.saltKey;
+    }
 
     await user.update(changes);
 

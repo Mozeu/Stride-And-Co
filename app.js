@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -20,8 +22,7 @@ var authRouter = require('./routes/auth');
 
 var app = express();
 
-
-var secret = "05a2c1c1791fcfcd8451a7c84ae140d44950b22f";
+var secret = process.env.JWT_SECRET || '05a2c1c1791fcfcd8451a7c84ae140d44950b22f';
 app.use(expressjwt({ secret, algorithms: ['HS256'] }).unless({ path: ['/api/auth/login'] }));
 
 // view engine setup

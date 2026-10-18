@@ -1,23 +1,17 @@
+require('dotenv').config();
+
 const { Sequelize } = require('sequelize');
 
-// Conexion a MySQL
 const sequelize = new Sequelize(
-  // Nombre de la base de datos
-  'stride_co',
-  // Usuario de la base de datos
-  'root',
-  // Password de la base de datos
-  'abcd1234',
+  process.env.DB_NAME || 'stride_co',
+  process.env.DB_USER || 'root',
+  process.env.DB_PASSWORD || 'abcd1234',
   {
-    // host: define la direccion del servidor de la base de datos
-    host: 'localhost',
-    // port: el puerto en el que atiende nuestro servidor de base de datos
-    port: 3306,
-    // dialect: la base de datos específica que vamos a usar
-    dialect: 'mysql',
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT) || 3306,
+    dialect: process.env.DB_DIALECT || 'mysql',
     logging: false,
     define: {
-      // Convierte automáticamente los campos de los modelos de camelCase a snake_case (createdAt -> created_at, roleId -> role_id)
       underscored: true
     }
   }
