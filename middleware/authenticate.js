@@ -10,11 +10,13 @@ const verifyToken = expressjwt({
 });
 
 function authenticate(req, res, next) {
-    if (req.path === '/api/auth/login') return next();
+    const isApiRequest = req.path === '/api' || req.path.startsWith('/api/');
+    const isLoginRequest = req.method === 'POST' && req.path === '/api/auth/login';
+
+    if (!isApiRequest || isLoginRequest) return next();
 
     verifyToken(req, res, async (error) => {
         if (error) return next(error);
-        if (!req.path.startsWith('/api/')) return next();
 
         try {
             const user = await User.findByPk(req.auth.sub, {
