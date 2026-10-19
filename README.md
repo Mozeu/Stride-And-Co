@@ -198,13 +198,13 @@ POST   /api/orders
 PUT    /api/orders/:id
 ```
 
-## Autenticacion
+## Autenticación
 
-La autenticación del backend usa `bcrypt` para proteger las contraseñas y `jsonwebtoken` para emitir y validar tokens JWT.
+La autenticación del backend usa `bcrypt` para proteger las contraseñas, `jsonwebtoken` para emitir tokens JWT y `express-jwt` para validarlos.
 
 ### Metodo para proteger contraseñas
 
-En `utils/password.js` se usa `bcrypt.genSalt(10)` para crear un salt y luego `bcrypt.hash(password, saltKey)` para generar el `password_hash`. La validación se realiza con `bcrypt.compare(password, passwordHash)`.
+En `utils/password.js` se usa `bcrypt.genSalt()` con el factor de costo configurado por `BCRYPT_SALT_ROUNDS` para crear un salt y luego `bcrypt.hash(password, saltKey)` para generar el `password_hash`. La validación se realiza con `bcrypt.compare(password, passwordHash)`.
 
 El modelo de usuario en `models/relationals/User.js` almacena estos campos:
 
@@ -215,15 +215,17 @@ Esto permite conservar la contraseña protegida y verificarla sin exponer el val
 
 ### Librerias para JWT
 
-Se utiliza la librería `jsonwebtoken` para firmar tokens con:
+Se utiliza `jsonwebtoken` para firmar los tokens y `express-jwt` para verificar su firma, expiración, issuer y audience. El token usa el algoritmo `HS256` y contiene únicamente el identificador del usuario en `sub`. Estos valores se configuran mediante variables de entorno:
 
-- `jwt.sign(...)`
-- `expiresIn: '15m'`
-- `issuer: 'stride-co'`
-- `audience: 'stride-co-api'`
-- `algorithm: 'HS256'`
+| Variable | Uso |
+|---|---|
+| `JWT_SECRET` | Clave compartida para firmar y verificar tokens. No debe publicarse ni guardarse en el repositorio. |
+| `JWT_EXPIRES_IN` | Vigencia del token; por ejemplo, `15m`. |
+| `JWT_ISSUER` | Emisor esperado del token; por ejemplo, `stride-co`. |
+| `JWT_AUDIENCE` | Audiencia esperada del token; por ejemplo, `stride-co-api`. |
+| `BCRYPT_SALT_ROUNDS` | Factor de costo de bcrypt; por ejemplo, `10`. |
 
-La verificación del token se realiza mediante `express-jwt` en `app.js`, con una clave secreta compartida para proteger rutas que requieren autenticación.
+Configura estas variables en un archivo `.env` local a partir de `.env.example` y completa `JWT_SECRET` con una clave segura propia. La aplicación no inicia si faltan variables JWT requeridas.
 
 ### Endpoint de login
 
@@ -269,30 +271,7 @@ Ejemplo del header enviado en peticiones protegidas:
 Authorization: Bearer <token>
 ```
 
-### Tiempo de expiración configurado
-
-El token tiene una expiración de:
-
-```text
-15 minutos
-```
-
-### Variables de entorno requeridas
-
-El proyecto actualmente usa valores hardcodeados en `app.js` y `controllers/auth.js`, pero para un entorno más seguro y portable se recomienda definir estos valores en un archivo `.env`:
-
-```env
-JWT_SECRET=tu_clave_secreta
-JWT_ISSUER=stride-co
-JWT_AUDIENCE=stride-co-api
-JWT_EXPIRES_IN=15m
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=stride_co
-DB_USER=root
-DB_PASSWORD=abcd1234
-PORT=3000
-```
+El token expira después del valor configurado en `JWT_EXPIRES_IN` (15 minutos en el ejemplo).
 ## Pruebas
 
 El proyecto incluye pruebas automatizadas con Jest y Supertest para validar el comportamiento principal de los endpoints.

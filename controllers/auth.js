@@ -1,19 +1,18 @@
 const {User} = require('../models/relationals');
 const { verifyPassword } = require('../utils/password');
 const jwt = require('jsonwebtoken');
+const jwtConfig = require('../config/jwt');
 
 const INVALID_CREDENTIALS = { message: 'Invalid credentials' };
 
 function signToken(user) {
-    const secret = process.env.JWT_SECRET;
-
     return jwt.sign(
         { sub: String(user.id) },
-        secret,
+        jwtConfig.secret,
         {
-            expiresIn: '15m',
-            issuer: 'stride-co',
-            audience: 'stride-co-api',
+            expiresIn: jwtConfig.expiresIn,
+            issuer: jwtConfig.issuer,
+            audience: jwtConfig.audience,
             algorithm: 'HS256'
         }
     );
@@ -34,23 +33,36 @@ function me(req, res) {
 
 
 
-async function login(req, res) {
-    const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+async function login(req, res, next) {
+    const { email, password } = req.body || {};
 
-    if(!user || !user.active) return res.status(401).json(INVALID_CREDENTIALS);
+    if (typeof email !== 'string' ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+        typeof password !== 'string' || !password.trim()) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-    const valid = await verifyPassword(password, user.password_hash);
-    if(!valid) return res.status(401).json(INVALID_CREDENTIALS);
+    try {
+        const user = await User.findOne({ where: { email: email.trim() } });
 
-    res.json({
-        message: 'Login successful',
-        data: {
-            token: signToken(user),
-            tokenType: "Bearer",
-            expiresIn: "15m"
+        if (!user || !user.active) {
+            return res.status(401).json(INVALID_CREDENTIALS);
         }
-    });
+
+        const valid = await verifyPassword(password, user.password_hash);
+        if (!valid) return res.status(401).json(INVALID_CREDENTIALS);
+
+        return res.json({
+            message: 'Login successful',
+            data: {
+                token: signToken(user),
+                tokenType: 'Bearer',
+                expiresIn: jwtConfig.expiresIn
+            }
+        });
+    } catch (error) {
+        return next(error);
+    }
 }
 
 

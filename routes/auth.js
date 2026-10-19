@@ -3,10 +3,7 @@ const router = express.Router();
 
 const controller = require('../controllers/auth');
 
-const authenticate = require('../middleware/authenticate');
-
-
 router.post('/login', controller.login);
-router.get('/me', authenticate, controller.me);
+router.get('/me', controller.me);
 
 module.exports = router;

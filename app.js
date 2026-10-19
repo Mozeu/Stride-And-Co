@@ -5,7 +5,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var {expressjwt} = require('express-jwt');
+var authenticate = require('./middleware/authenticate');
 
 //Router
 var indexRouter = require('./routes/index');
@@ -22,8 +22,7 @@ var authRouter = require('./routes/auth');
 
 var app = express();
 
-var secret = process.env.JWT_SECRET || '05a2c1c1791fcfcd8451a7c84ae140d44950b22f';
-app.use(expressjwt({ secret, algorithms: ['HS256'] }).unless({ path: ['/api/auth/login'] }));
+app.use(authenticate);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -54,6 +53,10 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
