@@ -273,6 +273,52 @@ Authorization: Bearer <token>
 ```
 
 El token expira después del valor configurado en `JWT_EXPIRES_IN` (15 minutos en el ejemplo).
+
+## Control de acceso basado en roles
+
+La autorización usa RBAC con la librería `accesscontrol`. La autenticación (JWT) no cambia, sino el middleware `authorize` solo usa el usuario que ya deja `authenticate`.
+
+### Roles
+- `admin`: administra productos, usuarios y órdenes.
+- `sales`: consulta productos y gestiona órdenes.
+- `user`: consulta productos y opera solo sobre sus propias órdenes.
+
+### Convención de permisos
+Cada `Permission.key` tiene la forma `recurso:acción:alcance`, por ejemplo `orders:read:own`. El alcance es `own` (solo recursos del usuario) o `any` (cualquier recurso).
+
+### Permisos definidos
+`products:read:any`, `products:create:any`, `products:update:any`, `products:delete:any`, `orders:create:any`, `orders:read:own`, `orders:read:any`, `orders:update:own`, `orders:update:any`, `users:read:any`.
+
+### Matriz RBAC
+| Permiso | admin | sales | user |
+| --- | --- | --- | --- |
+| products:read:any | Sí | Sí | Sí |
+| products:create:any | Sí | No | No |
+| products:update:any | Sí | No | No |
+| products:delete:any | Sí | No | No |
+| orders:create:any | Sí | Sí | Sí |
+| orders:read:own | Sí | Sí | Sí |
+| orders:read:any | Sí | Sí | No |
+| orders:update:own | Sí | Sí | Sí |
+| orders:update:any | Sí | Sí | No |
+| users:read:any | Sí | No | No |
+
+### Endpoints protegidos
+- POST, GET, GET por id, PUT y DELETE de /api/products
+- GET y GET por id de /api/users
+- POST, GET, GET por id y PUT de /api/orders
+
+Si el usuario autenticado no tiene el permiso, la API responde 403 Forbidden.
+
+### Ejemplo de permiso any
+GET /api/orders exige `orders:read:any`. Un `user` recibe 403; `admin` y `sales` reciben 200.
+
+### Ejemplo de permiso own
+GET /api/orders/:id exige `orders:read:own` o `orders:read:any`. Con `own`, la orden debe pertenecer al usuario: se busca el cliente de la orden en MongoDB y se compara su `userId` con el id del usuario autenticado.
+
+### Origen de los permisos
+`middleware/authorize.js` consulta `Role`, `role_permissions` y `Permission` en MySQL, separa cada `key` en recurso, acción y alcance, y con eso configura `accesscontrol`. Los datos iniciales se cargan con `node scripts/seed-rbac.js`.
+
 ## Pruebas
 
 El proyecto incluye pruebas automatizadas con Jest y Supertest para validar el comportamiento principal de los endpoints.
@@ -324,6 +370,7 @@ Stride-And-Co/
 ├── bin/
 │   └── www
 ├── config/
+│   └── jwt.js
 │   ├── mongoose.js
 │   └── sequelize.js
 ├── controllers/
@@ -339,6 +386,7 @@ Stride-And-Co/
 │   └── variants.js
 ├── middleware/
 │   └── authenticate.js
+│   └── authorize.js
 ├── models/
 │   ├── documents/
 │   │   ├── customer.js
@@ -363,6 +411,9 @@ Stride-And-Co/
 │   ├── roles.js
 │   ├── users.js
 │   └── variants.js
+├── scripts/
+│   └── create-admin.js
+│   └── seed-rbac.js
 ├── tests/
 │   ├── customers.test.js
 │   ├── inventory.test.js
@@ -373,11 +424,14 @@ Stride-And-Co/
 │   ├── users.test.js
 │   └── variants.test.js
 ├── utils/
+│   └── orderOwnership.js
 │   └── password.js
 ├── views/
 │   ├── error.pug
 │   ├── index.pug
 │   └── layout.pug
+└── .dockerignore
+└── .env.example
 └── .gitignore
 ```
 
