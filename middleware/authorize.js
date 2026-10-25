@@ -1,10 +1,10 @@
-const { AccessControl } = require('accesscontrol');
 const { Role, Permission } = require('../models/relationals');
 
 let ac = null; // variable para la config. RBAC
 
 // Lee Role, Role_Permission y Permission directo desde la Base de Datos
 async function loadAccessControl() {
+    const { AccessControl } = await import('accesscontrol');
     const roles = await Role.findAll({
         include: [{ model: Permission, as: 'permissions', attributes: ['key'] }]
     });
