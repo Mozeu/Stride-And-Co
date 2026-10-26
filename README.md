@@ -161,6 +161,9 @@ PUT    /api/products/:id
 DELETE /api/products/:id
 ```
 
+Las rutas de productos y sus permisos RBAC están definidos; el controlador
+actual todavía responde con datos simulados y no persiste productos.
+
 ### Variantes
 
 ```text
@@ -197,6 +200,10 @@ GET    /api/orders/:id
 POST   /api/orders
 PUT    /api/orders/:id
 ```
+
+Los pedidos y clientes usan modelos de MongoDB. La creación y el listado de
+pedidos consultan la base; la búsqueda individual y la actualización siguen
+siendo respuestas simuladas.
 
 ## Autenticación
 
@@ -327,7 +334,25 @@ El proyecto incluye pruebas automatizadas con Jest y Supertest para validar el c
 npm test
 ```
 
-Archivos de pruebas actuales:
+Las pruebas unitarias simulan el middleware de autenticación, autorización y
+acceso a modelos para validar el comportamiento de rutas y controladores sin
+requerir bases de datos. No sustituyen las pruebas de integración de JWT/RBAC.
+
+Para ejecutar la suite de integración, inicia MySQL y MongoDB en los puertos
+locales y ejecuta:
+
+```bash
+npm run test:integration
+```
+
+Esta suite crea y limpia únicamente las bases `stride_co_test` de MySQL y
+MongoDB. Requiere un usuario MySQL con permiso para crear la base; por defecto
+usa `root` y la contraseña `abcd1234`. Si tu configuración local es distinta,
+define `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, `TEST_DB_PASSWORD`,
+`TEST_DB_NAME` y `TEST_MONGO_URI`. Los nombres de ambas bases deben coincidir
+y terminar en `_test`; nunca apuntes estas variables a bases con datos reales.
+
+Archivos de pruebas unitarias:
 
 - `tests/products.test.js`
 - `tests/users.test.js`
@@ -337,6 +362,10 @@ Archivos de pruebas actuales:
 - `tests/inventory.test.js`
 - `tests/customers.test.js`
 - `tests/orders.test.js`
+
+Pruebas de integración:
+
+- `tests/integration/auth-rbac.integration.test.js`
 
 ## Calidad de código
 

@@ -6,7 +6,9 @@
     "start": "node ./bin/www",
     "dev": "supervisor ./bin/www",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",
+    "test:integration": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.integration.config.js"
   },
   "dependencies": {
     "accesscontrol": "^3.1.1",
