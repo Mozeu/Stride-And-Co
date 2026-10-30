@@ -1,15 +1,18 @@
 require('dotenv').config();
 
 const { Sequelize } = require('sequelize');
+const config = require('config');
+
+const mysqlConfig = config.get("mysql");
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'stride_co',
-  process.env.DB_USER || 'root',
-  process.env.DB_PASSWORD || 'abcd1234',
+  mysqlConfig.database, 
+  mysqlConfig.user,
+  mysqlConfig.password,
   {
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 3306,
-    dialect: process.env.DB_DIALECT || 'mysql',
+    host: mysqlConfig.host,
+    port: mysqlConfig.port,
+    dialect: 'mysql',
     logging: false,
     define: {
       underscored: true
@@ -18,3 +21,5 @@ const sequelize = new Sequelize(
 );
 
 module.exports = sequelize;
+
+console.log("App conectada a " + mysqlConfig.database);
