@@ -1,18 +1,16 @@
-require('dotenv').config();
-
 const { Sequelize } = require('sequelize');
 const config = require('config');
 
-const mysqlConfig = config.get("mysql");
+const postgresConfig = config.get('postgres');
 
 const sequelize = new Sequelize(
-  mysqlConfig.database, 
-  mysqlConfig.user,
-  mysqlConfig.password,
+  postgresConfig.database,
+  postgresConfig.user,
+  postgresConfig.password,
   {
-    host: mysqlConfig.host,
-    port: mysqlConfig.port,
-    dialect: 'mysql',
+    host: postgresConfig.host,
+    port: postgresConfig.port,
+    dialect: 'postgres',
     logging: false,
     define: {
       underscored: true
@@ -21,5 +19,3 @@ const sequelize = new Sequelize(
 );
 
 module.exports = sequelize;
-
-console.log("App conectada a " + mysqlConfig.database);

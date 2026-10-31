@@ -1,3 +1,4 @@
+const { log } = require('node:console');
 require('dotenv').config();
 const { sequelize, User, Role } = require('../models/relationals');
 const { hashPassword } = require('../utils/password');
@@ -7,7 +8,7 @@ async function createAdmin() {
 
     const role = await Role.findOne({ where: { name: 'admin' } });
     if (!role) {
-        console.log('necesitas correr "node scripts/seed-rbac.js" primero.');
+        log('necesitas correr "node scripts/seed-rbac.js" primero.');
         await sequelize.close();
         return;
     }
@@ -24,11 +25,11 @@ async function createAdmin() {
             salt_key: passwordData.saltKey
         }
     });
-    console.log('admin -> user id ' + user.id);
+    log('admin -> user id ' + user.id);
     await sequelize.close();
 }
 
 createAdmin().catch((error) => {
-    console.error(error);
+    process.stderr.write(`${error}\n`);
     process.exit(1);
 });

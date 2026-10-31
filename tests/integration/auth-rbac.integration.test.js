@@ -4,9 +4,9 @@ const { afterAll, beforeAll } = require('@jest/globals');
 
 const testDatabaseName = process.env.TEST_DB_NAME || 'stride_co_test';
 const testMongoUri = process.env.TEST_MONGO_URI || 'mongodb://127.0.0.1:27017/stride_co_test';
-const mysqlConfig = {
+const postgresConfig = {
   host: process.env.TEST_DB_HOST || '127.0.0.1',
-  port: Number(process.env.TEST_DB_PORT) || 3306,
+  port: Number(process.env.TEST_DB_PORT) || 5432,
   user: process.env.TEST_DB_USER || 'root',
   password: process.env.TEST_DB_PASSWORD || 'abcd1234'
 };
@@ -14,16 +14,21 @@ const mongoDatabaseName = new URL(testMongoUri).pathname.slice(1);
 
 if (!/^[a-zA-Z0-9_]+_test$/.test(testDatabaseName) ||
     mongoDatabaseName !== testDatabaseName) {
-  throw new Error('Integration tests require matching MySQL and MongoDB databases ending in _test');
+  throw new Error('Integration tests require matching PostgreSQL and MongoDB databases ending in _test');
 }
 
 process.env.NODE_ENV = 'test';
-process.env.DB_NAME = testDatabaseName;
-process.env.DB_USER = mysqlConfig.user;
-process.env.DB_PASSWORD = mysqlConfig.password;
-process.env.DB_HOST = mysqlConfig.host;
-process.env.DB_PORT = String(mysqlConfig.port);
-process.env.DB_DIALECT = 'mysql';
+const existingNodeConfig = process.env.NODE_CONFIG
+  ? JSON.parse(process.env.NODE_CONFIG)
+  : {};
+process.env.NODE_CONFIG = JSON.stringify({
+  ...existingNodeConfig,
+  postgres: {
+    ...existingNodeConfig.postgres,
+    ...postgresConfig,
+    database: testDatabaseName
+  }
+});
 process.env.MONGO_URI = testMongoUri;
 process.env.JWT_SECRET = 'integration-test-only-secret-change-me';
 process.env.JWT_EXPIRES_IN = '15m';
@@ -31,7 +36,7 @@ process.env.JWT_ISSUER = 'stride-co-test';
 process.env.JWT_AUDIENCE = 'stride-co-test-api';
 process.env.BCRYPT_SALT_ROUNDS = '4';
 
-const mysql = require('mysql2/promise');
+const { Client } = require('pg');
 const mongoose = require('mongoose');
 const request = require('supertest');
 const app = require('../../app');
@@ -73,24 +78,29 @@ const permissionMatrix = {
 let tokens;
 let ownOrderId;
 let otherOrderId;
-let mysqlReady = false;
+let postgresReady = false;
 let mongoReady = false;
 
 beforeAll(async () => {
-  const adminConnection = await mysql.createConnection({
-    ...mysqlConfig,
-    database: 'mysql'
+  const adminConnection = new Client({
+    ...postgresConfig,
+    database: 'postgres'
   });
   try {
-    await adminConnection.query(
-      `CREATE DATABASE IF NOT EXISTS \`${testDatabaseName}\` CHARACTER SET utf8mb4`
+    await adminConnection.connect();
+    const databaseExists = await adminConnection.query(
+      'SELECT 1 FROM pg_database WHERE datname = $1',
+      [testDatabaseName]
     );
+    if (databaseExists.rowCount === 0) {
+      await adminConnection.query(`CREATE DATABASE "${testDatabaseName}"`);
+    }
   } finally {
     await adminConnection.end();
   }
 
   await sequelize.authenticate();
-  mysqlReady = true;
+  postgresReady = true;
   await sequelize.sync({ force: true });
   await connectMongo();
   mongoReady = true;
@@ -156,7 +166,7 @@ afterAll(async () => {
     await mongoose.connection.dropDatabase();
     await mongoose.disconnect();
   }
-  if (mysqlReady) {
+  if (postgresReady) {
     await sequelize.drop();
     await sequelize.close();
   }

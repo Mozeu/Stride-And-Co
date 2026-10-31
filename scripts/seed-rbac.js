@@ -1,3 +1,4 @@
+const { log } = require('node:console');
 require('dotenv').config();
 const { sequelize, Role, Permission } = require('../models/relationals');
 
@@ -54,12 +55,12 @@ async function seed() {
             defaults: { description: 'Rol ' + roleName }
         });
         await role.setPermissions(matrix[roleName].map((key) => permissions[key]));
-        console.log(roleName + ' -> ' + matrix[roleName].length + ' permisos');
+        log(roleName + ' -> ' + matrix[roleName].length + ' permisos');
     }
     await sequelize.close();
 }
 
 seed().catch((error) => {
-    console.error(error);
+    process.stderr.write(`${error}\n`);
     process.exit(1);
 });
