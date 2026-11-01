@@ -1,4 +1,4 @@
-const { Role, Permission } = require('../models/relationals');
+const { Role, Permission } = require('../models/sql');
 
 let ac = null; // variable para la config. RBAC
 

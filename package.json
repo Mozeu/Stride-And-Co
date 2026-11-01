@@ -5,6 +5,7 @@
   "scripts": {
     "start": "NODE_ENV=production node ./bin/www",
     "dev": "NODE_ENV=development supervisor ./bin/www",
+    "seed": "node scripts/seed.js",
     "lint": "eslint .",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",

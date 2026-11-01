@@ -52,16 +52,11 @@ describe('API /api/products', () => {
     expect(res.body.message).toBe('Product Deleted');
   });
 
-  // ---- MANEJO DE RECURSOS INEXISTENTES ----
-  // NOTA: el controlador actual (find/update/destroy) no valida si el ID
-  // existe realmente -- siempre responde 200 con data: {}. Este test documenta
-  // ese comportamiento actual. Si agregan validación real (404 cuando no
-  // existe), hay que cambiar este test para esperar 404.
-  test('GET /api/products/:id con un id inexistente (comportamiento actual del mock)', async () => {
+  test('GET /api/products/:id responde 404 cuando no existe', async () => {
     const res = await request(app).get('/api/products/999999');
 
-    expect(res.statusCode).toBe(200); // Debería ser 404 si hubiera validación real
-    expect(res.body.data).toEqual({});
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toBe('Product not found');
   });
 
   // ---- COMPORTAMIENTO ANTE SOLICITUDES INCORRECTAS ----

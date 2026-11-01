@@ -35,7 +35,7 @@ Se busca aplicar una arquitectura organizada basada en la separación de respons
 La arquitectura general utilizada es:
 
 ```text
-HTTP Request -> Express -> Route -> Controller -> Response Mock
+HTTP Request -> Express -> Route -> Controller -> Sequelize/Mongoose -> Database
 ```
 
 ## Tecnologías utilizadas
@@ -47,7 +47,7 @@ HTTP Request -> Express -> Route -> Controller -> Response Mock
 - JavaScript
 
 ### Base de datos
-- MySQL con Sequelize
+- PostgreSQL con Sequelize
 - MongoDB con Mongoose
 
 ### Seguridad
@@ -68,7 +68,7 @@ HTTP Request -> Express -> Route -> Controller -> Response Mock
 - Node.js 18 o superior
 - npm
 - Git
-- MySQL local (para Sequelize)
+- PostgreSQL local (para Sequelize)
 - MongoDB local (si se usa la configuración de Mongoose)
 
 ## Instalación
@@ -85,6 +85,7 @@ npm install
 |---|---|
 | `npm start` | Inicia el servidor de Express |
 | `npm run dev` | Inicia el servidor en modo desarrollo |
+| `npm run seed` | Crea roles, permisos y datos de demostración en PostgreSQL y MongoDB |
 | `npm test` | Ejecuta las pruebas automatizadas con Jest |
 | `npm run lint` | Ejecuta ESLint para analizar la calidad del código |
 
@@ -213,7 +214,7 @@ La autenticación del backend usa `bcrypt` para proteger las contraseñas, `json
 
 En `utils/password.js` se usa `bcrypt.genSalt()` con el factor de costo configurado por `BCRYPT_SALT_ROUNDS` para crear un salt y luego `bcrypt.hash(password, saltKey)` para generar el `password_hash`. La validación se realiza con `bcrypt.compare(password, passwordHash)`.
 
-El modelo de usuario en `models/relationals/User.js` almacena estos campos:
+El modelo de usuario en `models/sql/User.js` almacena estos campos:
 
 - `password_hash`
 - `salt_key`
@@ -324,7 +325,15 @@ GET /api/orders exige `orders:read:any`. Un `user` recibe 403; `admin` y `sales`
 GET /api/orders/:id exige `orders:read:own` o `orders:read:any`. Con `own`, la orden debe pertenecer al usuario: se busca el cliente de la orden en MongoDB y se compara su `userId` con el id del usuario autenticado.
 
 ### Origen de los permisos
-`middleware/authorize.js` consulta `Role`, `role_permissions` y `Permission` en MySQL, separa cada `key` en recurso, acción y alcance, y con eso configura `accesscontrol`. Los datos iniciales se cargan con `node scripts/seed-rbac.js`.
+`middleware/authorize.js` consulta `Role`, `role_permissions` y `Permission` en PostgreSQL, separa cada `key` en recurso, acción y alcance, y con eso configura `accesscontrol`. Los datos iniciales se cargan con `npm run seed`.
+
+El seed crea usuarios ficticios de demostración. Sus contraseñas son exclusivamente para esas cuentas locales:
+
+| Rol | Email | Contraseña |
+|---|---|---|
+| admin | `admin@stride.test` | `DemoAdmin!2026` |
+| sales | `sales@stride.test` | `DemoSales!2026` |
+| user | `user@stride.test` | `DemoUser!2026` |
 
 ## Pruebas
 
@@ -338,16 +347,16 @@ Las pruebas unitarias simulan el middleware de autenticación, autorización y
 acceso a modelos para validar el comportamiento de rutas y controladores sin
 requerir bases de datos. No sustituyen las pruebas de integración de JWT/RBAC.
 
-Para ejecutar la suite de integración, inicia MySQL y MongoDB en los puertos
+Para ejecutar la suite de integración, inicia PostgreSQL y MongoDB en los puertos
 locales y ejecuta:
 
 ```bash
 npm run test:integration
 ```
 
-Esta suite crea y limpia únicamente las bases `stride_co_test` de MySQL y
-MongoDB. Requiere un usuario MySQL con permiso para crear la base; por defecto
-usa `root` y la contraseña `abcd1234`. Si tu configuración local es distinta,
+Esta suite crea y limpia únicamente las bases `stride_co_test` de PostgreSQL y
+MongoDB. Requiere un usuario PostgreSQL con permiso para crear la base; por defecto
+usa `root` y la contraseña configurada en PostgreSQL local. Si tu configuración local es distinta,
 define `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, `TEST_DB_PASSWORD`,
 `TEST_DB_NAME` y `TEST_MONGO_URI`. Los nombres de ambas bases deben coincidir
 y terminar en `_test`; nunca apuntes estas variables a bases con datos reales.
@@ -483,7 +492,7 @@ Entre los elementos que están presentes en el proyecto se encuentran:
 - Gestión de pedidos
 - Autenticación con JWT
 - Middlewares para protección de rutas
-- Configuración para MySQL y MongoDB
+- Configuración para PostgreSQL y MongoDB
 - Pruebas automatizadas con Jest y Supertest
 - Linting con ESLint
 - Estructura de modelos y configuraciones separadas por responsabilidad

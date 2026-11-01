@@ -19,7 +19,7 @@ jest.mock('../utils/password', () => ({
   verifyPassword: jest.fn(async () => true)
 }));
 
-jest.mock('../models/relationals/User', () => ({
+jest.mock('../models/sql/User', () => ({
   hasMany: jest.fn(),
   belongsTo: jest.fn(),
   findOne: jest.fn(async () => null),
@@ -39,7 +39,7 @@ jest.mock('../models/relationals/User', () => ({
     }))
 }));
 
-jest.mock('../models/relationals/Roles', () => ({
+jest.mock('../models/sql/Roles', () => ({
   hasMany: jest.fn(),
   belongsTo: jest.fn(),
   belongsToMany: jest.fn(),
@@ -66,7 +66,7 @@ jest.mock('../models/relationals/Roles', () => ({
     }))
 }));
 
-jest.mock('../models/relationals/Permissions', () => ({
+jest.mock('../models/sql/Permissions', () => ({
   belongsToMany: jest.fn(),
   create: jest.fn(async (attributes) => ({ id: 1, ...attributes })),
   findAll: jest.fn(async () => []),
@@ -82,7 +82,54 @@ jest.mock('../models/relationals/Permissions', () => ({
     }))
 }));
 
-jest.mock('../models/documents', () => ({
+jest.mock('../models/sql/Product', () => ({
+  hasMany: jest.fn(),
+  belongsTo: jest.fn(),
+  create: jest.fn(async (attributes) => ({ id: 1, ...attributes })),
+  findAll: jest.fn(async () => []),
+  findByPk: jest.fn(async (id) => id === '999999' ? null : ({
+    id: Number(id),
+    name: 'Test Product',
+    price: '599.00',
+    update: jest.fn(async function (changes) {
+      Object.assign(this, changes);
+      return this;
+    }),
+    destroy: jest.fn(async () => undefined)
+  }))
+}));
+
+jest.mock('../models/sql/Variant', () => ({
+  hasOne: jest.fn(),
+  belongsTo: jest.fn(),
+  create: jest.fn(async (attributes) => ({ id: 1, ...attributes })),
+  findAll: jest.fn(async () => []),
+  findByPk: jest.fn(async (id) => id === '999999' ? null : ({
+    id: Number(id),
+    name: 'Test Variant',
+    update: jest.fn(async function (changes) {
+      Object.assign(this, changes);
+      return this;
+    }),
+    destroy: jest.fn(async () => undefined)
+  }))
+}));
+
+jest.mock('../models/sql/Inventory', () => ({
+  belongsTo: jest.fn(),
+  findAll: jest.fn(async () => []),
+  findByPk: jest.fn(async (id) => id === '999999' ? null : ({
+    id: Number(id),
+    stock: 25,
+    reserved: 0,
+    update: jest.fn(async function (changes) {
+      Object.assign(this, changes);
+      return this;
+    })
+  }))
+}));
+
+jest.mock('../models/mongo', () => ({
   Customer: {
     create: jest.fn(async (attributes) => ({ _id: 'customer-test-id', ...attributes })),
     find: jest.fn(async () => []),
@@ -93,9 +140,11 @@ jest.mock('../models/documents', () => ({
   Order: {
     create: jest.fn(async (attributes) => ({ _id: 'order-test-id', ...attributes })),
     find: jest.fn(() => ({ populate: jest.fn(async () => []) })),
-    findById: jest.fn(() => ({ populate: jest.fn(async () => ({ _id: 'order-test-id' })) })),
-    findByIdAndUpdate: jest.fn(() => ({
-      populate: jest.fn(async () => ({ _id: 'order-test-id' }))
+    findById: jest.fn((id) => ({
+      populate: jest.fn(async () => id === '999999' ? null : ({ _id: id }))
+    })),
+    findByIdAndUpdate: jest.fn((id, changes) => ({
+      populate: jest.fn(async () => id === '999999' ? null : ({ _id: id, ...changes }))
     }))
   }
 }));

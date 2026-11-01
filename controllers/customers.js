@@ -1,4 +1,4 @@
-const { Customer } = require('../models/documents');
+const { Customer } = require('../models/mongo');
 
 // CREATE
 async function create(req, res, next) {

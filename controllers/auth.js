@@ -1,4 +1,4 @@
-const {User} = require('../models/relationals');
+const {User} = require('../models/sql');
 const { verifyPassword } = require('../utils/password');
 const jwt = require('jsonwebtoken');
 const jwtConfig = require('../config/jwt');

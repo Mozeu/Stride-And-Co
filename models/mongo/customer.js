@@ -8,12 +8,12 @@ const customerSchema = new mongoose.Schema({
   // Lista de direcciones del cliente, EMBEBIDO (vive dentro del propio documento)
   addresses: [
     {
-      type: { type: String, enum: ['SHIPPING', 'BILLING'], required: true },
+      type: { type: String, enum: ['shipping', 'billing'], required: true },
       street: String,
       number: String,
       city: String,
       state: String,
-      zipCode: String,
+      postalCode: String,
       country: String
     }
   ]

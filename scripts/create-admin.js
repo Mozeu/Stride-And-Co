@@ -1,6 +1,6 @@
 const { log } = require('node:console');
 require('dotenv').config();
-const { sequelize, User, Role } = require('../models/relationals');
+const { sequelize, User, Role } = require('../models/sql');
 const { hashPassword } = require('../utils/password');
 
 async function createAdmin() {

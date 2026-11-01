@@ -1,5 +1,5 @@
-const Roles = require('../models/relationals/Roles');
-const Permission = require('../models/relationals/Permissions');
+const Roles = require('../models/sql/Roles');
+const Permission = require('../models/sql/Permissions');
 
 // CREATE
 async function create(req, res, next) {

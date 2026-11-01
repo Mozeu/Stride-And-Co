@@ -1,6 +1,6 @@
 const { log } = require('node:console');
 require('dotenv').config();
-const { sequelize, Role, Permission } = require('../models/relationals');
+const { sequelize, Role, Permission } = require('../models/sql');
 
 // Matriz RBAC: rol -> permisos
 // Formato: recurso:acción:alcance
@@ -34,33 +34,38 @@ const matrix = {
     ]
 };
 
-async function seed() {
-    await sequelize.sync();
+async function seed({ closeConnection = true } = {}) {
+    try {
+        await sequelize.sync();
 
-    // 1. Permisos
-    const keys = [...new Set(Object.values(matrix).flat())];
-    const permissions = {};
-    for (const key of keys) {
-        const [permission] = await Permission.findOrCreate({
-            where: { key },
-            defaults: { description: key }
-        });
-        permissions[key] = permission;
-    }
+        const keys = [...new Set(Object.values(matrix).flat())];
+        const permissions = {};
+        for (const key of keys) {
+            const [permission] = await Permission.findOrCreate({
+                where: { key },
+                defaults: { description: key }
+            });
+            permissions[key] = permission;
+        }
 
-    // 2. Roles + sus permisos (llenado usando role_permissions)
-    for (const roleName of Object.keys(matrix)) {
-        const [role] = await Role.findOrCreate({
-            where: { name: roleName },
-            defaults: { description: 'Rol ' + roleName }
-        });
-        await role.setPermissions(matrix[roleName].map((key) => permissions[key]));
-        log(roleName + ' -> ' + matrix[roleName].length + ' permisos');
+        for (const roleName of Object.keys(matrix)) {
+            const [role] = await Role.findOrCreate({
+                where: { name: roleName },
+                defaults: { description: 'Rol ' + roleName }
+            });
+            await role.setPermissions(matrix[roleName].map((key) => permissions[key]));
+            log(roleName + ' -> ' + matrix[roleName].length + ' permisos');
+        }
+    } finally {
+        if (closeConnection) await sequelize.close();
     }
-    await sequelize.close();
 }
 
-seed().catch((error) => {
-    process.stderr.write(`${error}\n`);
-    process.exit(1);
-});
+if (require.main === module) {
+    seed().catch((error) => {
+        process.stderr.write(`${error}\n`);
+        process.exitCode = 1;
+    });
+}
+
+module.exports = { seed, matrix };

@@ -55,12 +55,11 @@ describe('API /api/variants', () => {
     expect(res.body.message).toBe('Variant Deleted');
   });
 
-  // ---- MANEJO DE RECURSOS INEXISTENTES ----
-  test('GET /api/variants/:id con un id inexistente (comportamiento actual del mock)', async () => {
+  test('GET /api/variants/:id responde 404 cuando no existe', async () => {
     const res = await request(app).get('/api/variants/999999');
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body.data).toEqual({});
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toBe('Variant not found');
   });
 
   // ---- COMPORTAMIENTO ANTE SOLICITUDES INCORRECTAS ----

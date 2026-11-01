@@ -1,5 +1,5 @@
-const User = require('../models/relationals/User');
-const Role = require('../models/relationals/Roles');
+const User = require('../models/sql/User');
+const Role = require('../models/sql/Roles');
 const { hashPassword } = require('../utils/password');
 
 // CREATE
@@ -40,7 +40,10 @@ async function list (req, res, next) {
 
 async function find(req, res, next) {
     const id = req.params.id;
-    const user = await User.findByPk(id,{attributes:['first_name', 'last_name', 'email']}, {include:{model: Role, as:'role'}});
+    const user = await User.findByPk(id, {
+        attributes: ['id', 'first_name', 'last_name', 'email'],
+        include: { model: Role, as: 'role' }
+    });
 
     res.json({
         message: "User by ID",

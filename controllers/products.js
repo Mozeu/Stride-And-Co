@@ -1,40 +1,59 @@
-// CREATE
-function create(req, res, next) {
-    res.status(201).json({
-        message: "Product Created", 
-        data: {}
-    });
+const { Product, Variant, Inventory } = require('../models/sql');
+
+const productIncludes = [{
+    model: Variant,
+    as: 'variants',
+    include: [{ model: Inventory, as: 'inventory' }]
+}];
+
+async function create(req, res, next) {
+    try {
+        const product = await Product.create(req.body);
+        return res.status(201).json({ message: 'Product Created', data: product });
+    } catch (error) {
+        return next(error);
+    }
 }
 
-// READ
-function list (req, res, next) {
-  res.json({
-    message: "Products List",
-    data: []
-  });
+async function list(req, res, next) {
+    try {
+        const products = await Product.findAll({ include: productIncludes });
+        return res.json({ message: 'Products List', data: products });
+    } catch (error) {
+        return next(error);
+    }
 }
 
-function find(req, res, next) {
-    res.json({
-        message: "Product by ID",
-        data: {}
-  });
-};
+async function find(req, res, next) {
+    try {
+        const product = await Product.findByPk(req.params.id, { include: productIncludes });
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+        return res.json({ message: 'Product by ID', data: product });
+    } catch (error) {
+        return next(error);
+    }
+}
 
-// UPDATE
-function update(req, res, next) {
-    res.json({
-        message: "Product Updated",
-        data: {}
-    });
-};
+async function update(req, res, next) {
+    try {
+        const product = await Product.findByPk(req.params.id);
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+        await product.update(req.body);
+        return res.json({ message: 'Product Updated', data: product });
+    } catch (error) {
+        return next(error);
+    }
+}
 
-// DELETE
-function destroy(req, res, next){
-    res.json({
-        message: "Product Deleted",
-        data: {}
-    });
-};
+async function destroy(req, res, next) {
+    try {
+        const product = await Product.findByPk(req.params.id);
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+        await product.destroy();
+        return res.json({ message: 'Product Deleted', data: product });
+    } catch (error) {
+        return next(error);
+    }
+}
 
-module.exports =  {create, list, find, update, destroy};
+module.exports = { create, list, find, update, destroy };

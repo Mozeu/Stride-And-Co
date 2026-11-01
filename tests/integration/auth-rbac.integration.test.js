@@ -41,8 +41,16 @@ const mongoose = require('mongoose');
 const request = require('supertest');
 const app = require('../../app');
 const connectMongo = require('../../config/mongoose');
-const { sequelize, User, Role, Permission } = require('../../models/relationals');
-const { Customer, Order } = require('../../models/documents');
+const {
+  sequelize,
+  User,
+  Role,
+  Permission,
+  Product,
+  Variant,
+  Inventory
+} = require('../../models/sql');
+const { Customer, Order } = require('../../models/mongo');
 const { hashPassword } = require('../../utils/password');
 const { loginAndGetToken, withToken } = require('../helpers/authenticated-request');
 
@@ -78,6 +86,8 @@ const permissionMatrix = {
 let tokens;
 let ownOrderId;
 let otherOrderId;
+let productId;
+let variantId;
 let postgresReady = false;
 let mongoReady = false;
 
@@ -144,6 +154,26 @@ beforeAll(async () => {
     });
   }
 
+  const product = await Product.create({
+    name: 'Integration product',
+    brand: 'Stride',
+    price: 599
+  });
+  productId = product.id;
+
+  const variant = await Variant.create({
+    product_id: product.id,
+    size: 'M',
+    color: 'Black',
+    sku: 'INTEGRATION-PRODUCT-M'
+  });
+  variantId = variant.id;
+  await Inventory.create({
+    variant_id: variant.id,
+    stock: 25,
+    reserved: 2
+  });
+
   tokens = {};
   for (const roleName of Object.keys(userRecords)) {
     tokens[roleName] = await loginAndGetToken(
@@ -179,9 +209,69 @@ describe('JWT and RBAC integration with test databases', () => {
     expect(response.status).toBe(401);
   });
 
+  test('returns persisted products with their variants and inventory', async () => {
+    const productResponse = await withToken(
+      request(app).get(`/api/products/${productId}`),
+      tokens.admin
+    );
+    const variantResponse = await withToken(
+      request(app).get(`/api/variants/${variantId}`),
+      tokens.admin
+    );
+    const inventoryResponse = await withToken(
+      request(app).get('/api/inventory'),
+      tokens.admin
+    );
+
+    expect(productResponse.status).toBe(200);
+    expect(productResponse.body.data.variants[0].inventory.stock).toBe(25);
+    expect(variantResponse.status).toBe(200);
+    expect(variantResponse.body.data.product.id).toBe(productId);
+    expect(variantResponse.body.data.inventory.reserved).toBe(2);
+    expect(inventoryResponse.status).toBe(200);
+    expect(inventoryResponse.body.data[0].variant.product.id).toBe(productId);
+  });
+
+  test('validates required fields and ranges in relational models', async () => {
+    await expect(Product.build({ name: '', price: -1 }).validate()).rejects.toThrow();
+    await expect(Variant.build({
+      product_id: 1,
+      size: 'M',
+      color: 'Black',
+      sku: ''
+    }).validate()).rejects.toThrow();
+    await expect(Inventory.build({
+      variant_id: 1,
+      stock: -1,
+      reserved: 0
+    }).validate()).rejects.toThrow();
+  });
+
+  test('includes the user role when reading a user by ID', async () => {
+    const response = await withToken(
+      request(app).get('/api/users/101'),
+      tokens.admin
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.role.name).toBe('admin');
+  });
+
+  test('validates standard payment and order status enums', async () => {
+    const customerId = new mongoose.Types.ObjectId();
+    await expect(new Order({
+      customerId,
+      paymentMethod: 'cryptocurrency'
+    }).validate()).rejects.toThrow();
+    await expect(new Order({
+      customerId,
+      statusHistory: [{ status: 'awaiting_magic' }]
+    }).validate()).rejects.toThrow();
+  });
+
   test('authenticates through login and allows admin product deletion', async () => {
     const response = await withToken(
-      request(app).delete('/api/products/1'),
+      request(app).delete(`/api/products/${productId}`),
       tokens.admin
     );
 
@@ -191,20 +281,21 @@ describe('JWT and RBAC integration with test databases', () => {
 
   test('denies sales users product deletion', async () => {
     const response = await withToken(
-      request(app).delete('/api/products/1'),
+      request(app).delete(`/api/products/${productId}`),
       tokens.sales
     );
 
     expect(response.status).toBe(403);
   });
 
-  test('allows a user to read their own order', async () => {
+  test('populates the customer when a user reads their own order', async () => {
     const response = await withToken(
       request(app).get(`/api/orders/${ownOrderId}`),
       tokens.user
     );
 
     expect(response.status).toBe(200);
+    expect(response.body.data.customerId.userId).toBe(103);
   });
 
   test('denies a user access to another user’s order', async () => {

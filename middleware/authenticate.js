@@ -1,4 +1,4 @@
-const { User, Role, Permission } = require('../models/relationals');
+const { User, Role, Permission } = require('../models/sql');
 const { expressjwt } = require('express-jwt');
 const jwtConfig = require('../config/jwt');
 

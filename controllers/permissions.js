@@ -1,4 +1,4 @@
-const Permissions = require('../models/relationals/Permissions');
+const Permissions = require('../models/sql/Permissions');
 // CREATE
 async function create(req, res, next) {
     const key = req.body.key;
