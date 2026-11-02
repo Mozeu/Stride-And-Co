@@ -284,56 +284,130 @@ El token expira después del valor configurado en `JWT_EXPIRES_IN` (15 minutos e
 
 ## Control de acceso basado en roles
 
-La autorización usa RBAC con la librería `accesscontrol`. La autenticación (JWT) no cambia, sino el middleware `authorize` solo usa el usuario que ya deja `authenticate`.
+La autorización usa RBAC con la librería `accesscontrol`. La autenticación (JWT) no cambia: el middleware `authorize` solo usa el usuario que ya deja `authenticate`, que se aplica de forma global a todo `/api`. Cada ruta protegida lleva `authorize(recurso, acción, alcance)`.
 
 ### Roles
-- `admin`: administra productos, usuarios y órdenes.
-- `sales`: consulta productos y gestiona órdenes.
-- `user`: consulta productos y opera solo sobre sus propias órdenes.
+- `admin`: administra todos los recursos.
+- `sales`: consulta el catálogo, los usuarios y el inventario, actualiza el inventario, y gestiona clientes y órdenes de cualquier usuario.
+- `user`: consulta el catálogo y opera solo sobre su propio usuario, su propio cliente y sus propias órdenes.
 
 ### Convención de permisos
-Cada `Permission.key` tiene la forma `recurso:acción:alcance`, por ejemplo `orders:read:own`. El alcance es `own` (solo recursos del usuario) o `any` (cualquier recurso).
+Cada `Permission.key` tiene la forma `recurso:acción:alcance`, por ejemplo `orders:read:own`. El alcance es `own` (solo recursos del usuario) o `any` (cualquier recurso). Un rol con `any` también puede operar sobre lo propio.
 
-### Permisos definidos
-`products:read:any`, `products:create:any`, `products:update:any`, `products:delete:any`, `orders:create:any`, `orders:read:own`, `orders:read:any`, `orders:update:own`, `orders:update:any`, `users:read:any`.
+### Permisos definidos y matriz RBAC
+Los permisos definidos son los de la matriz. Solo existen permisos para las rutas que tiene la API: el inventario solo se consulta y se actualiza, y las órdenes no se eliminan.
 
-### Matriz RBAC
 | Permiso | admin | sales | user |
 | --- | --- | --- | --- |
-| products:read:any | Sí | Sí | Sí |
-| products:create:any | Sí | No | No |
-| products:update:any | Sí | No | No |
-| products:delete:any | Sí | No | No |
-| orders:create:any | Sí | Sí | Sí |
-| orders:read:own | Sí | Sí | Sí |
-| orders:read:any | Sí | Sí | No |
-| orders:update:own | Sí | Sí | Sí |
-| orders:update:any | Sí | Sí | No |
-| users:read:any | Sí | No | No |
+| `users:create:any` | Sí | No | No |
+| `users:create:own` | Sí | Sí | Sí |
+| `users:read:any` | Sí | Sí | No |
+| `users:read:own` | Sí | Sí | Sí |
+| `users:update:any` | Sí | No | No |
+| `users:update:own` | Sí | Sí | Sí |
+| `users:delete:any` | Sí | No | No |
+| `roles:create:any` | Sí | No | No |
+| `roles:read:any` | Sí | No | No |
+| `roles:update:any` | Sí | No | No |
+| `roles:delete:any` | Sí | No | No |
+| `permissions:create:any` | Sí | No | No |
+| `permissions:read:any` | Sí | No | No |
+| `permissions:update:any` | Sí | No | No |
+| `permissions:delete:any` | Sí | No | No |
+| `products:create:any` | Sí | No | No |
+| `products:read:any` | Sí | Sí | Sí |
+| `products:update:any` | Sí | No | No |
+| `products:delete:any` | Sí | No | No |
+| `variants:create:any` | Sí | No | No |
+| `variants:read:any` | Sí | Sí | Sí |
+| `variants:update:any` | Sí | No | No |
+| `variants:delete:any` | Sí | No | No |
+| `inventory:read:any` | Sí | Sí | No |
+| `inventory:update:any` | Sí | Sí | No |
+| `customers:create:any` | Sí | Sí | No |
+| `customers:read:any` | Sí | Sí | No |
+| `customers:read:own` | No | No | Sí |
+| `customers:update:any` | Sí | Sí | No |
+| `customers:update:own` | No | No | Sí |
+| `customers:delete:any` | Sí | No | No |
+| `orders:create:any` | Sí | Sí | No |
+| `orders:create:own` | No | No | Sí |
+| `orders:read:any` | Sí | Sí | No |
+| `orders:read:own` | Sí | Sí | Sí |
+| `orders:update:any` | Sí | Sí | No |
+| `orders:update:own` | Sí | Sí | Sí |
 
 ### Endpoints protegidos
-- POST, GET, GET por id, PUT y DELETE de /api/products
-- GET y GET por id de /api/users
-- POST, GET, GET por id y PUT de /api/orders
+Todos los endpoints bajo `/api` exigen token (401 si falta o no es válido) y el permiso de la tabla (403 si no lo tiene). Las excepciones son `GET /`, `GET /health` y `POST /api/auth/login` (sin autenticación ni autorización) y `GET /api/auth/me` (solo autenticación).
 
-Si el usuario autenticado no tiene el permiso, la API responde 403 Forbidden.
+| Método y ruta | Permiso | Descripción |
+| --- | --- | --- |
+| `GET /` | ninguno | Página de bienvenida |
+| `GET /health` | ninguno | Health check |
+| `POST /api/auth/login` | ninguno | Inicia sesión y devuelve un JWT |
+| `GET /api/auth/me` | cualquier usuario autenticado | Usuario actual sin hash ni salt |
+| `POST /api/users` | `users:create:any` | Crea un usuario |
+| `GET /api/users` | `users:read:any` | Lista usuarios |
+| `GET /api/users/:id` | `users:read:own` o `any` | Obtiene un usuario |
+| `PUT /api/users/:id` | `users:update:own` o `any` | Actualiza un usuario |
+| `DELETE /api/users/:id` | `users:delete:any` | Elimina un usuario |
+| `POST /api/roles` | `roles:create:any` | Crea un rol |
+| `GET /api/roles` | `roles:read:any` | Lista roles |
+| `GET /api/roles/:id` | `roles:read:any` | Obtiene un rol |
+| `PUT /api/roles/:id` | `roles:update:any` | Actualiza un rol |
+| `DELETE /api/roles/:id` | `roles:delete:any` | Elimina un rol |
+| `POST /api/permissions` | `permissions:create:any` | Crea un permiso |
+| `GET /api/permissions` | `permissions:read:any` | Lista permisos |
+| `GET /api/permissions/:id` | `permissions:read:any` | Obtiene un permiso |
+| `PUT /api/permissions/:id` | `permissions:update:any` | Actualiza un permiso |
+| `DELETE /api/permissions/:id` | `permissions:delete:any` | Elimina un permiso |
+| `POST /api/products` | `products:create:any` | Crea un producto |
+| `GET /api/products` | `products:read:any` | Lista productos |
+| `GET /api/products/:id` | `products:read:any` | Obtiene un producto con sus variantes |
+| `PUT /api/products/:id` | `products:update:any` | Actualiza un producto |
+| `DELETE /api/products/:id` | `products:delete:any` | Elimina un producto |
+| `POST /api/variants` | `variants:create:any` | Crea una variante |
+| `GET /api/variants` | `variants:read:any` | Lista variantes |
+| `GET /api/variants/:id` | `variants:read:any` | Obtiene una variante |
+| `PUT /api/variants/:id` | `variants:update:any` | Actualiza una variante |
+| `DELETE /api/variants/:id` | `variants:delete:any` | Elimina una variante |
+| `GET /api/inventory` | `inventory:read:any` | Lista el inventario |
+| `GET /api/inventory/:id` | `inventory:read:any` | Obtiene un registro de inventario |
+| `PUT /api/inventory/:id` | `inventory:update:any` | Actualiza el stock |
+| `POST /api/customers` | `customers:create:any` | Crea un cliente |
+| `GET /api/customers` | `customers:read:any` | Lista clientes |
+| `GET /api/customers/:id` | `customers:read:own` o `any` | Obtiene un cliente |
+| `PUT /api/customers/:id` | `customers:update:own` o `any` | Actualiza un cliente |
+| `DELETE /api/customers/:id` | `customers:delete:any` | Elimina un cliente sin órdenes |
+| `POST /api/orders` | `orders:create:own` o `any` | Crea una orden |
+| `GET /api/orders` | `orders:read:any` | Lista órdenes con su cliente |
+| `GET /api/orders/:id` | `orders:read:own` o `any` | Obtiene una orden con su cliente |
+| `PUT /api/orders/:id` | `orders:update:own` o `any` | Actualiza una orden |
+
+Donde dice "own o any", la ruta pide `own` con una función que busca al dueño, y `any` también pasa.
 
 ### Ejemplo de permiso any
-GET /api/orders exige `orders:read:any`. Un `user` recibe 403; `admin` y `sales` reciben 200.
+`GET /api/orders` exige `orders:read:any`. Un `user` recibe 403; `admin` y `sales` reciben 200.
 
 ### Ejemplo de permiso own
-GET /api/orders/:id exige `orders:read:own` o `orders:read:any`. Con `own`, la orden debe pertenecer al usuario: se busca el cliente de la orden en MongoDB y se compara su `userId` con el id del usuario autenticado.
+`GET /api/orders/:id` exige `orders:read:own` o `orders:read:any`. Con `own`, la orden debe pertenecer al usuario: se busca el cliente de la orden en MongoDB y se compara su `userId` con el id del usuario autenticado (`utils/checkOwnership.js`). Para `users:read:own` y `users:update:own`, el dueño es el propio usuario: el id de la URL debe ser el del usuario autenticado. Lo mismo aplica a `orders:update:own`, `customers:read:own` y `customers:update:own`. Para `orders:create:own`, el cliente indicado en el body debe pertenecer al usuario. Si no es suyo, la API responde 403.
 
 ### Origen de los permisos
-`middleware/authorize.js` consulta `Role`, `role_permissions` y `Permission` en PostgreSQL, separa cada `key` en recurso, acción y alcance, y con eso configura `accesscontrol`. Los datos iniciales se cargan con `npm run seed`.
+Los permisos no están escritos en el código. `middleware/authorize.js` consulta `Role`, `role_permissions` y `Permission` en PostgreSQL, separa cada `key` en recurso, acción y alcance, y con eso configura `accesscontrol`. Los datos iniciales se cargan con `npm run seed`, que usa la misma matriz de este README (`scripts/seed-rbac.js`). Los permisos se cargan en memoria en la primera petición, por lo que hay que reiniciar el servidor después de correr el seed o de cambiar permisos.
 
-El seed crea usuarios ficticios de demostración. Sus contraseñas son exclusivamente para esas cuentas locales:
-
+### Decisiones del equipo
+- El proyecto define sus propios métodos por recurso, por eso el inventario solo se consulta y se actualiza y las órdenes no se eliminan. Solo hay permisos para rutas que existen.
+- Un usuario no puede eliminar su cuenta. Para darse de baja actualiza su usuario con `active: false` (`users:update:own`), el registro se conserva en la base de datos y el usuario ya no puede iniciar sesión. Eliminar usuarios es exclusivo del admin (`users:delete:any`).
+- `users:create:own` está registrado, pero `POST /api/users` exige `users:create:any` hasta que exista un registro público (sign-up).
+- Solo el admin administra roles y permisos. `sales` puede consultar todos los usuarios porque trabaja con clientes, y cada cliente está ligado a un usuario.
+  
 | Rol | Email | Contraseña |
 |---|---|---|
 | admin | `admin@stride.test` | `DemoAdmin!2026` |
 | sales | `sales@stride.test` | `DemoSales!2026` |
 | user | `user@stride.test` | `DemoUser!2026` |
+
+Estas contraseñas son exclusivas de estas cuentas de demostración y no se usan en ningún otro lugar.
 
 ## Pruebas
 
