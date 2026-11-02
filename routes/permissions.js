@@ -2,20 +2,21 @@ const express = require('express');
 const router = express.Router();
 
 const controller = require('../controllers/permissions');
+const { authorize } = require('../middleware/authorize');
 
 /* POST */
-router.post('/', controller.create);
+router.post('/', authorize('permissions', 'create', 'any'), controller.create);
 
 /* GET */
-router.get('/', controller.list);
+router.get('/', authorize('permissions', 'read', 'any'), controller.list);
 
 /* GET by ID */
-router.get('/:id', controller.find);
+router.get('/:id', authorize('permissions', 'read', 'any'), controller.find);
 
 /* PUT */
-router.put('/:id', controller.update);
+router.put('/:id', authorize('permissions', 'update', 'any'), controller.update);
 
 /* DELETE by ID. */
-router.delete('/:id', controller.destroy);
+router.delete('/:id', authorize('permissions', 'delete', 'any'), controller.destroy);
 
 module.exports = router;
