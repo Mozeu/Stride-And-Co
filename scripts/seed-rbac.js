@@ -29,7 +29,7 @@ const matrix = {
         'orders:read:own', 'orders:update:own'
     ],
     user: [
-        'users:create:own', 'users:read:own', 'users:update:own', 'users:delete:own',
+        'users:create:own', 'users:read:own', 'users:update:own',
         'products:read:any',
         'variants:read:any',
         'customers:read:own', 'customers:update:own',

@@ -18,6 +18,6 @@ router.get('/:id', authorize('users', 'read', 'own', getUserOwnerId), controller
 router.put('/:id', authorize('users', 'update', 'own', getUserOwnerId), controller.update);
 
 /* DELETE user by id. */
-router.delete('/:id', authorize('users', 'delete', 'own', getUserOwnerId), controller.destroy);
+   router.delete('/:id', authorize('users', 'delete', 'any'), controller.destroy);
 
 module.exports = router;
