@@ -3,10 +3,10 @@ const router = express.Router();
 
 const controller = require('../controllers/orders');
 const { authorize } = require('../middleware/authorize');
-const { getOrderOwnerId } = require('../utils/orderOwnership');
+const { getOrderOwnerId, getBodyCustomerOwnerId } = require('../utils/checkOwnership');
 
-/* POST */
-router.post('/', authorize('orders', 'create', 'any'), controller.create);
+/* POST: any, o own si el cliente del body es del usuario */
+router.post('/', authorize('orders', 'create', 'own', getBodyCustomerOwnerId), controller.create);
 
 /* GET */
 router.get('/', authorize('orders', 'read', 'any'), controller.list);

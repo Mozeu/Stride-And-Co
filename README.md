@@ -462,7 +462,7 @@ Stride-And-Co/
 │   ├── users.test.js
 │   └── variants.test.js
 ├── utils/
-│   └── orderOwnership.js
+│   └── checkOwnership.js
 │   └── password.js
 ├── views/
 │   ├── error.pug
