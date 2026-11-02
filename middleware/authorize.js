@@ -14,6 +14,8 @@ async function loadAccessControl() {
         for (const permission of role.permissions) {
             // 'orders:read:own' => resource ='orders', action ='read', possession='own'
             const [resource, action, possession] = permission.key.split(':');
+            if (!resource || !action || !possession) continue; // key mal formada se ignora
+
             grants.push({
                 role: role.name,
                 resource: resource,
@@ -22,7 +24,9 @@ async function loadAccessControl() {
             });
         }
     }
-    ac = new AccessControl(grants); // aqui cargamos la configuracion RBAC
+
+    // aqui cargamos la configuracion RBAC. Si no hay permisos, no se guarda y se reintenta en la siguiente peticion.
+    ac = grants.length > 0 ? new AccessControl(grants) : null;
 }
 
 // authorize('orders', 'read', 'own', getOwnerId)
@@ -32,7 +36,7 @@ function authorize(resource, action, possession, getOwnerId) {
             if (!ac) await loadAccessControl();
 
             const roleName = req.user && req.user.role ? req.user.role.name : null;
-            if (!roleName || !ac.hasRole(roleName)) {
+            if (!roleName || !ac || !ac.hasRole(roleName)) {
                 return res.status(403).json({ message: 'Forbidden' });
             }
 
