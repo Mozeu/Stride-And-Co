@@ -7,30 +7,33 @@ const { sequelize, Role, Permission } = require('../models/sql');
 
 const matrix = {
     admin: [
-        'products:read:any', 
-        'products:create:any', 
-        'products:update:any', 
-        'products:delete:any',
-        'orders:create:any', 
-        'orders:read:own', 
-        'orders:read:any', 
-        'orders:update:own', 
-        'orders:update:any',
-        'users:read:any'
+        'users:create:any', 'users:read:any', 'users:update:any', 'users:delete:any',
+        'users:create:own', 'users:read:own', 'users:update:own', 'users:delete:own',
+        'roles:create:any', 'roles:read:any', 'roles:update:any', 'roles:delete:any',
+        'permissions:create:any', 'permissions:read:any', 'permissions:update:any', 'permissions:delete:any',
+        'products:create:any', 'products:read:any', 'products:update:any', 'products:delete:any',
+        'variants:create:any', 'variants:read:any', 'variants:update:any', 'variants:delete:any',
+        'inventory:read:any', 'inventory:update:any',
+        'customers:create:any', 'customers:read:any', 'customers:update:any', 'customers:delete:any',
+        'orders:create:any', 'orders:read:any', 'orders:update:any',
+        'orders:read:own', 'orders:update:own'
     ],
     sales: [
+        'users:read:any',
+        'users:create:own', 'users:read:own', 'users:update:own', 'users:delete:own',
         'products:read:any',
-        'orders:create:any', 
-        'orders:read:own', 
-        'orders:read:any', 
-        'orders:update:own', 
-        'orders:update:any'
+        'variants:read:any',
+        'inventory:read:any', 'inventory:update:any',
+        'customers:create:any', 'customers:read:any', 'customers:update:any',
+        'orders:create:any', 'orders:read:any', 'orders:update:any',
+        'orders:read:own', 'orders:update:own'
     ],
     user: [
+        'users:create:own', 'users:read:own', 'users:update:own', 'users:delete:own',
         'products:read:any',
-        'orders:create:any', 
-        'orders:read:own', 
-        'orders:update:own'
+        'variants:read:any',
+        'customers:read:own', 'customers:update:own',
+        'orders:create:own', 'orders:read:own', 'orders:update:own'
     ]
 };
 

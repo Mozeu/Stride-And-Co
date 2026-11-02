@@ -116,6 +116,34 @@ async function seed() {
       });
     }
 
+    let salesCustomer = await Customer.findOne({ userId: users.sales.id });
+    if (!salesCustomer) {
+      salesCustomer = await Customer.create({
+        userId: users.sales.id,
+        email: users.sales.email,
+        phone: '5550000001',
+        addresses: [{
+          type: 'shipping',
+          street: 'Demo Street',
+          number: '2',
+          city: 'Chihuahua',
+          state: 'Chihuahua',
+          postalCode: '31000',
+          country: 'Mexico'
+        }]
+      });
+    }
+
+    const salesOrder = await Order.findOne({ customerId: salesCustomer._id });
+    if (!salesOrder) {
+      await Order.create({
+        customerId: salesCustomer._id,
+        paymentMethod: 'card',
+        totals: { subtotal: '599.00', shipping: '0.00', discount: '0.00', total: '599.00' },
+        items: [{ productId: variant.product_id, quantity: 1, unitPrice: '599.00' }]
+      });
+    }
+
     log('Datos de demostración creados o verificados');
   } finally {
     if (mongoConnected) await mongoose.disconnect();
