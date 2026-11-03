@@ -1,5 +1,18 @@
 {
 	"auth" : {
 		"invalidCredentials" : "Credenciales Invalidas"
+	},
+	"email" : {
+		"EmailandPassword" : "Se requieren email y contraseña"
+	},
+	"customerCreated" : {
+		"created" : "Cliente Creado"
+	},
+	"CustomerList" : {
+		"listCostumer" : "Lista de Clientes",
+		"customerNotFound" : "Cliente no encontrado",
+		"CustomerById" : "Cliente por ID",
+		"CustomerUpdated" : "Cliente Actualizado",
+		"CustomerDeleted" : "Cliente Eliminado"
 	}
 }

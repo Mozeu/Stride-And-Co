@@ -1,5 +1,18 @@
 {
 	"auth" : {
 		"invalidCredentials" : "Invalid Credentials"
+	},
+	"email" : {
+		"EmailandPassword" : "Email and password are required"
+	},
+	"customerCreated" : {
+		"created" : "Customer Created"
+	},
+	"CustomerList" : {
+		"listCostumer" : "Customers List",
+		"customerNotFound" : "Customer not found",
+		"CustomerById" : "Customer by ID",
+		"CustomerUpdated" : "Customer Updated",
+		"CustomerDeleted" : "Customer Deleted"
 	}
 }

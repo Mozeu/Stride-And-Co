@@ -39,7 +39,7 @@ async function login(req, res, next) {
     if (typeof email !== 'string' ||
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
         typeof password !== 'string' || !password.trim()) {
-        return res.status(400).json({ message: 'Email and password are required' });
+        return res.status(400).json({ message: req.__('email.EmailandPassword') });
     }
 
     try {

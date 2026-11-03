@@ -5,7 +5,7 @@ async function create(req, res, next) {
      const customer = await Customer.create(req.body);
 
     res.status(201).json({
-        message: "Customer Created", 
+        message: req.__('customerCreated.created'),
         data: customer
     });
 }
@@ -15,17 +15,17 @@ async function list (req, res, next) {
   const customers = await Customer.find();
 
   res.json({
-    message: "Customers List",
+    message: req.__("CustomerList.listCostumer"),
     data: customers
   });
 }
 
 async function find(req, res, next) {
     const customer = await Customer.findById(req.params.id);
-    if (!customer) res.status(404).json({ message: 'Customer not found' });
+    if (!customer) res.status(404).json({ message: req.__("CustomerList.customerNotFound") });
 
     res.json({
-        message: "Customer by ID",
+        message: req.__("CustomerList.CustomerById"),
         data: customer
   });
 };
@@ -33,10 +33,10 @@ async function find(req, res, next) {
 // UPDATE
 async function update(req, res, next) {
     const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!customer) res.status(404).json({ message: 'Customer not found' });
+    if (!customer) res.status(404).json({ message: req.__("CustomerList.customerNotFound") });
 
     res.json({
-        message: "Customer Updated",
+        message: req.__("CustomerList.CustomerUpdated"),
         data: customer
     });
 };
@@ -44,10 +44,10 @@ async function update(req, res, next) {
 // DELETE
 async function destroy(req, res, next){
     const customer = await Customer.findByIdAndDelete(req.params.id);
-    if (!customer) res.status(404).json({ message: 'Customer not found' });
+    if (!customer) res.status(404).json({ message: req.__("CustomerList.customerNotFound") });
 
     res.json({
-        message: "Customer Deleted",
+        message: req.__("CustomerList.CustomerDeleted"),
         data: customer._id
     });
 };
