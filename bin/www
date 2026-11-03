@@ -7,7 +7,7 @@
 const app = require('../app');
 const debug = require('debug')('stride-co:server');
 const http = require('http');
-const { sequelize } = require('../models/relationals');
+const { sequelize } = require('../models/sql');
 const connectMongo = require('../config/mongoose');
 
 /**
@@ -27,7 +27,7 @@ async function start() {
   await sequelize.authenticate();
   // Crea las tablas si es que no existen
   await sequelize.sync();
-  debug('Conexión a mysql generada correctamente.');
+  debug('Conexión a PostgreSQL generada correctamente.');
 
   await connectMongo();
   debug('Conexión a mongodb correcta');
