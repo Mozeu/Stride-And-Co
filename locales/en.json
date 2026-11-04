@@ -1,6 +1,7 @@
 {
 	"auth" : {
-		"invalidCredentials" : "Invalid Credentials"
+		"invalidCredentials" : "Invalid Credentials",
+		"LoginSuccessful" : "Login successful"
 	},
 	"email" : {
 		"EmailandPassword" : "Email and password are required"
@@ -14,5 +15,64 @@
 		"CustomerById" : "Customer by ID",
 		"CustomerUpdated" : "Customer Updated",
 		"CustomerDeleted" : "Customer Deleted"
+	},
+	"InventoryList" : {
+		"InventoryList" : "Inventory List",
+		"InventoryNotFound" : "Inventory not found",
+		"InventoryById" : "Inventory by ID",
+		"InventoryUpdated" : "Inventory Updated"
+	},
+	"OrderList" : {
+		"OrderCreated" : "Order Created",
+		"OrdersList" : "Orders List",
+		"OrderNotFound" : "Order not found",
+		"OrderById" : "Order by ID",
+		"OrderUpdated" : "Order Updated"
+	},
+	"PermissionsList" : {
+		"PermissionCreated" : "Permission Created",
+		"List" : "Permission List",
+		"PermissionNotFound" : "Permission not found",
+		"PermissionById" : "Permission by ID",
+		"PermissionUpdated" : "Permission Updated",
+		"PermissionDeleted" : "Permission Deleted"
+	},
+	"ProductsList" : {
+		"ProductCreated" : "Product Created",
+		"List" : "Products List",
+		"ProductNotFound" : "Product not found",
+		"ProductById" : "Product by ID",
+		"ProductUpdated" : "Product Updated",
+		"ProductDeleted" : "Product Deleted"
+	},
+	"RolesList" : {
+		"RoleCreated" : "Role Created",
+		"List" : "Roles List",
+		"RoleNotFound" : "Role not found",
+		"RoleById" : "Role by ID",
+		"RoleUpdated" : "Role Updated",
+		"RoleDeleted" : "Role Deleted"
+	},
+	"UsersList" : {
+		"UserCreated" : "User Created",
+		"List" : "Users List",
+		"UserNotFound" : "User not found",
+		"UserById" : "User by ID",
+		"UserUpdated" : "User Updated",
+		"UserDeleted" : "User Deleted"
+	},
+	"VariantsList" : {
+		"VariantCreated" : "Variant Created",
+		"List" : "Variants List",
+		"VariantNotFound" : "Variant not found",
+		"VariantById" : "Variant by ID",
+		"VariantUpdated" : "Variant Updated",
+		"VariantDeleted" : "Variant Deleted"
+	},
+	"authenticate" : {
+		"Unauthorized" : "Unauthorized"
+	},
+	"authorize" : {
+		"Forbidden" : "Forbidden"
 	}
 }

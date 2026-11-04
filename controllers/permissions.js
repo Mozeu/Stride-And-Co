@@ -10,7 +10,7 @@ async function create(req, res, next) {
     });
 
     res.status(201).json({
-        message: "Permission Created", 
+        message: req.__("PermissionsList.PermissionCreated"), 
         data: permission
     });
 }
@@ -19,7 +19,7 @@ async function create(req, res, next) {
 async function list (req, res, next) {
   const permissions = await Permissions.findAll();
   res.json({
-    message: "Permission List",
+    message: req.__("PermissionsList.List"),
     data: permissions
   });
 }
@@ -28,7 +28,7 @@ async function find(req, res, next) {
     const id = req.params.id;
     const permission = await Permissions.findByPk(id);
     res.json({
-        message: "Permission by ID",
+        message: req.__("PermissionsList.PermissionById"),
         data: permission
     });
 };
@@ -37,7 +37,7 @@ async function find(req, res, next) {
 async function update(req, res, next) {
     const id = req.params.id;
     const permission = await Permissions.findByPk(id);
-    if(!permission) res.status(404).json({ message: 'Permission not found' });
+    if(!permission) res.status(404).json({ message: req.__("PermissionsList.PermissionNotFound") });
     const key = req.body.key;
     const description = req.body.description;
     
@@ -46,7 +46,7 @@ async function update(req, res, next) {
     changes.description = description ? description : permission.description;
     await permission.update(changes);
     res.json({
-        message: "Permission Updated",
+        message: req.__("PermissionsList.PermissionUpdated"),
         data: permission
     });
 };
@@ -55,10 +55,10 @@ async function update(req, res, next) {
 async function destroy(req, res, next){
     const id = req.params.id;
     const permission = await Permissions.findByPk(id);
-    if(!permission) res.status(404).json({ message: 'Permission not found' });
+    if(!permission) res.status(404).json({ message: req.__("PermissionsList.PermissionNotFound") });
     await permission.destroy();
     res.json({
-        message: "Permission Deleted",
+        message: req.__("PermissionsList.PermissionDeleted"),
         data: permission
     });
 };

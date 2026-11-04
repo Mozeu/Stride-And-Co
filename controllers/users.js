@@ -23,7 +23,7 @@ async function create(req, res, next) {
     });
 
     res.status(201).json({
-        message: "User Created", 
+        message: req.__("UsersList.UserCreated"), 
         data: user
     });
 }
@@ -33,7 +33,7 @@ async function list (req, res, next) {
   const users = await User.findAll({include:{model: Role, as:'role'}}); 
 
   res.json({
-    message: "Users List",
+    message: req.__("UsersList.List"),
     data: users
   });
 }
@@ -46,7 +46,7 @@ async function find(req, res, next) {
     });
 
     res.json({
-        message: "User by ID",
+        message: req.__("UsersList.UserById"),
         data: user
   });
 };
@@ -55,7 +55,7 @@ async function find(req, res, next) {
 async function update(req, res, next) {
     const id = req.params.id;
     const user = await User.findByPk(id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: req.__("UsersList.UserNotFound") });
 
     const name = req.body.name;
     const lastName = req.body.lastName;
@@ -78,7 +78,7 @@ async function update(req, res, next) {
     await user.update(changes);
 
     res.json({
-        message: "User Updated",
+        message: req.__("UsersList.UserUpdated"),
         data: user
     });
 };
@@ -87,12 +87,12 @@ async function update(req, res, next) {
 async function destroy(req, res, next){
     const id = req.params.id;
     const user = await User.findByPk(id);
-    if (!user) res.status(404).json({ message: 'User not found' });
+    if (!user) res.status(404).json({ message: req.__("UsersList.UserNotFound") });
 
     await user.destroy();
 
     res.json({
-        message: "User Deleted",
+        message: req.__("UsersList.UserDeleted"),
         data: user
     });
 };

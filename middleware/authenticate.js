@@ -33,7 +33,7 @@ function authenticate(req, res, next) {
             });
 
             if (!user || !user.active) {
-                return res.status(401).json({ message: 'Unauthorized' });
+                return res.status(401).json({ message: req.__("authenticate.Unauthorized") });
             }
 
             req.user = user;

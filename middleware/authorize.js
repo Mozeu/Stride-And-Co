@@ -37,7 +37,7 @@ function authorize(resource, action, possession, getOwnerId) {
 
             const roleName = req.user && req.user.role ? req.user.role.name : null;
             if (!roleName || !ac || !ac.hasRole(roleName)) {
-                return res.status(403).json({ message: 'Forbidden' });
+                return res.status(403).json({ message: req.__("authorize.Forbidden") });
             }
 
             // can.readAny(resource), can.readOwn(resource), can.createAny(resource), etc.
@@ -55,7 +55,7 @@ function authorize(resource, action, possession, getOwnerId) {
                     return next();
                 }
             }
-            return res.status(403).json({ message: 'Forbidden' });
+            return res.status(403).json({ message: req.__("authorize.Forbidden") });
 
         } catch (error) {
             return next(error);

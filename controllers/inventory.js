@@ -9,7 +9,7 @@ const inventoryIncludes = [{
 async function list(req, res, next) {
     try {
         const inventory = await Inventory.findAll({ include: inventoryIncludes });
-        return res.json({ message: 'Inventory List', data: inventory });
+        return res.json({ message: req.__("InventoryList.InventoryList"), data: inventory });
     } catch (error) {
         return next(error);
     }
@@ -18,8 +18,8 @@ async function list(req, res, next) {
 async function find(req, res, next) {
     try {
         const inventory = await Inventory.findByPk(req.params.id, { include: inventoryIncludes });
-        if (!inventory) return res.status(404).json({ message: 'Inventory not found' });
-        return res.json({ message: 'Inventory by ID', data: inventory });
+        if (!inventory) return res.status(404).json({ message: req.__("InventoryList.InventoryNotFound") });
+        return res.json({ message: req.__("InventoryList.InventoryById"), data: inventory });
     } catch (error) {
         return next(error);
     }
@@ -28,9 +28,9 @@ async function find(req, res, next) {
 async function update(req, res, next) {
     try {
         const inventory = await Inventory.findByPk(req.params.id);
-        if (!inventory) return res.status(404).json({ message: 'Inventory not found' });
+        if (!inventory) return res.status(404).json({ message: req.__("InventoryList.InventoryNotFound") });
         await inventory.update(req.body);
-        return res.json({ message: 'Inventory Updated', data: inventory });
+        return res.json({ message: req.__("InventoryList.InventoryUpdated"), data: inventory });
     } catch (error) {
         return next(error);
     }

@@ -6,7 +6,7 @@ async function create(req, res, next) {
     try {
         const role = await Roles.create(req.body);
         if(req.body.permissionIds) role.setPermissions(req.body.permissionIds);
-        res.status(201).json({message: 'Role Created', data: role});
+        res.status(201).json({message: req.__("RolesList.RoleCreated"), data: role});
     } catch (error) {
         next(error);
     }
@@ -30,7 +30,7 @@ async function create(req, res, next) {
 async function list (req, res, next) {
   const roles = await Roles.findAll({include: {model: Permission, as:'permissions'}});
   res.json({
-    message: "Roles List",
+    message: req.__("RolesList.List"),
     data: roles
   });
 }
@@ -38,7 +38,7 @@ async function list (req, res, next) {
 async function find(req, res, next) {
     const role = await Roles.findByPk(req.params.id, {include: {model: Permission, as:'permissions'}});
     res.json({
-        message: "Role by ID",
+        message: req.__("RolesList.RoleById"),
         data: role
     });
 };
@@ -48,10 +48,10 @@ async function update(req, res, next) {
     try{
         const role = await Roles.findByPk(req.params.id);
         if(req.body.permissionIds) role.setPermissions(req.body.permissionIds);
-        if(!role) return res.status(404).json({ message: 'Role not found' });
+        if(!role) return res.status(404).json({ message: req.__("RolesList.RoleNotFound") });
         await role.update(req.body);
         if(req.body.permissionIds) role.setPermissions(req.body.permissionIds);
-        res.json({message: 'Role Updated', data: role});
+        res.json({message: req.__("RolesList.RoleUpdated"), data: role});
     }
     catch(error){
         next(error);
@@ -78,10 +78,10 @@ async function update(req, res, next) {
 async function destroy(req, res, next){
     const id = req.params.id;
     const role = await Roles.findByPk(id);
-    if(!role) res.status(404).json({ message: 'Role not found' });
+    if(!role) res.status(404).json({ message: req.__("RolesList.RoleNotFound") });
     await role.destroy();
     res.json({
-        message: "Role Deleted",
+        message: req.__("RolesList.RoleDeleted"),
         data: role
     });
 };
