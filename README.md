@@ -70,14 +70,107 @@ HTTP Request -> Express -> Route -> Controller -> Sequelize/Mongoose -> Database
 - Git
 - PostgreSQL local (para Sequelize)
 - MongoDB local (si se usa la configuración de Mongoose)
+- Docker (opcional, para comprobar la imagen)
 
 ## Instalación
 
+Clonar el repositorio:
 ```bash
 git clone https://github.com/Mozeu/Stride-And-Co.git
 cd Stride-And-Co
-npm install
 ```
+
+Instalar las dependencias:
+```bash
+npm ci
+```
+
+## Configuracion por entornos y secretos
+
+El proyecto utiliza `config` para administrar los parametros de la app segun el entorno:
+
+| Entorno | Archivo |
+|---|---|
+| Desarrollo | `config/development.json` |
+| Pruebas | `config/test.json` |
+| Producción | `config/production.json` |
+
+### Configuracion local
+
+Crear el archivo privado desde la plantilla:
+
+```bash
+cp config/local-development.example.json config/local-development.json
+chmod 600 config/local-development.json
+```
+
+Generar un secreto JWT:
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+Completar `config/local-development.json` con:
+
+- `postgres.password`: contraseña de PostgreSQL.
+- `mongo.uri`: conexión a MongoDB.
+- `jwt.secret`: secreto JWT generado.
+
+### Variables de entorno
+
+| Variable | Funcion |
+|---|---|
+| `NODE_ENV` | Selecciona desarrollo, pruebas o produccion |
+| `PORT` | Configura el puerto del servidor (3000 por defecto) |
+
+Ejecutar la aplicacion:
+
+```bash
+NODE_ENV=development npm start
+```
+
+Utilizar otro puerto:
+
+```bash
+NODE_ENV=development PORT=8080 npm start
+```
+
+JWT, PostgreSQL, MongoDB y bcrypt obtienen sus parametros mediante `config.get()`. La aplicacion requiere un secreto JWT válido para iniciar.
+
+### Pruebas
+
+Pruebas unitarias con mocks, sin bases de datos:
+
+```bash
+NODE_ENV=test npm test
+```
+
+Pruebas de integracion con PostgreSQL y MongoDB:
+
+```bash
+NODE_ENV=test npm run test:integration
+```
+
+### Produccion y Docker
+
+Producción utiliza `config/local-production.json`, su configuracion en Render corresponde al despliegue.
+
+Construir la imagen:
+
+```bash
+docker build -t stride-config-check .
+```
+
+Verificar que no contiene archivos privados:
+
+```bash
+docker run --rm --entrypoint sh stride-config-check \
+  -c 'find /app/config -name "local*.json" ! -name "*.example.json"'
+```
+
+La ejecucion completa requiere conexiones válidas a PostgreSQL y MongoDB.
+
+
 
 ## Scripts disponibles
 
@@ -86,8 +179,10 @@ npm install
 | `npm start` | Inicia el servidor de Express |
 | `npm run dev` | Inicia el servidor en modo desarrollo |
 | `npm run seed` | Crea roles, permisos y datos de demostración en PostgreSQL y MongoDB |
-| `npm test` | Ejecuta las pruebas automatizadas con Jest |
+| `npm test` | Ejecuta las pruebas unitarias |
 | `npm run lint` | Ejecuta ESLint para analizar la calidad del código |
+| `npm run test:unit` | Ejecuta las pruebas unitarias con mocks |
+| `npm run test:integration` | Ejecuta las pruebas de integración con bases de prueba |
 
 ## Recursos de la API
 
@@ -212,7 +307,7 @@ La autenticación del backend usa `bcrypt` para proteger las contraseñas, `json
 
 ### Metodo para proteger contraseñas
 
-En `utils/password.js` se usa `bcrypt.genSalt()` con el factor de costo configurado por `BCRYPT_SALT_ROUNDS` para crear un salt y luego `bcrypt.hash(password, saltKey)` para generar el `password_hash`. La validación se realiza con `bcrypt.compare(password, passwordHash)`.
+En `utils/password.js` se usa `bcrypt.genSalt()` con el factor de costo configurado por `config.get('bcrypt.saltRounds')` para crear un salt y luego `bcrypt.hash(password, saltKey)` para generar el `password_hash`. La validación se realiza con `bcrypt.compare(password, passwordHash)`.
 
 El modelo de usuario en `models/sql/User.js` almacena estos campos:
 
@@ -225,15 +320,7 @@ Esto permite conservar la contraseña protegida y verificarla sin exponer el val
 
 Se utiliza `jsonwebtoken` para firmar los tokens y `express-jwt` para verificar su firma, expiración, issuer y audience. El token usa el algoritmo `HS256` y contiene únicamente el identificador del usuario en `sub`. Estos valores se configuran mediante variables de entorno:
 
-| Variable | Uso |
-|---|---|
-| `JWT_SECRET` | Clave compartida para firmar y verificar tokens. No debe publicarse ni guardarse en el repositorio. |
-| `JWT_EXPIRES_IN` | Vigencia del token; por ejemplo, `15m`. |
-| `JWT_ISSUER` | Emisor esperado del token; por ejemplo, `stride-co`. |
-| `JWT_AUDIENCE` | Audiencia esperada del token; por ejemplo, `stride-co-api`. |
-| `BCRYPT_SALT_ROUNDS` | Factor de costo de bcrypt; por ejemplo, `10`. |
-
-Configura estas variables en un archivo `.env` local a partir de `.env.example` y completa `JWT_SECRET` con una clave segura propia. La aplicación no inicia si faltan variables JWT requeridas.
+Los parámetros de JWT se administran mediante el paquete config, utilizando las propiedades jwt.secret, jwt.expiresIn, jwt.issuer y jwt.audience. El secreto se almacena en un archivo privado excluido del repositorio.
 
 ### Endpoint de login
 
@@ -280,7 +367,7 @@ Ejemplo del header enviado en peticiones protegidas:
 Authorization: Bearer <token>
 ```
 
-El token expira después del valor configurado en `JWT_EXPIRES_IN` (15 minutos en el ejemplo).
+El token expira después del valor configurado en `jwt.expiresIn` (15 minutos en el ejemplo).
 
 ## Control de acceso basado en roles
 
@@ -428,14 +515,13 @@ locales y ejecuta:
 npm run test:integration
 ```
 
-Esta suite crea y limpia únicamente las bases `stride_co_test` de PostgreSQL y
-MongoDB. Requiere un usuario PostgreSQL con permiso para crear la base; por defecto
-usa `root` y la contraseña configurada en PostgreSQL local. Si tu configuración local es distinta,
-define `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, `TEST_DB_PASSWORD`,
-`TEST_DB_NAME` y `TEST_MONGO_URI`. Los nombres de ambas bases deben coincidir
-y terminar en `_test`; nunca apuntes estas variables a bases con datos reales.
+### Pruebas unitarias
 
-Archivos de pruebas unitarias:
+Utilizan mocks para comprobar rutas, controladores y configuración sin requerir bases de datos reales.
+
+```bash
+NODE_ENV=test npm test
+```
 
 - `tests/products.test.js`
 - `tests/users.test.js`
@@ -445,10 +531,31 @@ Archivos de pruebas unitarias:
 - `tests/inventory.test.js`
 - `tests/customers.test.js`
 - `tests/orders.test.js`
+- `tests/config.test.js`
 
-Pruebas de integración:
+### Pruebas de integración
+
+Verifican la persistencia, autenticación JWT y autorización RBAC utilizando PostgreSQL y MongoDB.
+
+```bash
+NODE_ENV=test npm run test:integration
+```
+
+Las conexiones se configuran mediante `config/test.json` y utilizan exclusivamente las bases `stride_co_test`.
+
+El usuario PostgreSQL `stride_test` debe tener permisos para crear la base de pruebas.
+
+**Importante:** Estas pruebas crean y eliminan datos; nunca deben ejecutarse sobre bases de desarrollo o producción.
+
+Archivo de integración:
 
 - `tests/integration/auth-rbac.integration.test.js`
+
+### Resultados verificados
+
+- Pruebas unitarias: 58/58 exitosas.
+- Pruebas de integración: 10/10 exitosas.
+- ESLint: 0 errores y 20 advertencias.
 
 ## Calidad de código
 
@@ -482,9 +589,16 @@ Stride-And-Co/
 ├── bin/
 │   └── www
 ├── config/
-│   └── jwt.js
+│   └── default.json
+│   ├── development.json
+│   ├── test.json
+│   ├── production.json
+│   ├── custom-environment-variables.json
+│   ├── local-development.example.json
+│   ├── jwt.js
 │   ├── mongoose.js
-│   └── sequelize.js
+│   ├── sequelize.js
+│   └── i18n.js
 ├── controllers/
 │   ├── auth.js
 │   ├── customers.js
@@ -543,7 +657,6 @@ Stride-And-Co/
 │   ├── index.pug
 │   └── layout.pug
 └── .dockerignore
-└── .env.example
 └── .gitignore
 ```
 

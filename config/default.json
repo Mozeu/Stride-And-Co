@@ -1,11 +1,20 @@
-
-
 {
+  "server": {
+    "port": 3000
+  },
   "postgres": {
     "host": "127.0.0.1",
     "port": 5432,
     "database": "stride_co",
-    "user": "root",
-	"password": "abcd1234"
+    "user": "stride_app",
+    "ssl": false
+  },
+  "jwt": {
+    "expiresIn": "15m",
+    "issuer": "stride-co",
+    "audience": "stride-co-api"
+  },
+  "bcrypt": {
+    "saltRounds": 10
   }
 }

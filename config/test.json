@@ -1,9 +1,25 @@
 {
+  "server": {
+    "port": 3001
+  },
   "postgres": {
     "host": "127.0.0.1",
     "port": 5432,
     "database": "stride_co_test",
-    "user": "root",
-    "password": "integration-test-only"
+    "user": "stride_test",
+    "password": "test-only-password",
+    "ssl": false
+  },
+  "mongo": {
+    "uri": "mongodb://127.0.0.1:27017/stride_co_test"
+  },
+  "jwt": {
+    "secret": "test-only-secret-never-use-in-production",
+    "expiresIn": "15m",
+    "issuer": "stride-co-test",
+    "audience": "stride-co-test-api"
+  },
+  "bcrypt": {
+    "saltRounds": 4
   }
 }

@@ -1,0 +1,11 @@
+{
+  "postgres": {
+    "password": "<SECRET>"
+  },
+  "mongo": {
+    "uri": "mongodb://127.0.0.1:27017/stride_co"
+  },
+  "jwt": {
+    "secret": "REEMPLAZAR"
+  }
+}

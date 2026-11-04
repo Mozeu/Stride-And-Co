@@ -1,40 +1,27 @@
-const process = require('node:process');
+const config = require('config');
 const { URL } = require('node:url');
 const { afterAll, beforeAll } = require('@jest/globals');
 
-const testDatabaseName = process.env.TEST_DB_NAME || 'stride_co_test';
-const testMongoUri = process.env.TEST_MONGO_URI || 'mongodb://127.0.0.1:27017/stride_co_test';
+if (config.util.getEnv('NODE_ENV') !== 'test') {
+  throw new Error('Las pruebas de integracion requieren el entorno test');
+}
+
+const testDatabaseName = config.get('postgres.database');
+const testMongoUri = config.get('mongo.uri');
+
 const postgresConfig = {
-  host: process.env.TEST_DB_HOST || '127.0.0.1',
-  port: Number(process.env.TEST_DB_PORT) || 5432,
-  user: process.env.TEST_DB_USER || 'root',
-  password: process.env.TEST_DB_PASSWORD || 'abcd1234'
+  host: config.get('postgres.host'),
+  port: config.get('postgres.port'),
+  user: config.get('postgres.user'),
+  password: config.get('postgres.password')
 };
+
 const mongoDatabaseName = new URL(testMongoUri).pathname.slice(1);
 
 if (!/^[a-zA-Z0-9_]+_test$/.test(testDatabaseName) ||
     mongoDatabaseName !== testDatabaseName) {
-  throw new Error('Integration tests require matching PostgreSQL and MongoDB databases ending in _test');
+  throw new Error('Las bases de integración deben coincidir y terminar en _test');
 }
-
-process.env.NODE_ENV = 'test';
-const existingNodeConfig = process.env.NODE_CONFIG
-  ? JSON.parse(process.env.NODE_CONFIG)
-  : {};
-process.env.NODE_CONFIG = JSON.stringify({
-  ...existingNodeConfig,
-  postgres: {
-    ...existingNodeConfig.postgres,
-    ...postgresConfig,
-    database: testDatabaseName
-  }
-});
-process.env.MONGO_URI = testMongoUri;
-process.env.JWT_SECRET = 'integration-test-only-secret-change-me';
-process.env.JWT_EXPIRES_IN = '15m';
-process.env.JWT_ISSUER = 'stride-co-test';
-process.env.JWT_AUDIENCE = 'stride-co-test-api';
-process.env.BCRYPT_SALT_ROUNDS = '4';
 
 const { Client } = require('pg');
 const mongoose = require('mongoose');
@@ -60,6 +47,8 @@ const permissionMatrix = {
     'products:create:any',
     'products:update:any',
     'products:delete:any',
+    'variants:read:any',
+    'inventory:read:any',
     'orders:create:any',
     'orders:read:own',
     'orders:read:any',
@@ -271,7 +260,9 @@ describe('JWT and RBAC integration with test databases', () => {
 
   test('authenticates through login and allows admin product deletion', async () => {
     const response = await withToken(
-      request(app).delete(`/api/products/${productId}`),
+      request(app)
+      .delete(`/api/products/${productId}`)
+      .set('Accept-Language', 'en'),
       tokens.admin
     );
 

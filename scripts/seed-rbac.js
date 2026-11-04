@@ -1,5 +1,4 @@
 const { log } = require('node:console');
-require('dotenv').config();
 const { sequelize, Role, Permission } = require('../models/sql');
 
 // Matriz RBAC: rol -> permisos

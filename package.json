@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "NODE_ENV=production node ./bin/www",
-    "dev": "NODE_ENV=development supervisor ./bin/www",
+    "start": "node ./bin/www",
+    "dev": "supervisor ./bin/www",
     "seed": "node scripts/seed.js",
     "lint": "eslint .",
-    "test": "npm run test:unit && npm run test:integration",
+    "test": "npm run test:unit",
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",
     "test:integration": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.integration.config.js"
   },
@@ -17,7 +17,6 @@
     "config": "^4.4.2",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
-    "dotenv": "^18.0.4",
     "express": "^4.22.3",
     "express-jwt": "^8.5.1",
     "http-errors": "~1.6.3",

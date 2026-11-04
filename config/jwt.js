@@ -1,19 +1,22 @@
-const requiredVariables = [
-    'JWT_SECRET',
-    'JWT_EXPIRES_IN',
-    'JWT_ISSUER',
-    'JWT_AUDIENCE'
-];
+const config = require('config');
 
-for (const variable of requiredVariables) {
-    if (!process.env[variable]) {
-        throw new Error(`Missing required environment variable: ${variable}`);
-    }
+if (!config.has('jwt.secret')) {
+  throw new Error('Falta configurar jwt.secret en el archivo local del entorno');
+}
+
+const secret = config.get('jwt.secret');
+
+if (
+  typeof secret !== 'string' ||
+  !secret.trim() ||
+  secret === 'REEMPLAZAR'
+) {
+  throw new Error('jwt.secret debe contener un secreto valido');
 }
 
 module.exports = {
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRES_IN,
-    issuer: process.env.JWT_ISSUER,
-    audience: process.env.JWT_AUDIENCE
+  secret,
+  expiresIn: config.get('jwt.expiresIn'),
+  issuer: config.get('jwt.issuer'),
+  audience: config.get('jwt.audience')
 };

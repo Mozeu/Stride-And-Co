@@ -1,5 +1,4 @@
 const { log } = require('node:console');
-require('dotenv').config();
 const mongoose = require('mongoose');
 const {
   sequelize,

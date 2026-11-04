@@ -1,20 +1,28 @@
 const { Sequelize } = require('sequelize');
 const config = require('config');
 
-const postgresConfig = config.get('postgres');
+const postgres = config.get('postgres');
 
 const sequelize = new Sequelize(
-  postgresConfig.database,
-  postgresConfig.user,
-  postgresConfig.password,
+  postgres.database,
+  postgres.user,
+  config.get('postgres.password'),
   {
-    host: postgresConfig.host,
-    port: postgresConfig.port,
+    host: postgres.host,
+    port: postgres.port,
     dialect: 'postgres',
     logging: false,
     define: {
       underscored: true
-    }
+    },
+    dialectOptions: postgres.ssl
+      ? {
+          ssl: {
+            require: true,
+            rejectUnauthorized: true
+          }
+        }
+      : {}
   }
 );
 

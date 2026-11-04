@@ -1,4 +1,3 @@
-require('dotenv').config();
 
 const createError = require('http-errors');
 const express = require('express');
@@ -23,6 +22,7 @@ var authRouter = require('./routes/auth');
 
 var app = express();
 
+app.use(i18n.init);
 app.use(authenticate);
 
 // view engine setup
@@ -34,7 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(i18n.init);
+
 //Routes
 app.use('/', indexRouter);
 app.use('/api/users', usersRouter);
