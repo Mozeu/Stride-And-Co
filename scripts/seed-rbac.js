@@ -7,7 +7,7 @@ const { sequelize, Role, Permission } = require('../models/sql');
 const matrix = {
     admin: [
         'users:create:any', 'users:read:any', 'users:update:any', 'users:delete:any',
-        'users:create:own', 'users:read:own', 'users:update:own', 'users:delete:own',
+        'users:create:own', 'users:read:own', 'users:update:own',
         'roles:create:any', 'roles:read:any', 'roles:update:any', 'roles:delete:any',
         'permissions:create:any', 'permissions:read:any', 'permissions:update:any', 'permissions:delete:any',
         'products:create:any', 'products:read:any', 'products:update:any', 'products:delete:any',
@@ -19,7 +19,7 @@ const matrix = {
     ],
     sales: [
         'users:read:any',
-        'users:create:own', 'users:read:own', 'users:update:own', 'users:delete:own',
+        'users:create:own', 'users:read:own', 'users:update:own',
         'products:read:any',
         'variants:read:any',
         'inventory:read:any', 'inventory:update:any',
