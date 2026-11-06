@@ -5,3 +5,4 @@ node_modules/
 .env.*.local
 config/local*.json
 !config/local*.example.json
+coverage/
