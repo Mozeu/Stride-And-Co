@@ -25,7 +25,7 @@ module.exports = [
 
   // Tests
   {
-    files: ['tests/**/*.js'],
+    files: ['tests/**/*.js', 'test/e2e/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
@@ -36,7 +36,11 @@ module.exports = [
         describe: 'readonly',
         test: 'readonly',
         expect: 'readonly',
+        process: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
         beforeEach: 'readonly',
+        afterEach: 'readonly',
         jest: 'readonly',
       },
     },
@@ -46,6 +50,6 @@ module.exports = [
   },
 
   {
-    ignores: ['node_modules/', 'logs/'],
+    ignores: ['tests/**/*.js', 'test/e2e/**/*.js'],
   },
 ];

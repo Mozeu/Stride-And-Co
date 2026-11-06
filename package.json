@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test": "npm run test:unit",
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",
-    "test:integration": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.integration.config.js"
+    "test:integration": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.integration.config.js",
+    "test:e2e": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.e2e.config.js --runInBand"
   },
   "dependencies": {
     "accesscontrol": "^3.1.1",
