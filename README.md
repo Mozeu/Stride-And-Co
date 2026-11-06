@@ -498,41 +498,51 @@ Estas contraseñas son exclusivas de estas cuentas de demostración y no se usan
 
 ## Pruebas
 
-El proyecto incluye pruebas automatizadas con Jest y Supertest para validar el comportamiento principal de los endpoints.
+El proyecto utiliza Jest y Supertest. Hay tres suites diferentes:
 
-```bash
-npm test
-```
+| Tipo | Comando | Requiere bases de datos | Requiere servidor HTTP iniciado |
+|---|---|---|---|
+| Unitarias | `NODE_ENV=test npm test` | No, utilizan mocks | No |
+| Integración JWT/RBAC | `NODE_ENV=test npm run test:integration` | Sí, PostgreSQL y MongoDB | No |
+| E2E  | `NODE_ENV=test npm run test:e2e` | Sí, PostgreSQL y MongoDB | Sí |
 
-Las pruebas unitarias simulan el middleware de autenticación, autorización y
-acceso a modelos para validar el comportamiento de rutas y controladores sin
-requerir bases de datos. No sustituyen las pruebas de integración de JWT/RBAC.
-
-Para ejecutar la suite de integración, inicia PostgreSQL y MongoDB en los puertos
-locales y ejecuta:
-
-```bash
-npm run test:integration
-```
+Desde una clonación limpia, se instalan primero las dependencias con `npm ci`.
 
 ### Pruebas unitarias
 
-Utilizan mocks para comprobar rutas, controladores y configuración sin requerir bases de datos reales.
+Conservan las pruebas anteriores y verifican las rutas, JWT, RBAC, internacionalización y configuración mediante mocks. No requieren PostgreSQL, MongoDB ni el servidor iniciado.
 
 ```bash
 NODE_ENV=test npm test
 ```
 
-- `tests/products.test.js`
-- `tests/users.test.js`
-- `tests/roles.test.js`
-- `tests/permissions.test.js`
-- `tests/variants.test.js`
-- `tests/inventory.test.js`
-- `tests/customers.test.js`
-- `tests/orders.test.js`
-- `tests/config.test.js`
+### Preparación de las bases de pruebas
 
+Los siguientes pasos se utilizan solo para integración y E2E:
+
+1. Inicia PostgreSQL en `127.0.0.1:5432` y MongoDB en `127.0.0.1:27017`.
+2. Verifica que el usuario PostgreSQL `stride_test` exista, tenga contraseña y permiso `CREATEDB`. Si todavía no existe, un administrador de PostgreSQL puede crearlo con:
+
+   ```sql
+   CREATE ROLE stride_test LOGIN CREATEDB PASSWORD 'CAMBIAR_POR_CONTRASEÑA_LOCAL';
+   ```
+
+3. Crea el archivo privado `config/local-test.json`:
+
+   ```json
+   {
+     "postgres": {
+       "password": "CONTRASEÑA_REAL_DE_STRIDE_TEST"
+     }
+   }
+   ```
+
+   La contraseña debe coincidir con la que acepta PostgreSQL; `config/test.json` contiene un valor de ejemplo que puede no coincidir con la instalación local. Protege el archivo y comprueba su exclusión:
+
+   ```bash
+   chmod 600 config/local-test.json
+   git check-ignore -v config/local-test.json
+   ```
 ### Pruebas de integración
 
 Verifican la persistencia, autenticación JWT y autorización RBAC utilizando PostgreSQL y MongoDB.
@@ -550,6 +560,55 @@ El usuario PostgreSQL `stride_test` debe tener permisos para crear la base de pr
 Archivo de integración:
 
 - `tests/integration/auth-rbac.integration.test.js`
+
+## Pruebas E2E 
+
+Las E2E utilizan la API real mediante Supertest, sin mocks. Necesitan el backend iniciado, las bases de pruebas disponibles y los usuarios de demostración `admin`, `sales` y `user`.
+
+1. Prepara los datos de prueba:
+
+   ```bash
+   NODE_ENV=test npm run seed
+   ```
+
+2. En una terminal independiente, inicia la API en el puerto utilizado por `e2e.baseUrl` (`http://localhost:3000`):
+
+   ```bash
+   NODE_ENV=test PORT=3000 npm start
+   ```
+
+   Comprueba desde otra terminal:
+
+   ```bash
+   curl -i http://localhost:3000/health
+   ```
+
+   Debe responder `200` y `{"status":"UP"}`.
+
+3. En la terminal desde la que ejecutarás Jest, define los correos y las contraseñas de los usuarios del seed:
+
+   ```bash
+   export E2E_ADMIN_EMAIL='admin@stride.test'
+   export E2E_SALES_EMAIL='sales@stride.test'
+   export E2E_USER_EMAIL='user@stride.test'
+
+   read -r -s -p 'Contraseña admin: ' E2E_ADMIN_PASSWORD; echo
+   export E2E_ADMIN_PASSWORD
+   read -r -s -p 'Contraseña sales: ' E2E_SALES_PASSWORD; echo
+   export E2E_SALES_PASSWORD
+   read -r -s -p 'Contraseña user: ' E2E_USER_PASSWORD; echo
+   export E2E_USER_PASSWORD
+   ```
+
+   Las contraseñas de demostración son `DemoAdmin!2026`, `DemoSales!2026` y `DemoUser!2026`, respectivamente.
+
+4. Ejecucion de todas las E2E:
+
+   ```bash
+   NODE_ENV=test npm run test:e2e -- --runTestsByPath test/e2e/health.e2e.test.js
+   NODE_ENV=test npm run test:e2e -- --runTestsByPath test/e2e/auth.e2e.test.js
+   NODE_ENV=test npm run test:e2e
+   ```
 
 ### Resultados verificados
 
@@ -640,6 +699,17 @@ Stride-And-Co/
 ├── scripts/
 │   └── create-admin.js
 │   └── seed-rbac.js
+├── test/
+│   └── e2e/
+│       ├── auth.e2e.test.js
+│       ├── health.e2e.test.js
+│       ├── helpers.js
+│       ├── i18n.e2e.test.js
+│       ├── permissions.e2e.test.js
+│       ├── rbac.e2e.test.js
+│       ├── roles.e2e.test.js
+│       └── users.e2e.test.js
+├── tests/
 ├── tests/
 │   ├── customers.test.js
 │   ├── inventory.test.js
