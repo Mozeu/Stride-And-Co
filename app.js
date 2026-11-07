@@ -52,6 +52,29 @@ app.use(function(req, res, next) {
   next(createError(404));
 });
 
+app.use(function(err, req, res, next) {
+  if (!err.status) {
+    const isSequelizeValidation =
+      err.name === 'SequelizeValidationError' ||
+      err.name === 'SequelizeUniqueConstraintError' ||
+      err.name === 'SequelizeForeignKeyConstraintError';
+
+    // 22P02 = invalid input syntax in PostgreSQL (e.g. id "abc")
+    const isBadInput =
+      err.name === 'SequelizeDatabaseError' &&
+      err.parent &&
+      err.parent.code === '22P02';
+
+    // MongoDB (customers and orders)
+    const isMongoose = err.name === 'ValidationError' || err.name === 'CastError';
+
+    if (isSequelizeValidation || isBadInput || isMongoose) {
+      err.status = 400;
+    }
+  }
+  next(err);
+});
+
 // error handler
 app.use(function(err, req, res, next) {
   if (err.name === 'UnauthorizedError') {

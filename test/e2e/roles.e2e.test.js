@@ -120,7 +120,7 @@ describe('E2E Roles', () => {
           name: ''
         });
 
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(400);
     });
 
     test('Actualizar rol inexistente responde 404 Not Found', async () => {

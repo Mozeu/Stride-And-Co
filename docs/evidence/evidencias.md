@@ -1386,181 +1386,421 @@ Tras revisar el archivo generado, el equipo detectó tres problemas:
    usar un producto creado y eliminado por la propia suite.
 3. El 403 al eliminar solo se probaba con el rol user; se agregó sales.
 
-Estos ajustes se aplicaron con el prompt 5
+Se hizo algunos ajustes en app.js para que devolviera el 400.
+
+
 
 ## Prompt 5
 
-En test/e2e/products.e2e.test.js haz estos tres ajustes sin modificar el backend ni helpers.js: 1) Agrega pruebas de 400 para
-  datos inválidos: POST sin name, POST con price negativo o no numérico, y GET con un id mal formado (por ejemplo abc). Primero
-  revisa el controlador y la validación reales para ver qué responde hoy. Si el backend responde algo distinto de 400, deja la
-  prueba esperando 400 y dime qué respondió. 2) Cambia las pruebas de 403 de PUT y DELETE para que no usen el id 1 fijo: crea
-  un producto con admin en esa prueba, intenta modificarlo o eliminarlo con user y sales, y bórralo con admin al final. 3)
-  Mantén el código sencillo, legible y explícito. Muéstrame los cambios y ejecuta solo esa suite.
+puedes hacer la prueba de nuevo esperando que todos los test funciones ahora
 
-  ### Que genero la IA
+### Que genero la IA
 
-  Se realizaron los ajustes solicitados exclusivamente en products.e2e.test.js sin modificar el backend ni helpers.js.       
-  ──────
-  ### 1. Diagnóstico del Backend Actual (Controlador y Validaciones)
-  
-  Al revisar products.js, Product.js y el manejador global de errores en app.js:                                             
+Se ejecutó nuevamente la suite products.e2e.test.js con el backend actualizado en app.js para mapear los errores de        
+  Sequelize/Mongoose a 400.                                                                                                  
                                                                                                                              
-  • No existe middleware de validación a nivel de ruta express para POST ni GET /:id.
-  • Las restricciones (notNull, min: 0, conversión de tipos de PostgreSQL) son lanzadas como errores de Sequelize            
-  directamente al llamar a Product.create(...) o Product.findByPk(...).
-  • En el bloque catch, estos errores pasan a next(error). Al no contar con una propiedad err.status, el manejador de        
-  app.js:56-68 ejecuta res.status(err.status || 500) y renderiza una vista de error HTML con código de estado 500.           
-  
-   Caso                                       │ Respuesta real del B… │ Motivo en el Backend
-  ────────────────────────────────────────────┼───────────────────────┼──────────────────────────────────────────────────────
-   POST sin name                              │          500          │ notNull Violation: Product.name cannot be null
-   POST con price negativo                    │          500          │ Validation error: Validation min on price failed
-   POST con price no numérico                 │          500          │ PostgreSQL: la sintaxis de entrada no es válida para
-                                              │                       │ tipo numeric
-   GET con id mal formado (/api/products/abc) │          500          │ PostgreSQL: la sintaxis de entrada no es válida para
-                                              │                       │ tipo integer: «abc»
-  
-  │ Note
-  │ Siguiendo la instrucción, las pruebas se dejaron esperando 400, reflejando el fallo esperado debido al comportamiento    
-  │ actual del backend.
-  ──────
-  ### 2. Cambios realizados en products.e2e.test.js                                                                          
+  ### Resultado de la ejecución                                                                                              
                                                                                                                              
-  #### A. Pruebas 403 dinámicas (sin ID 1 fijo):
-  
-  Se reemplazaron las pruebas estáticas de actualización y eliminación por una prueba completa que crea el producto con      
-  admin, valida el rechazo con 403 para user y sales, y finalmente lo elimina con admin:
-  
-        test('Usuarios sin permisos suficientes (user y sales) responden 403 Forbidden al actualizar o eliminar producto',   
-        async () => {
-          // 1. Crear producto con admin
-          const createRes = await request(baseUrl)                                                                           
-            .post('/api/products')
-            .set(authHeader(adminToken))
-            .send({
-              name: `Forbidden_RBAC_${Date.now()}`,                                                                          
-              price: 99.99                                                                                                   
-            });
-          expect(createRes.status).toBe(201);                                                                                
-          const testProductId = createRes.body.data.id;                                                                      
-  
-          try {                                                                                                              
-            // 2. Intentar actualizar (PUT) con user y sales
-            const putUserRes = await request(baseUrl)                                                                        
-              .put(`/api/products/${testProductId}`)
-              .set(authHeader(userToken))
-              .send({ name: 'Forbidden Update User' });
-            expect(putUserRes.status).toBe(403);
-  
-            const putSalesRes = await request(baseUrl)                                                                       
-              .put(`/api/products/${testProductId}`)
-              .set(authHeader(salesToken))
-              .send({ name: 'Forbidden Update Sales' });
-            expect(putSalesRes.status).toBe(403);
-                                                                                                                             
-            // 3. Intentar eliminar (DELETE) con user y sales                                                                
-            const deleteUserRes = await request(baseUrl)                                                                     
-              .delete(`/api/products/${testProductId}`)
-              .set(authHeader(userToken));
-            expect(deleteUserRes.status).toBe(403);
-  
-            const deleteSalesRes = await request(baseUrl)                                                                    
-              .delete(`/api/products/${testProductId}`)                                                                      
-              .set(authHeader(salesToken));
-            expect(deleteSalesRes.status).toBe(403);
-          } finally {
-            // 4. Borrar con admin al final
-            await deleteProduct(testProductId, adminToken);
-          }
-        });
-  
-  #### B. Pruebas 400 para datos inválidos:
-  
-  Se incorporaron las pruebas explícitas esperando 400:
-  
-        test('Crear producto sin name responde 400 Bad Request', async () => {
-          const res = await request(baseUrl)                                                                                 
-            .post('/api/products')
-            .set(authHeader(adminToken))
-            .send({
-              price: 99.99
-            });
-  
-          expect(res.status).toBe(400);
-        });
-  
-        test('Crear producto con price negativo responde 400 Bad Request', async () => {
-          const res = await request(baseUrl)
-            .post('/api/products')
-            .set(authHeader(adminToken))
-            .send({
-              name: 'Producto Precio Negativo',
-              price: -10
-            });
-  
-          expect(res.status).toBe(400); 
-        });
-  
-        test('Crear producto con price no numérico responde 400 Bad Request', async () => {                                  
-          const res = await request(baseUrl)                                                                                 
-            .post('/api/products')
-            .set(authHeader(adminToken))
-            .send({
-              name: 'Producto Precio No Numérico',
-              price: 'no-es-un-numero'                                                                                       
-            });
-  
-          expect(res.status).toBe(400);
-        });
-  
-        test('Consultar producto con ID malformado (no numérico) responde 400 Bad Request', async () => {
-          const res = await request(baseUrl)                                                                                 
-            .get('/api/products/abc')
-            .set(authHeader(adminToken));
-  
-          expect(res.status).toBe(400);
-        });
-  ──────
-  ### 3. Resultado de la ejecución de la suite
-  
-  Comando ejecutado:
-  
-    npm run test:e2e test/e2e/products.e2e.test.js
-  
-  Salida:
-  
-    FAIL test/e2e/products.e2e.test.js
-      E2E Products
-        Control de acceso (Autenticación y RBAC)
-          ✓ Petición sin token responde 401 Unauthorized (4 ms)
-          ✓ Usuario sin permisos suficientes responde 403 Forbidden al crear producto (6 ms)
-          ✓ Usuarios sin permisos suficientes (user y sales) responden 403 Forbidden al actualizar o eliminar producto (94
-          ms)                                                                                                                
-        Validación de solicitudes y datos inválidos                                                                          
-          ✓ Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request (10 ms)                         
-          ✕ Crear producto sin name responde 400 Bad Request (13 ms) -> Expected: 400, Received: 500                         
-          ✕ Crear producto con price negativo responde 400 Bad Request (14 ms) -> Expected: 400, Received: 500               
-          ✕ Crear producto con price no numérico responde 400 Bad Request (12 ms) -> Expected: 400, Received: 500            
-          ✕ Consultar producto con ID malformado (no numérico) responde 400 Bad Request (13 ms) -> Expected: 400, Received:  
-          500
+    PASS test/e2e/products.e2e.test.js                                                                                       
+      E2E Products                                                                                                           
+        Control de acceso (Autenticación y RBAC)                                                                             
+          ✓ Petición sin token responde 401 Unauthorized (11 ms)                                                             
+          ✓ Usuario sin permisos suficientes responde 403 Forbidden al crear producto (13 ms)                                
+          ✓ Usuarios sin permisos suficientes (user y sales) responden 403 Forbidden al actualizar o eliminar producto (203  
+          ms)
+        Validación de solicitudes y datos inválidos
+          ✓ Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request (27 ms)
+          ✓ Crear producto sin name responde 400 Bad Request (19 ms)
+          ✓ Crear producto con price negativo responde 400 Bad Request (20 ms)
+          ✓ Crear producto con price no numérico responde 400 Bad Request (19 ms)
+          ✓ Consultar producto con ID malformado (no numérico) responde 400 Bad Request (18 ms)
         Operaciones CRUD con Admin
-          ✓ Crear producto (POST /api/products) responde 201 (12 ms)
-          ✓ Consultar producto por ID (GET /api/products/:id) responde 200 (10 ms)
-          ✓ Listar productos (GET /api/products) responde 200 y contiene el producto creado (18 ms)
-          ✓ Actualizar producto (PUT /api/products/:id) responde 200 (15 ms)
-          ✓ Actualizar producto inexistente responde 404 Not Found (6 ms)
-          ✓ Eliminar producto (DELETE /api/products/:id) responde 200 (15 ms)
-          ✓ Verificar que el producto eliminado ya no existe y responde 404 Not Found (14 ms)
+          ✓ Crear producto (POST /api/products) responde 201 (38 ms)
+          ✓ Consultar producto por ID (GET /api/products/:id) responde 200 (19 ms)
+          ✓ Listar productos (GET /api/products) responde 200 y contiene el producto creado (20 ms)
+          ✓ Actualizar producto (PUT /api/products/:id) responde 200 (36 ms)
+          ✓ Actualizar producto inexistente responde 404 Not Found (21 ms)
+          ✓ Eliminar producto (DELETE /api/products/:id) responde 200 (32 ms)
+          ✓ Verificar que el producto eliminado ya no existe y responde 404 Not Found (45 ms)
         Relación con variantes (Producto devuelve sus variantes)
-          ✓ Consultar producto por ID (GET /api/products/:id) devuelve sus variantes asociadas (38 ms)
-          ✓ Listar productos (GET /api/products) incluye variantes asociadas (7 ms)
+          ✓ Consultar producto por ID (GET /api/products/:id) devuelve sus variantes asociadas (77 ms)
+          ✓ Listar productos (GET /api/products) incluye variantes asociadas (24 ms)
   
-    Test Suites: 1 failed, 1 total
-    Tests:       4 failed, 13 passed, 17 total
+    Test Suites: 1 passed, 1 total
+    Tests:       17 passed, 17 total
+    Snapshots:   0 total
+    Time:        1.383 s
+  
+  Todos los 17 tests pasaron exitosamente.
 
- ### Correcciones
+  ### Codigo products 
 
-Se agregaron pruebas de 400 para datos inválidos. Al ejecutarlas, 4 fallaron
-porque el backend responde 500 (los errores de Sequelize llegan al manejador
-global sin status). No se ajustaron las pruebas: el PDF exige 400 en estos casos.
-Hallazgo reportado al equipo para corregirlo en el backend.   
+  'use strict';
+
+const request = require('supertest');
+const { getBaseUrl, loginAs, authHeader, deleteProduct, deleteVariant } = require('./helpers');
+
+describe('E2E Products', () => {
+  const baseUrl = getBaseUrl();
+
+  let adminToken;
+  let salesToken;
+  let userToken;
+  let createdProductId;
+
+  beforeAll(async () => {
+    adminToken = await loginAs('admin');
+    salesToken = await loginAs('sales');
+    userToken = await loginAs('user');
+  });
+
+  afterAll(async () => {
+    if (createdProductId) {
+      await deleteProduct(createdProductId, adminToken);
+    }
+  });
+
+  describe('Control de acceso (Autenticación y RBAC)', () => {
+    test('Petición sin token responde 401 Unauthorized', async () => {
+      const res = await request(baseUrl).get('/api/products');
+      expect(res.status).toBe(401);
+    });
+
+    test('Usuario sin permisos suficientes responde 403 Forbidden al crear producto', async () => {
+      const res = await request(baseUrl)
+        .post('/api/products')
+        .set(authHeader(userToken))
+        .send({
+          name: 'Forbidden Product',
+          price: 99.99
+        });
+      expect(res.status).toBe(403);
+    });
+
+    test('Usuarios sin permisos suficientes (user y sales) responden 403 Forbidden al actualizar o eliminar producto', async () => {
+      // 1. Crear producto con admin
+      const createRes = await request(baseUrl)
+        .post('/api/products')
+        .set(authHeader(adminToken))
+        .send({
+          name: `Forbidden_RBAC_${Date.now()}`,
+          price: 99.99
+        });
+      expect(createRes.status).toBe(201);
+      const testProductId = createRes.body.data.id;
+
+      try {
+        // 2. Intentar actualizar (PUT) con user y sales
+        const putUserRes = await request(baseUrl)
+          .put(`/api/products/${testProductId}`)
+          .set(authHeader(userToken))
+          .send({ name: 'Forbidden Update User' });
+        expect(putUserRes.status).toBe(403);
+
+        const putSalesRes = await request(baseUrl)
+          .put(`/api/products/${testProductId}`)
+          .set(authHeader(salesToken))
+          .send({ name: 'Forbidden Update Sales' });
+        expect(putSalesRes.status).toBe(403);
+
+        // 3. Intentar eliminar (DELETE) con user y sales
+        const deleteUserRes = await request(baseUrl)
+          .delete(`/api/products/${testProductId}`)
+          .set(authHeader(userToken));
+        expect(deleteUserRes.status).toBe(403);
+
+        const deleteSalesRes = await request(baseUrl)
+          .delete(`/api/products/${testProductId}`)
+          .set(authHeader(salesToken));
+        expect(deleteSalesRes.status).toBe(403);
+      } finally {
+        // 4. Borrar con admin al final
+        await deleteProduct(testProductId, adminToken);
+      }
+    });
+  });
+
+  describe('Validación de solicitudes y datos inválidos', () => {
+    test('Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request', async () => {
+      const res = await request(baseUrl)
+        .post('/api/products')
+        .set(authHeader(adminToken))
+        .set('Content-Type', 'application/json')
+        .send('{ "name": "Invalid JSON Payload');
+
+      expect(res.status).toBe(400);
+    });
+
+    test('Crear producto sin name responde 400 Bad Request', async () => {
+      const res = await request(baseUrl)
+        .post('/api/products')
+        .set(authHeader(adminToken))
+        .send({
+          price: 99.99
+        });
+
+      expect(res.status).toBe(400);
+    });
+
+    test('Crear producto con price negativo responde 400 Bad Request', async () => {
+      const res = await request(baseUrl)
+        .post('/api/products')
+        .set(authHeader(adminToken))
+        .send({
+          name: 'Producto Precio Negativo',
+          price: -10
+        });
+
+      expect(res.status).toBe(400);
+    });
+
+    test('Crear producto con price no numérico responde 400 Bad Request', async () => {
+      const res = await request(baseUrl)
+        .post('/api/products')
+        .set(authHeader(adminToken))
+        .send({
+          name: 'Producto Precio No Numérico',
+          price: 'no-es-un-numero'
+        });
+
+      expect(res.status).toBe(400);
+    });
+
+    test('Consultar producto con ID malformado (no numérico) responde 400 Bad Request', async () => {
+      const res = await request(baseUrl)
+        .get('/api/products/abc')
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('Operaciones CRUD con Admin', () => {
+    test('Crear producto (POST /api/products) responde 201', async () => {
+      const uniqueName = `Producto_E2E_${Date.now()}`;
+      const res = await request(baseUrl)
+        .post('/api/products')
+        .set(authHeader(adminToken))
+        .send({
+          name: uniqueName,
+          description: 'Producto para pruebas E2E',
+          brand: 'Stride',
+          price: 199.99
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data.name).toBe(uniqueName);
+      expect(parseFloat(res.body.data.price)).toBe(199.99);
+
+      createdProductId = res.body.data.id;
+    });
+
+    test('Consultar producto por ID (GET /api/products/:id) responde 200', async () => {
+      expect(createdProductId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .get(`/api/products/${createdProductId}`)
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data.id).toBe(createdProductId);
+      expect(res.body.data).toHaveProperty('variants');
+      expect(Array.isArray(res.body.data.variants)).toBe(true);
+    });
+
+    test('Listar productos (GET /api/products) responde 200 y contiene el producto creado', async () => {
+      const res = await request(baseUrl)
+        .get('/api/products')
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBe(true);
+
+      const found = res.body.data.find((p) => p.id === createdProductId);
+      expect(found).toBeDefined();
+    });
+
+    test('Actualizar producto (PUT /api/products/:id) responde 200', async () => {
+      expect(createdProductId).toBeDefined();
+
+      const updatedName = `Producto_E2E_Modificado_${Date.now()}`;
+      const updatedPrice = 249.50;
+
+      const res = await request(baseUrl)
+        .put(`/api/products/${createdProductId}`)
+        .set(authHeader(adminToken))
+        .send({
+          name: updatedName,
+          price: updatedPrice
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data.name).toBe(updatedName);
+      expect(parseFloat(res.body.data.price)).toBe(updatedPrice);
+    });
+
+    test('Actualizar producto inexistente responde 404 Not Found', async () => {
+      const res = await request(baseUrl)
+        .put('/api/products/999999')
+        .set(authHeader(adminToken))
+        .send({
+          name: 'ProductoInexistente'
+        });
+
+      expect(res.status).toBe(404);
+    });
+
+    test('Eliminar producto (DELETE /api/products/:id) responde 200', async () => {
+      expect(createdProductId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .delete(`/api/products/${createdProductId}`)
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(200);
+    });
+
+    test('Verificar que el producto eliminado ya no existe y responde 404 Not Found', async () => {
+      expect(createdProductId).toBeDefined();
+
+      // Al consultar por ID, responde 404 Not Found
+      const getRes = await request(baseUrl)
+        .get(`/api/products/${createdProductId}`)
+        .set(authHeader(adminToken));
+
+      expect(getRes.status).toBe(404);
+
+      // Al intentar actualizar un producto que ya no existe, responde 404
+      const putRes = await request(baseUrl)
+        .put(`/api/products/${createdProductId}`)
+        .set(authHeader(adminToken))
+        .send({ name: 'ShouldFail' });
+
+      expect(putRes.status).toBe(404);
+
+      // Limpiar variable para que afterAll no intente borrarlo nuevamente
+      createdProductId = null;
+    });
+  });
+
+  describe('Relación con variantes (Producto devuelve sus variantes)', () => {
+    let productWithVariantsId;
+    let createdVariantId;
+
+    afterAll(async () => {
+      if (createdVariantId) {
+        await deleteVariant(createdVariantId, adminToken);
+      }
+      if (productWithVariantsId) {
+        await deleteProduct(productWithVariantsId, adminToken);
+      }
+    });
+
+    test('Consultar producto por ID (GET /api/products/:id) devuelve sus variantes asociadas', async () => {
+      // 1. Crear producto base
+      const prodRes = await request(baseUrl)
+        .post('/api/products')
+        .set(authHeader(adminToken))
+        .send({
+          name: `Producto_Variantes_${Date.now()}`,
+          brand: 'Stride Shoes',
+          price: 159.99
+        });
+
+      expect(prodRes.status).toBe(201);
+      expect(prodRes.body).toHaveProperty('data');
+      productWithVariantsId = prodRes.body.data.id;
+
+      // 2. Crear una variante asociada al producto
+      const uniqueSku = `SKU-E2E-${Date.now()}`;
+      const varRes = await request(baseUrl)
+        .post('/api/variants')
+        .set(authHeader(adminToken))
+        .send({
+          product_id: productWithVariantsId,
+          size: '42',
+          color: 'Azul Marino',
+          sku: uniqueSku
+        });
+
+      expect(varRes.status).toBe(201);
+      expect(varRes.body).toHaveProperty('data');
+      createdVariantId = varRes.body.data.id;
+
+      // 3. Consultar el producto por ID y verificar que incluye sus variantes
+      const getRes = await request(baseUrl)
+        .get(`/api/products/${productWithVariantsId}`)
+        .set(authHeader(adminToken));
+
+      expect(getRes.status).toBe(200);
+      expect(getRes.body).toHaveProperty('data');
+      expect(getRes.body.data.id).toBe(productWithVariantsId);
+      expect(getRes.body.data).toHaveProperty('variants');
+      expect(Array.isArray(getRes.body.data.variants)).toBe(true);
+      expect(getRes.body.data.variants.length).toBeGreaterThanOrEqual(1);
+
+      const foundVariant = getRes.body.data.variants.find((v) => v.id === createdVariantId);
+      expect(foundVariant).toBeDefined();
+      expect(foundVariant.sku).toBe(uniqueSku);
+      expect(foundVariant.size).toBe('42');
+      expect(foundVariant.color).toBe('Azul Marino');
+    });
+
+    test('Listar productos (GET /api/products) incluye variantes asociadas', async () => {
+      expect(productWithVariantsId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .get('/api/products')
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBe(true);
+
+      const foundProduct = res.body.data.find((p) => p.id === productWithVariantsId);
+      expect(foundProduct).toBeDefined();
+      expect(foundProduct).toHaveProperty('variants');
+      expect(Array.isArray(foundProduct.variants)).toBe(true);
+      expect(foundProduct.variants.some((v) => v.id === createdVariantId)).toBe(true);
+    });
+  });
+});
+
+### Correcciones 
+
+Las 4 pruebas de 400 fallaron porque el backend respondía 500: los errores
+de Sequelize llegaban al manejador de app.js sin err.status. No se ajustaron
+las pruebas, porque el PDF (4.3) exige 400 en datos inválidos e id mal formado.
+El equipo corrigió el backend agregando en app.js un middleware, antes del
+manejador final de errores, que asigna status 400 a errores de validación,
+de unicidad, de llave foránea, de sintaxis inválida de PostgreSQL (22P02)
+y de Mongoose.
+
+app.use(function(err, req, res, next) {
+  if (!err.status) {
+    const isSequelizeValidation =
+      err.name === 'SequelizeValidationError' ||
+      err.name === 'SequelizeUniqueConstraintError' ||
+      err.name === 'SequelizeForeignKeyConstraintError';
+
+    // 22P02 = invalid input syntax in PostgreSQL (e.g. id "abc")
+    const isBadInput =
+      err.name === 'SequelizeDatabaseError' &&
+      err.parent &&
+      err.parent.code === '22P02';
+
+    // MongoDB (customers and orders)
+    const isMongoose = err.name === 'ValidationError' || err.name === 'CastError';
+
+    if (isSequelizeValidation || isBadInput || isMongoose) {
+      err.status = 400;
+    }
+  }
+  next(err);
+});
+
