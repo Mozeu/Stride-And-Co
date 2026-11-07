@@ -2381,3 +2381,818 @@ Time:        1.269 s
 No hay una prueba de que user y sales sí pueden leer variantes (200), aunque el RBAC se lo permite. Es una prueba corta de agregar.
 La prueba de actualizar solo revisa la respuesta del PUT. No hace un GET después para confirmar que el cambio quedó guardado.
 
+## Prompt 7
+
+Genera test/e2e/inventory.e2e.test.js con Jest, Supertest y la API real, usando unicamente request(baseUrl) y las funciones helpers.js, sin modificarlo. Usa products.e2e.test.js como estilo. Primero revisa rutas, controladores, modelos y permisos RBAC reales de inventario (incluida la regla de que sales puede actualizar y user solo leer, si asi esta en el seed). Prueba: crear o consultar el inventario de una variante creada por la suite, consultada por ID, listar, actualizar stock, eliminar y comprobar 404; datos invalidos como stock negativo o no numerico (400), id mal formado (400), sin token (401), rol sin permiso (403) con recursos creados por la suite; y que el inventario devuelva su variante. Limplia solo lo que crea la suite (inventario, variante y producto, en ese orden). Sin mocks, sin tocar el backend. Si el backend responde algo distinto de lo que pide el PDF, deja la prueba esperando lo del PDF y dime qué responde. Codigo sencillo y explicito. Muestrame los cambios y ejecuta solo esa suite.
+
+### Que genero la IA
+
+Se ha generado la suite de pruebas E2E inventory.e2e.test.js con Jest, Supertest y la API real, utilizando únicamente       
+  request(baseUrl) y las funciones exportadas de helpers.js (sin modificarlo ni tocar el backend).                            
+  ──────                                                                                                                      
+  ### 1. Revisión de Rutas, Controladores, Modelos y Permisos RBAC                                                            
+                                                                                                                              
+  • Rutas (inventory.js):                                                                                                     
+      • GET /api/inventory → authorize('inventory', 'read', 'any'), controller.list                                           
+      • GET /api/inventory/:id → authorize('inventory', 'read', 'any'), controller.find                                       
+      • PUT /api/inventory/:id → authorize('inventory', 'update', 'any'), controller.update                                   
+      • Observación: No existen rutas POST ni DELETE declaradas en el router de inventario.                                   
+  • Controladores (inventory.js):                                                                                             
+      • Solo expone { list, find, update }. No existen funciones create ni destroy (coincide con la nota encontrada en        
+      inventory.test.js:4).                                                                                                   
+      • list y find incluyen la relación { model: Variant, as: 'variant', include: [{ model: Product, as: 'product' }] }.     
+  • Modelos y Validaciones (Inventory.js):                                                                                    
+      • variant_id: entero, obligatorio, único.                                                                               
+      • stock: entero, obligatorio, min: 0.                                                                                   
+      • reserved: entero, obligatorio, min: 0.                                                                                
+      • Asociación: Inventory.belongsTo(Variant, { as: 'variant' }).                                                          
+  • Permisos RBAC reales en el seed (seed-rbac.js):                                                                           
+      • Rol admin: Posee inventory:read:any e inventory:update:any.                                                           
+      • Rol sales: Posee inventory:read:any e inventory:update:any. Puede listar, consultar y actualizar.                     
+      • Rol user: No tiene ningún permiso de inventario asignado en el seed. Por lo tanto, el backend responde 403 Forbidden  
+      tanto al intentar leer (GET) como al actualizar (PUT).                                                                  
+  • Comportamiento del Backend hoy frente a lo que pide el PDF:                                                               
+      1. Datos inválidos (stock negativo, no numérico o JSON malformado): Responde 400 Bad Request (cumple con el PDF).       
+      2. ID malformado (no numérico como /abc): Responde 400 Bad Request (cumple con el PDF).                                 
+      3. Petición sin token: Responde 401 Unauthorized (cumple con el PDF).                                                   
+      4. Control de acceso (usuario sin permisos): Responde 403 Forbidden para user (cumple con el PDF).                      
+      5. Inventario inexistente (GET o PUT a /999999): Responde 404 Not Found (cumple con el PDF).                            
+      6. Relación con Variante: GET /api/inventory/:id y GET /api/inventory devuelven la propiedad variant y variant.product  
+      pobladas (cumple con el PDF).                                                                                           
+      7. DIFERENCIA 1 - Crear inventario (POST /api/inventory):                                                               
+          • PDF pide: 201 Created dentro del ciclo CRUD.                                                                      
+          • Backend responde hoy: 404 Not Found (la ruta POST no está definida en Express).                                   
+          • Acción: La prueba se dejó esperando 201 tal como lo pide el PDF.                                                  
+      8. DIFERENCIA 2 - Eliminar inventario (DELETE /api/inventory/:id):                                                      
+          • PDF pide: 200 OK dentro del ciclo CRUD.                                                                           
+          • Backend responde hoy: 404 Not Found (la ruta DELETE no está definida en Express).                                 
+          • Acción: La prueba se dejó esperando 200 tal como lo pide el PDF.                                                  
+                                                                                                                              
+                                                                                                                              
+  ──────                                                                                                                      
+  ### 2. Archivo Creado                                                                                                       
+                                                                                                                              
+    // test/e2e/inventory.e2e.test.js                                                                                         
+    'use strict';                                                                                                             
+                                                                                                                              
+    const request = require('supertest');                                                                                     
+    const { getBaseUrl, loginAs, authHeader, deleteProduct, deleteVariant } = require('./helpers');                           
+                                                                                                                              
+    describe('E2E Inventory', () => {                                                                                         
+      const baseUrl = getBaseUrl();                                                                                           
+                                                                                                                              
+      let adminToken;                                                                                                         
+      let salesToken;                                                                                                         
+      let userToken;                                                                                                          
+      let suiteProductId;                                                                                                     
+      let suiteVariantId;                                                                                                     
+      let createdInventoryId;                                                                                                 
+      let existingInventoryId;                                                                                                
+      let originalStock;                                                                                                      
+                                                                                                                              
+      beforeAll(async () => {                                                                                                 
+        adminToken = await loginAs('admin');                                                                                  
+        salesToken = await loginAs('sales');                                                                                  
+        userToken = await loginAs('user');                                                                                    
+                                                                                                                              
+        // 1. Crear producto base para la suite                                                                               
+        const productRes = await request(baseUrl)                                                                             
+          .post('/api/products')                                                                                              
+          .set(authHeader(adminToken))                                                                                        
+          .send({                                                                                                             
+            name: `Producto_Suite_Inventario_${Date.now()}`,                                                                  
+            description: 'Producto base para suite E2E de inventario',                                                        
+            brand: 'Stride Shoes',                                                                                            
+            price: 199.99                                                                                                     
+          });                                                                                                                 
+                                                                                                                              
+        expect(productRes.status).toBe(201);                                                                                  
+        suiteProductId = productRes.body.data.id;                                                                             
+                                                                                                                              
+        // 2. Crear variante asociada al producto para la suite                                                               
+        const variantRes = await request(baseUrl)                                                                             
+          .post('/api/variants')                                                                                              
+          .set(authHeader(adminToken))                                                                                        
+          .send({                                                                                                             
+            product_id: suiteProductId,                                                                                       
+            size: '43',                                                                                                       
+            color: 'Negro Mate',                                                                                              
+            sku: `SKU_INV_SUITE_${Date.now()}`                                                                                
+          });                                                                                                                 
+                                                                                                                              
+        expect(variantRes.status).toBe(201);                                                                                  
+        suiteVariantId = variantRes.body.data.id;                                                                             
+                                                                                                                              
+        // 3. Consultar inventario existente para pruebas de lectura/actualización en caso de que POST no esté implementado   
+        const listRes = await request(baseUrl)                                                                                
+          .get('/api/inventory')                                                                                              
+          .set(authHeader(adminToken));                                                                                       
+                                                                                                                              
+        if (listRes.status === 200 && Array.isArray(listRes.body.data) && listRes.body.data.length > 0) {                     
+          existingInventoryId = listRes.body.data[0].id;                                                                      
+          originalStock = listRes.body.data[0].stock;                                                                         
+        }                                                                                                                     
+      });                                                                                                                     
+                                                                                                                              
+      afterAll(async () => {                                                                                                  
+        // Restaurar stock original del inventario existente si fue modificado                                                
+        if (existingInventoryId && originalStock !== undefined) {                                                             
+          await request(baseUrl)                                                                                              
+            .put(`/api/inventory/${existingInventoryId}`)                                                                     
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: originalStock });                                                                                  
+        }                                                                                                                     
+                                                                                                                              
+        // Limpieza de recursos creados por la suite en orden inverso: inventario -> variante -> producto                     
+        if (createdInventoryId) {                                                                                             
+          await request(baseUrl)                                                                                              
+            .delete(`/api/inventory/${createdInventoryId}`)                                                                   
+            .set(authHeader(adminToken));                                                                                     
+        }                                                                                                                     
+                                                                                                                              
+        if (suiteVariantId) {                                                                                                 
+          await deleteVariant(suiteVariantId, adminToken);                                                                    
+        }                                                                                                                     
+                                                                                                                              
+        if (suiteProductId) {                                                                                                 
+          await deleteProduct(suiteProductId, adminToken);                                                                    
+        }                                                                                                                     
+      });                                                                                                                     
+                                                                                                                              
+      // Helper para obtener un ID de inventario válido (el creado o el existente)                                            
+      const getActiveInventoryId = () => createdInventoryId || existingInventoryId;                                           
+                                                                                                                              
+      describe('Control de acceso (Autenticación y RBAC)', () => {                                                            
+        test('Petición sin token responde 401 Unauthorized', async () => {                                                    
+          const res = await request(baseUrl).get('/api/inventory');                                                           
+          expect(res.status).toBe(401);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" responde 403 Forbidden al listar inventario (sin permiso en seed)', async () => {        
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory')                                                                                            
+            .set(authHeader(userToken));                                                                                      
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" responde 403 Forbidden al consultar inventario por ID', async () => {                    
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .get(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(userToken));                                                                                      
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" responde 403 Forbidden al actualizar stock de inventario', async () => {                 
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(userToken))                                                                                       
+            .send({ stock: 50 });                                                                                             
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "sales" tiene permisos para listar y actualizar inventario', async () => {                      
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          // Sales puede listar inventario (inventory:read:any)                                                               
+          const listRes = await request(baseUrl)                                                                              
+            .get('/api/inventory')                                                                                            
+            .set(authHeader(salesToken));                                                                                     
+                                                                                                                              
+          expect(listRes.status).toBe(200);                                                                                   
+                                                                                                                              
+          // Sales puede actualizar inventario (inventory:update:any)                                                         
+          const updateRes = await request(baseUrl)                                                                            
+            .put(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(salesToken))                                                                                      
+            .send({ stock: originalStock });                                                                                  
+                                                                                                                              
+          expect(updateRes.status).toBe(200);                                                                                 
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Validación de solicitudes y datos inválidos', () => {                                                         
+        test('Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request', async () => {                
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(adminToken))                                                                                      
+            .set('Content-Type', 'application/json')                                                                          
+            .send('{ "stock": "Invalid JSON Payload');                                                                        
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar inventario con stock negativo responde 400 Bad Request', async () => {                               
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: -10 });                                                                                            
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar inventario con stock no numérico responde 400 Bad Request', async () => {                            
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: 'no-es-un-numero' });                                                                              
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Consultar inventario con ID malformado (no numérico) responde 400 Bad Request', async () => {                   
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory/abc')                                                                                        
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Operaciones CRUD con Admin', () => {                                                                          
+        test('Crear inventario para la variante creada por la suite (POST /api/inventory) responde 201 según el PDF', async ()
+        => {                                                                                                                  
+          expect(suiteVariantId).toBeDefined();                                                                               
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .post('/api/inventory')                                                                                           
+            .set(authHeader(adminToken))                                                                                      
+            .send({                                                                                                           
+              variant_id: suiteVariantId,                                                                                     
+              stock: 40                                                                                                       
+            });                                                                                                               
+                                                                                                                              
+          // El PDF requiere ciclo completo (crear -> 201), aunque la API hoy responda 404 por no tener implementada la ruta  
+          POST                                                                                                                
+          expect(res.status).toBe(201);                                                                                       
+          if (res.body && res.body.data && res.body.data.id) {                                                                
+            createdInventoryId = res.body.data.id;                                                                            
+          }                                                                                                                   
+        });                                                                                                                   
+                                                                                                                              
+        test('Consultar inventario por ID (GET /api/inventory/:id) responde 200', async () => {                               
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .get(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(res.body.data.id).toBe(inventoryId);                                                                         
+          expect(res.body.data).toHaveProperty('stock');                                                                      
+        });                                                                                                                   
+                                                                                                                              
+        test('Listar inventario (GET /api/inventory) responde 200 y devuelve un array', async () => {                         
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory')                                                                                            
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(Array.isArray(res.body.data)).toBe(true);                                                                    
+                                                                                                                              
+          const found = res.body.data.find((item) => item.id === inventoryId);                                                
+          expect(found).toBeDefined();                                                                                        
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar stock de inventario (PUT /api/inventory/:id) responde 200', async () => {                            
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const updatedStock = 75;                                                                                            
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: updatedStock });                                                                                   
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(res.body.data.stock).toBe(updatedStock);                                                                     
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar inventario inexistente responde 404 Not Found', async () => {                                        
+          const res = await request(baseUrl)                                                                                  
+            .put('/api/inventory/999999')                                                                                     
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: 10 });                                                                                             
+                                                                                                                              
+          expect(res.status).toBe(404);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Eliminar inventario (DELETE /api/inventory/:id) responde 200 según el PDF', async () => {                       
+          const inventoryId = createdInventoryId || 999999;                                                                   
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .delete(`/api/inventory/${inventoryId}`)                                                                          
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          // El PDF requiere eliminar (200), aunque la API hoy responda 404 por no tener implementada la ruta DELETE          
+          expect(res.status).toBe(200);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Consultar inventario inexistente responde 404 Not Found', async () => {                                         
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory/999999')                                                                                     
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(404);                                                                                       
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Relación con variante (Inventario devuelve su variante)', () => {                                             
+        test('Consultar inventario por ID (GET /api/inventory/:id) devuelve su variante y producto asociados', async () => {  
+          const inventoryId = getActiveInventoryId();                                                                         
+          expect(inventoryId).toBeDefined();                                                                                  
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .get(`/api/inventory/${inventoryId}`)                                                                             
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(res.body.data).toHaveProperty('variant');                                                                    
+          expect(res.body.data.variant).not.toBeNull();                                                                       
+          expect(res.body.data.variant).toHaveProperty('id');                                                                 
+          expect(res.body.data.variant).toHaveProperty('sku');                                                                
+          expect(res.body.data.variant).toHaveProperty('product');                                                            
+          expect(res.body.data.variant.product).not.toBeNull();                                                               
+        });                                                                                                                   
+                                                                                                                              
+        test('Listar inventario (GET /api/inventory) incluye la variante asociada en cada elemento', async () => {            
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory')                                                                                            
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(Array.isArray(res.body.data)).toBe(true);                                                                    
+          expect(res.body.data.length).toBeGreaterThanOrEqual(1);                                                             
+                                                                                                                              
+          const firstItem = res.body.data[0];                                                                                 
+          expect(firstItem).toHaveProperty('variant');                                                                        
+          expect(firstItem.variant).not.toBeNull();                                                                           
+          expect(firstItem.variant).toHaveProperty('id');                                                                     
+          expect(firstItem.variant).toHaveProperty('sku');                                                                    
+        });                                                                                                                   
+      });                                                                                                                     
+    });                                                                                                                       
+  ──────                                                                                                                      
+  ### 3. Ejecución de la Suite                                                                                                
+                                                                                                                              
+  Comando ejecutado:                                                                                                          
+                                                                                                                              
+    npx jest --config jest.e2e.config.js test/e2e/inventory.e2e.test.js                                                       
+                                                                                                                              
+  Salida del comando:                                                                                                         
+                                                                                                                              
+    FAIL test/e2e/inventory.e2e.test.js                                                                                       
+      E2E Inventory                                                                                                           
+        Control de acceso (Autenticación y RBAC)                                                                              
+          ✓ Petición sin token responde 401 Unauthorized (9 ms)                                                               
+          ✓ Usuario con rol "user" responde 403 Forbidden al listar inventario (sin permiso en seed) (14 ms)                  
+          ✓ Usuario con rol "user" responde 403 Forbidden al consultar inventario por ID (18 ms)                              
+          ✓ Usuario con rol "user" responde 403 Forbidden al actualizar stock de inventario (15 ms)                           
+          ✓ Usuario con rol "sales" tiene permisos para listar y actualizar inventario (26 ms)                                
+        Validación de solicitudes y datos inválidos                                                                           
+          ✓ Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request (20 ms)                          
+          ✓ Actualizar inventario con stock negativo responde 400 Bad Request (18 ms)                                         
+          ✓ Actualizar inventario con stock no numérico responde 400 Bad Request (39 ms)                                      
+          ✓ Consultar inventario con ID malformado (no numérico) responde 400 Bad Request (26 ms)                             
+        Operaciones CRUD con Admin                                                                                            
+          ✕ Crear inventario para la variante creada por la suite (POST /api/inventory) responde 201 según el PDF (19 ms)     
+          ✓ Consultar inventario por ID (GET /api/inventory/:id) responde 200 (14 ms)                                         
+          ✓ Listar inventario (GET /api/inventory) responde 200 y devuelve un array (12 ms)                                   
+          ✓ Actualizar stock de inventario (PUT /api/inventory/:id) responde 200 (58 ms)                                      
+          ✓ Actualizar inventario inexistente responde 404 Not Found (19 ms)                                                  
+          ✕ Eliminar inventario (DELETE /api/inventory/:id) responde 200 según el PDF (26 ms)                                 
+          ✓ Consultar inventario inexistente responde 404 Not Found (16 ms)                                                   
+        Relación con variante (Inventario devuelve su variante)                                                               
+          ✓ Consultar inventario por ID (GET /api/inventory/:id) devuelve su variante y producto asociados (15 ms)            
+          ✓ Listar inventario (GET /api/inventory) incluye la variante asociada en cada elemento (19 ms)                      
+                                                                                                                              
+      ● E2E Inventory › Operaciones CRUD con Admin › Crear inventario para la variante creada por la suite (POST              
+      /api/inventory) responde 201 según el PDF                                                                               
+                                                                                                                              
+        expect(received).toBe(expected) // Object.is equality                                                                 
+                                                                                                                              
+        Expected: 201                                                                                                         
+        Received: 404                                                                                                         
+                                                                                                                              
+          206 |                                                                                                               
+          207 |       // El PDF requiere ciclo completo (crear -> 201), aunque la API hoy responda 404 por no tener           
+          implementada la ruta POST                                                                                           
+        > 208 |       expect(res.status).toBe(201);                                                                           
+              |                          ^                                                                                    
+          209 |       if (res.body && res.body.data && res.body.data.id) {                                                    
+          210 |         createdInventoryId = res.body.data.id;                                                                
+          211 |       }                                                                                                       
+                                                                                                                              
+          at Object.toBe (test/e2e/inventory.e2e.test.js:208:26)                                                              
+                                                                                                                              
+      ● E2E Inventory › Operaciones CRUD con Admin › Eliminar inventario (DELETE /api/inventory/:id) responde 200 según el PDF
+                                                                                                                              
+        expect(received).toBe(expected) // Object.is equality                                                                 
+                                                                                                                              
+        Expected: 200                                                                                                         
+        Received: 404                                                                                                         
+                                                                                                                              
+          274 |                                                                                                               
+          275 |       // El PDF requiere eliminar (200), aunque la API hoy responda 404 por no tener implementada la ruta     
+          DELETE                                                                                                              
+        > 276 |       expect(res.status).toBe(200);                                                                           
+              |                          ^                                                                                    
+          277 |     });                                                                                                       
+          278 |                                                                                                               
+          279 |     test('Consultar inventario inexistente responde 404 Not Found', async () => {                             
+                                                                                                                              
+          at Object.toBe (test/e2e/inventory.e2e.test.js:276:26)                                                              
+                                                                                                                              
+    Test Suites: 1 failed, 1 total                                                                                            
+    Tests:       2 failed, 16 passed, 18 total                                                                                
+    Snapshots:   0 total                                                                                                      
+    Time:        1.543 s                                                                                                      
+    Ran all test suites matching test/e2e/inventory.e2e.test.js.
+
+### Correciones
+Nos dimos cuenta que da errores, son hallazgos sobre el backend. Las dos pruebas que fallan (POST y DELETE) esperan 201 y 200 como pide el PDF, pero el backend no tiene esas rutas (responde 404). Se reportó al equipo y se tomo la decision de pedir las pruebas para que funcionen con lo de nosotros, ya que estaba la sugerencia de dejar a nuestro criterio el CRUD. Y es por eso que se genero un nuevo prompt para que se basara  en lo nuestro en lugar del PDF.
+
+## Prompt 8
+
+Modifica test/e2e/inventory.e2e.test.js para que se base en lo que el backend ya tiene: el inventario solo expone GET
+  /api/inventory, GET /api/inventory/:id y PUT /api/inventory/:id, sin POST ni DELETE. Haz estos cambios sin modificar el
+  backend, helpers.js ni el seed:
+  
+  Elimina las pruebas de crear (POST) y eliminar (DELETE) inventario, y todo el código que dependa de createdInventoryId.
+  Revisa si al crear una variante con POST /api/variants el backend crea su registro de inventario automáticamente. Si lo hace,
+  usa el inventario de la variante creada por la suite en las pruebas de lectura y actualización, y elimina la variante y el
+  producto al final. Si no lo hace, usa un inventario del seed, guarda su stock original en el beforeAll y restáuralo en el
+  afterAll.
+  Conserva y asegura estas pruebas: 401 sin token; user recibe 403 al listar, consultar y actualizar; sales puede listar,
+  consultar y actualizar; stock negativo y no numérico responden 400; id mal formado responde 400; id inexistente responde 404
+  en GET y PUT; listar devuelve un arreglo que contiene el inventario usado; consultar por ID devuelve su variante y el producto
+  de la variante.
+  En la prueba de actualizar, después del PUT haz un GET y comprueba que el nuevo stock quedó guardado.
+  Agrega un comentario al inicio del describe que diga que el recurso no tiene POST ni DELETE por decisión de diseño del equipo.
+  Código sencillo, legible y explícito, sin mocks. Muéstrame los cambios y ejecuta solo esa suite.
+
+  ### Que genero la IA
+
+  Se ha modificado inventory.e2e.test.js ajustándolo al diseño real del backend (GET /api/inventory, GET /api/inventory/:id y 
+  PUT /api/inventory/:id, sin POST ni DELETE).                                                                                
+  ──────                                                                                                                      
+  ### Resumen de Cambios                                                                                                      
+                                                                                                                              
+  1. Revisión de creación automática de inventario:                                                                           
+      • Se comprobó que POST /api/variants no crea automáticamente registros en la tabla inventory (el modelo ni el           
+      controlador incluyen ganchos ni asociaciones automáticas).                                                              
+      • Por tanto, la suite toma un inventario existente del seed (targetInventoryId), respalda su stock original en beforeAll
+      y lo restaura de forma segura en afterAll.                                                                              
+  2. Eliminación de endpoints inexistentes:                                                                                   
+      • Se removieron las pruebas de POST /api/inventory y DELETE /api/inventory/:id, así como las referencias a              
+      createdInventoryId.                                                                                                     
+  3. Persistencia verificada tras actualizar:                                                                                 
+      • En la prueba de actualización, tras ejecutar el PUT /api/inventory/:id se ejecuta inmediatamente un GET               
+      /api/inventory/:id comprobando que el nuevo stock quedó efectivamente guardado.                                         
+  4. Comentario explicativo al inicio del describe:                                                                           
+      • Se documentó que el recurso no expone POST ni DELETE por decisión de diseño del equipo.                               
+  5. Cobertura de pruebas completa:                                                                                           
+      • 401 Unauthorized sin token.                                                                                           
+      • 403 Forbidden para user al listar, consultar y actualizar.                                                            
+      • 200 OK para sales al listar, consultar y actualizar.                                                                  
+      • 400 Bad Request para stock negativo, stock no numérico, ID malformado (/abc) y JSON malformado.                       
+      • 404 Not Found en GET y PUT para ID inexistente (/999999).                                                             
+      • Listar devuelve un arreglo que incluye el inventario utilizado.                                                       
+      • Consultar por ID devuelve la variante asociada y el producto de dicha variante.                                       
+                                                                                                                              
+  ──────                                                                                                                      
+  ### Código Actualizado de test/e2e/inventory.e2e.test.js                                                                    
+                                                                                                                              
+    'use strict';                                                                                                             
+                                                                                                                              
+    const request = require('supertest');                                                                                     
+    const { getBaseUrl, loginAs, authHeader } = require('./helpers');                                                         
+                                                                                                                              
+    describe('E2E Inventory', () => {                                                                                         
+      // NOTA: Por decisión de diseño del equipo, el recurso /api/inventory no expone operaciones POST ni DELETE;             
+      // únicamente permite lectura (GET / y GET /:id) y actualización de stock (PUT /:id).                                   
+                                                                                                                              
+      const baseUrl = getBaseUrl();                                                                                           
+                                                                                                                              
+      let adminToken;                                                                                                         
+      let salesToken;                                                                                                         
+      let userToken;                                                                                                          
+      let targetInventoryId;                                                                                                  
+      let originalStock;                                                                                                      
+                                                                                                                              
+      beforeAll(async () => {                                                                                                 
+        adminToken = await loginAs('admin');                                                                                  
+        salesToken = await loginAs('sales');                                                                                  
+        userToken = await loginAs('user');                                                                                    
+                                                                                                                              
+        // Dado que el backend no crea inventario automáticamente al crear una variante,                                      
+        // se utiliza un inventario existente del seed y se almacena su stock original para restaurarlo.                      
+        const listRes = await request(baseUrl)                                                                                
+          .get('/api/inventory')                                                                                              
+          .set(authHeader(adminToken));                                                                                       
+                                                                                                                              
+        expect(listRes.status).toBe(200);                                                                                     
+        expect(Array.isArray(listRes.body.data)).toBe(true);                                                                  
+        expect(listRes.body.data.length).toBeGreaterThan(0);                                                                  
+                                                                                                                              
+        const seedInventory = listRes.body.data[0];                                                                           
+        targetInventoryId = seedInventory.id;                                                                                 
+        originalStock = seedInventory.stock;                                                                                  
+      });                                                                                                                     
+                                                                                                                              
+      afterAll(async () => {                                                                                                  
+        // Restaurar el stock original del inventario del seed al finalizar la suite                                          
+        if (targetInventoryId && originalStock !== undefined) {                                                               
+          await request(baseUrl)                                                                                              
+            .put(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: originalStock });                                                                                  
+        }                                                                                                                     
+      });                                                                                                                     
+                                                                                                                              
+      describe('Control de acceso (Autenticación y RBAC)', () => {                                                            
+        test('Petición sin token responde 401 Unauthorized', async () => {                                                    
+          const res = await request(baseUrl).get('/api/inventory');                                                           
+          expect(res.status).toBe(401);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" responde 403 Forbidden al listar inventario', async () => {                              
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory')                                                                                            
+            .set(authHeader(userToken));                                                                                      
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" responde 403 Forbidden al consultar inventario por ID', async () => {                    
+          const res = await request(baseUrl)                                                                                  
+            .get(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(userToken));                                                                                      
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" responde 403 Forbidden al actualizar stock de inventario', async () => {                 
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(userToken))                                                                                       
+            .send({ stock: 50 });                                                                                             
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "sales" puede listar inventario', async () => {                                                 
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory')                                                                                            
+            .set(authHeader(salesToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(Array.isArray(res.body.data)).toBe(true);                                                                    
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "sales" puede consultar inventario por ID', async () => {                                       
+          const res = await request(baseUrl)                                                                                  
+            .get(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(salesToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(res.body.data.id).toBe(targetInventoryId);                                                                   
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "sales" puede actualizar stock de inventario', async () => {                                    
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(salesToken))                                                                                      
+            .send({ stock: originalStock });                                                                                  
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Validación de solicitudes y datos inválidos', () => {                                                         
+        test('Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request', async () => {                
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(adminToken))                                                                                      
+            .set('Content-Type', 'application/json')                                                                          
+            .send('{ "stock": "Invalid JSON Payload');                                                                        
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar inventario con stock negativo responde 400 Bad Request', async () => {                               
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: -10 });                                                                                            
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar inventario con stock no numérico responde 400 Bad Request', async () => {                            
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: 'no-es-un-numero' });                                                                              
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Consultar inventario con ID malformado (no numérico) responde 400 Bad Request', async () => {                   
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory/abc')                                                                                        
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Operaciones de lectura y actualización con Admin', () => {                                                    
+        test('Consultar inventario con ID inexistente (GET /api/inventory/:id) responde 404 Not Found', async () => {         
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory/999999')                                                                                     
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(404);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar inventario con ID inexistente (PUT /api/inventory/:id) responde 404 Not Found', async () => {        
+          const res = await request(baseUrl)                                                                                  
+            .put('/api/inventory/999999')                                                                                     
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: 10 });                                                                                             
+                                                                                                                              
+          expect(res.status).toBe(404);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Listar inventario (GET /api/inventory) devuelve un arreglo que contiene el inventario utilizado', async () => { 
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/inventory')                                                                                            
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(Array.isArray(res.body.data)).toBe(true);                                                                    
+                                                                                                                              
+          const found = res.body.data.find((item) => item.id === targetInventoryId);                                          
+          expect(found).toBeDefined();                                                                                        
+          expect(found.id).toBe(targetInventoryId);                                                                           
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar stock (PUT /api/inventory/:id) responde 200 y persiste el nuevo stock al consultar con GET', async ()
+        => {                                                                                                                  
+          const newStock = originalStock + 20;                                                                                
+                                                                                                                              
+          // 1. Actualizar stock mediante PUT                                                                                 
+          const putRes = await request(baseUrl)                                                                               
+            .put(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(adminToken))                                                                                      
+            .send({ stock: newStock });                                                                                       
+                                                                                                                              
+          expect(putRes.status).toBe(200);                                                                                    
+          expect(putRes.body).toHaveProperty('data');                                                                         
+          expect(putRes.body.data.stock).toBe(newStock);                                                                      
+                                                                                                                              
+          // 2. Realizar GET posterior para verificar que el nuevo stock quedó persistido                                     
+          const getRes = await request(baseUrl)                                                                               
+            .get(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(getRes.status).toBe(200);                                                                                    
+          expect(getRes.body).toHaveProperty('data');                                                                         
+          expect(getRes.body.data.stock).toBe(newStock);                                                                      
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Relación con variante (Inventario devuelve su variante y producto)', () => {                                  
+        test('Consultar inventario por ID (GET /api/inventory/:id) devuelve su variante y el producto de la variante', async  
+        () => {                                                                                                               
+          const res = await request(baseUrl)                                                                                  
+            .get(`/api/inventory/${targetInventoryId}`)                                                                       
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(res.body.data.id).toBe(targetInventoryId);                                                                   
+                                                                                                                              
+          // Comprobar que devuelve su variante asociada                                                                      
+          expect(res.body.data).toHaveProperty('variant');                                                                    
+          expect(res.body.data.variant).not.toBeNull();                                                                       
+          expect(res.body.data.variant).toHaveProperty('id');                                                                 
+          expect(res.body.data.variant).toHaveProperty('sku');                                                                
+                                                                                                                              
+          // Comprobar que devuelve el producto asociado a la variante                                                        
+          expect(res.body.data.variant).toHaveProperty('product');                                                            
+          expect(res.body.data.variant.product).not.toBeNull();                                                               
+          expect(res.body.data.variant.product).toHaveProperty('id');                                                         
+          expect(res.body.data.variant.product).toHaveProperty('name');                                                       
+        });                                                                                                                   
+      });                                                                                                                     
+    });                                                                                                                       
+  ──────                                                                                                                      
+  ### Ejecución de la Suite                                                                                                   
+                                                                                                                              
+  Comando:                                                                                                                    
+                                                                                                                              
+    npx jest --config jest.e2e.config.js test/e2e/inventory.e2e.test.js                                                       
+  
+  Resultado:
+  
+    PASS test/e2e/inventory.e2e.test.js
+      E2E Inventory
+        Control de acceso (Autenticación y RBAC)
+          ✓ Petición sin token responde 401 Unauthorized (4 ms)
+          ✓ Usuario con rol "user" responde 403 Forbidden al listar inventario (5 ms)
+          ✓ Usuario con rol "user" responde 403 Forbidden al consultar inventario por ID (5 ms)
+          ✓ Usuario con rol "user" responde 403 Forbidden al actualizar stock de inventario (6 ms)
+          ✓ Usuario con rol "sales" puede listar inventario (7 ms)
+          ✓ Usuario con rol "sales" puede consultar inventario por ID (7 ms)
+          ✓ Usuario con rol "sales" puede actualizar stock de inventario (8 ms)
+        Validación de solicitudes y datos inválidos
+          ✓ Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request (10 ms)
+          ✓ Actualizar inventario con stock negativo responde 400 Bad Request (17 ms)
+          ✓ Actualizar inventario con stock no numérico responde 400 Bad Request (15 ms)
+          ✓ Consultar inventario con ID malformado (no numérico) responde 400 Bad Request (12 ms)
+        Operaciones de lectura y actualización con Admin
+          ✓ Consultar inventario con ID inexistente (GET /api/inventory/:id) responde 404 Not Found (8 ms)
+          ✓ Actualizar inventario con ID inexistente (PUT /api/inventory/:id) responde 404 Not Found (6 ms)
+          ✓ Listar inventario (GET /api/inventory) devuelve un arreglo que contiene el inventario utilizado (7 ms)            
+          ✓ Actualizar stock (PUT /api/inventory/:id) responde 200 y persiste el nuevo stock al consultar con GET (82 ms)     
+        Relación con variante (Inventario devuelve su variante y producto)
+          ✓ Consultar inventario por ID (GET /api/inventory/:id) devuelve su variante y el producto de la variante (14 ms)    
+  
+    Test Suites: 1 passed, 1 total
+    Tests:       16 passed, 16 total
+    Snapshots:   0 total
+    Time:        0.707 s, estimated 1 s
+    Ran all test suites matching test/e2e/inventory.e2e.test.js.
+
+## Prueba ya corregida y aplicada 
+
+npm run test:e2e -- inventory
+
+> stride-co@0.0.0 test:e2e
+> node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.e2e.config.js --runInBand inventory
+
+ PASS  test/e2e/inventory.e2e.test.js
+  E2E Inventory
+    Control de acceso (Autenticación y RBAC)
+      ✓ Petición sin token responde 401 Unauthorized (3 ms)
+      ✓ Usuario con rol "user" responde 403 Forbidden al listar inventario (5 ms)
+      ✓ Usuario con rol "user" responde 403 Forbidden al consultar inventario por ID (7 ms)
+      ✓ Usuario con rol "user" responde 403 Forbidden al actualizar stock de inventario (6 ms)
+      ✓ Usuario con rol "sales" puede listar inventario (22 ms)
+      ✓ Usuario con rol "sales" puede consultar inventario por ID (17 ms)
+      ✓ Usuario con rol "sales" puede actualizar stock de inventario (8 ms)
+    Validación de solicitudes y datos inválidos
+      ✓ Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request (11 ms)
+      ✓ Actualizar inventario con stock negativo responde 400 Bad Request (17 ms)
+      ✓ Actualizar inventario con stock no numérico responde 400 Bad Request (10 ms)
+      ✓ Consultar inventario con ID malformado (no numérico) responde 400 Bad Request (12 ms)
+    Operaciones de lectura y actualización con Admin
+      ✓ Consultar inventario con ID inexistente (GET /api/inventory/:id) responde 404 Not Found (8 ms)
+      ✓ Actualizar inventario con ID inexistente (PUT /api/inventory/:id) responde 404 Not Found (6 ms)
+      ✓ Listar inventario (GET /api/inventory) devuelve un arreglo que contiene el inventario utilizado (10 ms)
+      ✓ Actualizar stock (PUT /api/inventory/:id) responde 200 y persiste el nuevo stock al consultar con GET (23 ms)
+    Relación con variante (Inventario devuelve su variante y producto)
+      ✓ Consultar inventario por ID (GET /api/inventory/:id) devuelve su variante y el producto de la variante (9 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       16 passed, 16 total
+Snapshots:   0 total
+Time:        1.045 s
+Ran all test suites matching inventory.
+
+### Correcciones 
+
+La suite usa data[0] del seed. Si alguien corre las pruebas sin el seed, falla en el beforeAll. Es aceptable, pero ya depende de que npm run seed haya corrido.
+Si la suite se interrumpe a la mitad (por ejemplo, con Ctrl+C), el afterAll puede no ejecutarse y el stock quedaría modificado. En ese caso vuelve a correr el seed o la suite completa.
+
