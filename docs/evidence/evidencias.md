@@ -3155,7 +3155,7 @@ Modifica test/e2e/inventory.e2e.test.js para que se base en lo que el backend ya
     Time:        0.707 s, estimated 1 s
     Ran all test suites matching test/e2e/inventory.e2e.test.js.
 
-## Prueba ya corregida y aplicada 
+### Prueba ya corregida y aplicada 
 
 npm run test:e2e -- inventory
 
@@ -3195,4 +3195,441 @@ Ran all test suites matching inventory.
 
 La suite usa data[0] del seed. Si alguien corre las pruebas sin el seed, falla en el beforeAll. Es aceptable, pero ya depende de que npm run seed haya corrido.
 Si la suite se interrumpe a la mitad (por ejemplo, con Ctrl+C), el afterAll puede no ejecutarse y el stock quedaría modificado. En ese caso vuelve a correr el seed o la suite completa.
+
+## Prompt 9
+
+Genera test/e2e/customers.e2e.test.js con Jest, Supertest y la API real, usando unicamente request(baseUrl) y las funciones de test/e2e/helpers.js, sin modificar helpers.js, el backend ni el seed. Usa test/e2e/products.e2e.test.js como ejemplo de estilo. Primero revisa rutas, controladores, el modelo Mongoose de Customer y los permisos RBAC reales(alcances own y any), y basa las pruebas enn lo que el backend ya tiene. Si una ruta no existe o el backend se comporta distinto de lo habitual (por ejemplo, devuelve 200 con data:null en lugar de 404, o un codigo distinto de 400 en datos invalidos), adapta la prueba al comportamiento real, pero dime exactamente que cambiaste y por que. No elimines pruebas de seguridad (401,403). Cubre, segun lo que exista: crear, consultar por ID, listar, actualizar y eliminar con el rol que tenga permiso, y comprobar que el eliminado ya no existe; datos invalidos; id mal formado (por ejemplo un ObjectId invalido); sin token(401); user intentando ver o modificar el cliente de otro (403) y user accediendo a su propio cliente si el RBAC lo permite; y que el cliente no exponga datos que no deberia. Usa datos unicos (por ejemplo un email con Date.now()), no toques los clientes del seed y limpia solo los que cree la suite con deleteCustomer o con request(baseUrl). Codigo sencillo, legible y explicito, sin mocks. Muestrame los cambios y ejecuta solo esa suite.
+
+### Que genero la IA
+
+Se ha generado la suite de pruebas E2E customers.e2e.test.js con Jest y Supertest contra la API real, utilizando únicamente 
+  request(baseUrl) y las funciones existentes de helpers.js (sin modificar el backend, helpers.js ni el seed).                
+  ──────                                                                                                                      
+  ### 1. Revisión de Rutas, Controladores, Modelo Mongoose y RBAC                                                             
+                                                                                                                              
+  • Rutas y Alcances (customers.js):                                                                                          
+      • POST /api/customers → authorize('customers', 'create', 'any')                                                         
+      • GET /api/customers → authorize('customers', 'read', 'any')                                                            
+      • GET /api/customers/:id → authorize('customers', 'read', 'own', getCustomerOwnerId)                                    
+      • PUT /api/customers/:id → authorize('customers', 'update', 'own', getCustomerOwnerId)                                  
+      • DELETE /api/customers/:id → authorize('customers', 'delete', 'any')                                                   
+  • Modelo Mongoose (customer.js):                                                                                            
+      • Campos: userId (número, requerido), phone (string), email (string), addresses (arreglo embebido).                     
+  • Controlador (customers.js):                                                                                               
+      • Funciones: create (201), list (200), find (200 / 404), update (200 / 404), destroy (200 / 404).                       
+  • Permisos RBAC reales en el seed (seed-rbac.js):                                                                           
+      • Rol admin: Posee permisos customers:*:any (crear, leer, actualizar y eliminar).                                       
+      • Rol sales: Posee customers:create:any, customers:read:any, customers:update:any. No tiene delete:any (recibe 403 al   
+      intentar eliminar).                                                                                                     
+      • Rol user: Posee customers:read:own y customers:update:own. No tiene permisos any (recibe 403 al listar, crear o       
+      eliminar).                                                                                                              
+  • Comprobación de Propiedad (own vs foreign):                                                                               
+      • El middleware checkOwnership.js evalúa si customer.userId === req.user.id.                                            
+      • Si el cliente pertenece al usuario autenticado, user tiene acceso (200 OK).                                           
+      • Si el cliente pertenece a otro usuario (foreign), user recibe 403 Forbidden.                                          
+                                                                                                                              
+  ──────                                                                                                                      
+  ### 2. Adaptaciones al Comportamiento Real del Backend                                                                      
+                                                                                                                              
+  1. ID malformado (ObjectId no válido):                                                                                      
+      • En routes/customers.js, el middleware getCustomerOwnerId valida previamente mongoose.isValidObjectId(req.params.id).  
+      Al recibir un identificador malformado (p. ej. 123invalid), retorna null, por lo que el middleware de autorización RBAC 
+      responde de forma segura con 403 Forbidden antes de invocar la consulta de Mongoose. La prueba valida este              
+      comportamiento real de seguridad.                                                                                       
+  2. Datos inválidos (cuerpo de solicitud):                                                                                   
+      • Se envía un payload con JSON malformado (sintaxis rota con cabecera application/json), el cual es interceptado por el 
+      middleware de parsing respondiendo 400 Bad Request.                                                                     
+  3. Verificación de eliminación:                                                                                             
+      • Tras eliminar con DELETE /api/customers/:id (200 OK), se comprueba que el cliente ya no exista en el listado general  
+      GET /api/customers.                                                                                                     
+  4. Seguridad de datos:                                                                                                      
+      • Se verifica que las respuestas nunca expongan atributos sensibles (password_hash, salt_key o password).               
+  5. Aislamiento del seed:                                                                                                    
+      • La suite crea sus propios registros de clientes con identificadores y correos dinámicos (Date.now()), garantizando no 
+      alterar los datos existentes del seed y limpiando únicamente lo generado mediante afterAll.                             
+                                                                                                                              
+  ──────                                                                                                                      
+  ### 3. Código de test/e2e/customers.e2e.test.js                                                                             
+                                                                                                                              
+    'use strict';                                                                                                             
+                                                                                                                              
+    const request = require('supertest');                                                                                     
+    const { getBaseUrl, loginAs, authHeader, deleteCustomer } = require('./helpers');                                         
+                                                                                                                              
+    describe('E2E Customers', () => {                                                                                         
+      const baseUrl = getBaseUrl();                                                                                           
+                                                                                                                              
+      let adminToken;                                                                                                         
+      let salesToken;                                                                                                         
+      let userToken;                                                                                                          
+      let currentUserId;                                                                                                      
+                                                                                                                              
+      let createdCustomerId;                                                                                                  
+      let ownCustomerId;                                                                                                      
+      let foreignCustomerId;                                                                                                  
+                                                                                                                              
+      beforeAll(async () => {                                                                                                 
+        adminToken = await loginAs('admin');                                                                                  
+        salesToken = await loginAs('sales');                                                                                  
+        userToken = await loginAs('user');                                                                                    
+                                                                                                                              
+        // Obtener información del usuario autenticado para asociar recursos de prueba por propiedad (own)                    
+        const meRes = await request(baseUrl)                                                                                  
+          .get('/api/auth/me')                                                                                                
+          .set(authHeader(userToken));                                                                                        
+                                                                                                                              
+        expect(meRes.status).toBe(200);                                                                                       
+        currentUserId = meRes.body.id;                                                                                        
+      });                                                                                                                     
+                                                                                                                              
+      afterAll(async () => {                                                                                                  
+        // Limpieza exclusiva de registros creados por la suite                                                               
+        if (createdCustomerId) {                                                                                              
+          await deleteCustomer(createdCustomerId, adminToken);                                                                
+        }                                                                                                                     
+        if (ownCustomerId) {                                                                                                  
+          await deleteCustomer(ownCustomerId, adminToken);                                                                    
+        }                                                                                                                     
+        if (foreignCustomerId) {                                                                                              
+          await deleteCustomer(foreignCustomerId, adminToken);                                                                
+        }                                                                                                                     
+      });                                                                                                                     
+                                                                                                                              
+      describe('Control de acceso (Autenticación y RBAC)', () => {                                                            
+        test('Petición sin token responde 401 Unauthorized', async () => {                                                    
+          const res = await request(baseUrl).get('/api/customers');                                                           
+          expect(res.status).toBe(401);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario sin permisos suficientes (user) responde 403 Forbidden al listar clientes', async () => {               
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/customers')                                                                                            
+            .set(authHeader(userToken));                                                                                      
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario sin permisos suficientes (user) responde 403 Forbidden al crear cliente', async () => {                 
+          const res = await request(baseUrl)                                                                                  
+            .post('/api/customers')                                                                                           
+            .set(authHeader(userToken))                                                                                       
+            .send({                                                                                                           
+              userId: currentUserId,                                                                                          
+              email: `forbidden_user_${Date.now()}@stride.test`                                                               
+            });                                                                                                               
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuarios sin permisos de eliminación (sales y user) responden 403 Forbidden al eliminar cliente', async () => { 
+          // 1. Crear un cliente temporal con admin                                                                           
+          const tempEmail = `customer_delete_rbac_${Date.now()}@stride.test`;                                                 
+          const tempRes = await request(baseUrl)                                                                              
+            .post('/api/customers')                                                                                           
+            .set(authHeader(adminToken))                                                                                      
+            .send({                                                                                                           
+              userId: 999,                                                                                                    
+              phone: '5550001111',                                                                                            
+              email: tempEmail                                                                                                
+            });                                                                                                               
+                                                                                                                              
+          expect(tempRes.status).toBe(201);                                                                                   
+          const tempId = tempRes.body.data._id;                                                                               
+                                                                                                                              
+          try {                                                                                                               
+            // 2. Intentar eliminar con user -> 403                                                                           
+            const userDelRes = await request(baseUrl)                                                                         
+              .delete(`/api/customers/${tempId}`)                                                                             
+              .set(authHeader(userToken));                                                                                    
+            expect(userDelRes.status).toBe(403);                                                                              
+                                                                                                                              
+            // 3. Intentar eliminar con sales -> 403 (sales solo tiene create, read, update en seed)                          
+            const salesDelRes = await request(baseUrl)                                                                        
+              .delete(`/api/customers/${tempId}`)                                                                             
+              .set(authHeader(salesToken));                                                                                   
+            expect(salesDelRes.status).toBe(403);                                                                             
+          } finally {                                                                                                         
+            // 4. Eliminar el cliente temporal con admin                                                                      
+            await deleteCustomer(tempId, adminToken);                                                                         
+          }                                                                                                                   
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "sales" tiene permisos para listar y crear clientes (alcance any)', async () => {               
+          // Sales lista clientes                                                                                             
+          const listRes = await request(baseUrl)                                                                              
+            .get('/api/customers')                                                                                            
+            .set(authHeader(salesToken));                                                                                     
+                                                                                                                              
+          expect(listRes.status).toBe(200);                                                                                   
+          expect(Array.isArray(listRes.body.data)).toBe(true);                                                                
+                                                                                                                              
+          // Sales crea cliente                                                                                               
+          const salesEmail = `sales_created_${Date.now()}@stride.test`;                                                       
+          const createRes = await request(baseUrl)                                                                            
+            .post('/api/customers')                                                                                           
+            .set(authHeader(salesToken))                                                                                      
+            .send({                                                                                                           
+              userId: 777,                                                                                                    
+              phone: '5557778888',                                                                                            
+              email: salesEmail                                                                                               
+            });                                                                                                               
+                                                                                                                              
+          expect(createRes.status).toBe(201);                                                                                 
+          await deleteCustomer(createRes.body.data._id, adminToken);                                                          
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Control de acceso por propiedad (Alcance own vs foreign)', () => {                                            
+        test('Usuario con rol "user" puede consultar su propio cliente (GET /api/customers/:id) responde 200', async () => {  
+          expect(currentUserId).toBeDefined();                                                                                
+                                                                                                                              
+          const ownEmail = `own_customer_${Date.now()}@stride.test`;                                                          
+          const createRes = await request(baseUrl)                                                                            
+            .post('/api/customers')                                                                                           
+            .set(authHeader(adminToken))                                                                                      
+            .send({                                                                                                           
+              userId: currentUserId,                                                                                          
+              phone: '5551112222',                                                                                            
+              email: ownEmail                                                                                                 
+            });                                                                                                               
+                                                                                                                              
+          expect(createRes.status).toBe(201);                                                                                 
+          ownCustomerId = createRes.body.data._id;                                                                            
+                                                                                                                              
+          // El usuario consulta su propio cliente                                                                            
+          const getRes = await request(baseUrl)                                                                               
+            .get(`/api/customers/${ownCustomerId}`)                                                                           
+            .set(authHeader(userToken));                                                                                      
+                                                                                                                              
+          expect(getRes.status).toBe(200);                                                                                    
+          expect(getRes.body).toHaveProperty('data');                                                                         
+          expect(getRes.body.data._id).toBe(ownCustomerId);                                                                   
+          expect(getRes.body.data.userId).toBe(currentUserId);                                                                
+          expect(getRes.body.data.email).toBe(ownEmail);                                                                      
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" puede actualizar su propio cliente (PUT /api/customers/:id) responde 200', async () => { 
+          expect(ownCustomerId).toBeDefined();                                                                                
+                                                                                                                              
+          const updatedPhone = '5559998888';                                                                                  
+          const updateRes = await request(baseUrl)                                                                            
+            .put(`/api/customers/${ownCustomerId}`)                                                                           
+            .set(authHeader(userToken))                                                                                       
+            .send({                                                                                                           
+              phone: updatedPhone                                                                                             
+            });                                                                                                               
+                                                                                                                              
+          expect(updateRes.status).toBe(200);                                                                                 
+          expect(updateRes.body).toHaveProperty('data');                                                                      
+          expect(updateRes.body.data.phone).toBe(updatedPhone);                                                               
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" responde 403 Forbidden al consultar el cliente de otro usuario', async () => {           
+          // Cliente asociado a un usuario distinto (foreign)                                                                 
+          const foreignEmail = `foreign_customer_${Date.now()}@stride.test`;                                                  
+          const createRes = await request(baseUrl)                                                                            
+            .post('/api/customers')                                                                                           
+            .set(authHeader(adminToken))                                                                                      
+            .send({                                                                                                           
+              userId: 99999,                                                                                                  
+              phone: '5553334444',                                                                                            
+              email: foreignEmail                                                                                             
+            });                                                                                                               
+                                                                                                                              
+          expect(createRes.status).toBe(201);                                                                                 
+          foreignCustomerId = createRes.body.data._id;                                                                        
+                                                                                                                              
+          // User intenta consultar cliente ajeno                                                                             
+          const getRes = await request(baseUrl)                                                                               
+            .get(`/api/customers/${foreignCustomerId}`)                                                                       
+            .set(authHeader(userToken));                                                                                      
+                                                                                                                              
+          expect(getRes.status).toBe(403);                                                                                    
+        });                                                                                                                   
+                                                                                                                              
+        test('Usuario con rol "user" responde 403 Forbidden al actualizar el cliente de otro usuario', async () => {          
+          expect(foreignCustomerId).toBeDefined();                                                                            
+                                                                                                                              
+          // User intenta actualizar cliente ajeno                                                                            
+          const putRes = await request(baseUrl)                                                                               
+            .put(`/api/customers/${foreignCustomerId}`)                                                                       
+            .set(authHeader(userToken))                                                                                       
+            .send({                                                                                                           
+              phone: '5550000000'                                                                                             
+            });                                                                                                               
+                                                                                                                              
+          expect(putRes.status).toBe(403);                                                                                    
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Validación de solicitudes y datos inválidos', () => {                                                         
+        test('Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request', async () => {                
+          const res = await request(baseUrl)                                                                                  
+            .post('/api/customers')                                                                                           
+            .set(authHeader(adminToken))                                                                                      
+            .set('Content-Type', 'application/json')                                                                          
+            .send('{ "email": "malformed_json');                                                                              
+                                                                                                                              
+          expect(res.status).toBe(400);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Consultar cliente con ID malformado (ObjectId no válido) con rol user responde 403 Forbidden por                
+        checkOwnership', async () => {                                                                                        
+          // El middleware getCustomerOwnerId comprueba mongoose.isValidObjectId.                                             
+          // Al ser inválido, retorna null y la autorización rechaza la petición con 403 sin invocar Mongoose.                
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/customers/123invalid')                                                                                 
+            .set(authHeader(userToken));                                                                                      
+                                                                                                                              
+          expect(res.status).toBe(403);                                                                                       
+        });                                                                                                                   
+      });                                                                                                                     
+                                                                                                                              
+      describe('Operaciones CRUD y verificación de seguridad con Admin', () => {                                              
+        test('Crear cliente (POST /api/customers) responde 201 y no expone credenciales ni datos sensibles', async () => {    
+          const uniqueEmail = `customer_e2e_${Date.now()}@stride.test`;                                                       
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .post('/api/customers')                                                                                           
+            .set(authHeader(adminToken))                                                                                      
+            .send({                                                                                                           
+              userId: 50,                                                                                                     
+              phone: '5554443333',                                                                                            
+              email: uniqueEmail,                                                                                             
+              addresses: [{                                                                                                   
+                type: 'shipping',                                                                                             
+                street: 'Av. Siempre Viva 742',                                                                               
+                city: 'Chihuahua',                                                                                            
+                country: 'Mexico'                                                                                             
+              }]                                                                                                              
+            });                                                                                                               
+                                                                                                                              
+          expect(res.status).toBe(201);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(res.body.data).toHaveProperty('_id');                                                                        
+          expect(res.body.data.email).toBe(uniqueEmail);                                                                      
+                                                                                                                              
+          // Comprobar que no expone datos sensibles                                                                          
+          expect(res.body.data).not.toHaveProperty('password_hash');                                                          
+          expect(res.body.data).not.toHaveProperty('salt_key');                                                               
+          expect(res.body.data).not.toHaveProperty('password');                                                               
+                                                                                                                              
+          createdCustomerId = res.body.data._id;                                                                              
+        });                                                                                                                   
+                                                                                                                              
+        test('Consultar cliente por ID (GET /api/customers/:id) responde 200', async () => {                                  
+          expect(createdCustomerId).toBeDefined();                                                                            
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .get(`/api/customers/${createdCustomerId}`)                                                                       
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(res.body.data._id).toBe(createdCustomerId);                                                                  
+        });                                                                                                                   
+                                                                                                                              
+        test('Listar clientes (GET /api/customers) responde 200 y contiene el cliente creado', async () => {                  
+          expect(createdCustomerId).toBeDefined();                                                                            
+                                                                                                                              
+          const res = await request(baseUrl)                                                                                  
+            .get('/api/customers')                                                                                            
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(Array.isArray(res.body.data)).toBe(true);                                                                    
+                                                                                                                              
+          const found = res.body.data.find((c) => c._id === createdCustomerId);                                               
+          expect(found).toBeDefined();                                                                                        
+        });                                                                                                                   
+                                                                                                                              
+        test('Actualizar cliente (PUT /api/customers/:id) responde 200', async () => {                                        
+          expect(createdCustomerId).toBeDefined();                                                                            
+                                                                                                                              
+          const updatedPhone = '5558889999';                                                                                  
+          const res = await request(baseUrl)                                                                                  
+            .put(`/api/customers/${createdCustomerId}`)                                                                       
+            .set(authHeader(adminToken))                                                                                      
+            .send({                                                                                                           
+              phone: updatedPhone                                                                                             
+            });                                                                                                               
+                                                                                                                              
+          expect(res.status).toBe(200);                                                                                       
+          expect(res.body).toHaveProperty('data');                                                                            
+          expect(res.body.data.phone).toBe(updatedPhone);                                                                     
+        });                                                                                                                   
+                                                                                                                              
+        test('Eliminar cliente (DELETE /api/customers/:id) responde 200', async () => {                                       
+          expect(createdCustomerId).toBeDefined();                                                                            
+                                                                                                                              
+          const res = await deleteCustomer(createdCustomerId, adminToken);                                                    
+          expect(res.status).toBe(200);                                                                                       
+        });                                                                                                                   
+                                                                                                                              
+        test('Verificar que el cliente eliminado ya no existe en el sistema', async () => {                                   
+          expect(createdCustomerId).toBeDefined();                                                                            
+                                                                                                                              
+          // Al listar clientes con Admin, el cliente eliminado ya no se encuentra                                            
+          const listRes = await request(baseUrl)                                                                              
+            .get('/api/customers')                                                                                            
+            .set(authHeader(adminToken));                                                                                     
+                                                                                                                              
+          expect(listRes.status).toBe(200);                                                                                   
+          const found = listRes.body.data.find((c) => c._id === createdCustomerId);                                           
+          expect(found).toBeUndefined();                                                                                      
+                                                                                                                              
+          // Resetear para evitar re-intento de eliminación en afterAll                                                       
+          createdCustomerId = null;                                                                                           
+        });                                                                                                                   
+      });                                                                                                                     
+    });                                                                                                                       
+  ──────                                                                                                                      
+  ### 4. Ejecución de la Suite                                                                                                
+                                                                                                                              
+  Comando ejecutado:                                                                                                          
+                                                                                                                              
+    npx jest --config jest.e2e.config.js test/e2e/customers.e2e.test.js                                                       
+                                                                                                                              
+  Salida de la ejecución:                                                                                                     
+                                                                                                                              
+    PASS test/e2e/customers.e2e.test.js                                                                                       
+      E2E Customers                                                                                                           
+        Control de acceso (Autenticación y RBAC)                                                                              
+          ✓ Petición sin token responde 401 Unauthorized (6 ms)                                                               
+          ✓ Usuario sin permisos suficientes (user) responde 403 Forbidden al listar clientes (6 ms)                          
+          ✓ Usuario sin permisos suficientes (user) responde 403 Forbidden al crear cliente (9 ms)                            
+          ✓ Usuarios sin permisos de eliminación (sales y user) responden 403 Forbidden al eliminar cliente (50 ms)           
+          ✓ Usuario con rol "sales" tiene permisos para listar y crear clientes (alcance any) (32 ms)                         
+        Control de acceso por propiedad (Alcance own vs foreign)                                                              
+          ✓ Usuario con rol "user" puede consultar su propio cliente (GET /api/customers/:id) responde 200 (31 ms)            
+          ✓ Usuario con rol "user" puede actualizar su propio cliente (PUT /api/customers/:id) responde 200 (16 ms)           
+          ✓ Usuario con rol "user" responde 403 Forbidden al consultar el cliente de otro usuario (38 ms)                     
+          ✓ Usuario con rol "user" responde 403 Forbidden al actualizar el cliente de otro usuario (21 ms)                    
+        Validación de solicitudes y datos inválidos
+          ✓ Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request (25 ms)
+          ✓ Consultar cliente con ID malformado (ObjectId no válido) con rol user responde 403 Forbidden por checkOwnership   
+          (12 ms)
+        Operaciones CRUD y verificación de seguridad con Admin
+          ✓ Crear cliente (POST /api/customers) responde 201 y no expone credenciales ni datos sensibles (33 ms)
+          ✓ Consultar cliente por ID (GET /api/customers/:id) responde 200 (23 ms)
+          ✓ Listar clientes (GET /api/customers) responde 200 y contiene el cliente creado (12 ms)
+          ✓ Actualizar cliente (PUT /api/customers/:id) responde 200 (11 ms)
+          ✓ Eliminar cliente (DELETE /api/customers/:id) responde 200 (10 ms)
+          ✓ Verificar que el cliente eliminado ya no existe en el sistema (13 ms)
+  
+    Test Suites: 1 passed, 1 total
+    Tests:       17 passed, 17 total
+    Snapshots:   0 total
+    Time:        1.092 s
+    Ran all test suites matching test/e2e/customers.e2e.test.js.
+
+### Correcciones
+
+1. Datos inválidos solo con JSON malformado. Es el mismo punto débil que tenía products al principio: Express lo rechaza antes de llegar a tu código, así que no prueba que la API valide nada. Falta, por ejemplo, un POST sin userId (obligatorio en el modelo), que debería dar 400 gracias al arreglo de app.js (los ValidationError de Mongoose se mapean a 400).
+
+2. El ID malformado solo se prueba con user. Ahí da 403, porque el middleware de propiedad rechaza antes de llegar a la base. Es un comportamiento seguro y está bien documentado, pero no cubre lo que pide el PDF (id mal formado: 400). Con admin la petición sí llega al controlador, Mongoose lanza un CastError y debería responder 400. Esa prueba falta.
+
+3. El “ya no existe” se comprueba solo con el listado. Después de borrar, falta un GET /api/customers/:id que responda 404. También faltan GET y PUT sobre un ObjectId válido pero inexistente (por ejemplo 000000000000000000000000), que el controlador debería responder con 404.
+
 
