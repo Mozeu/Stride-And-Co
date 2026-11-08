@@ -9,11 +9,11 @@
 | **Carrera** | Ingeniería en Computación |
 | **Materia** | Desarrollo de Aplicaciones Web |
 | **Docente** | Mtro. Luis Antonio Ramírez Martínez |
-| **Actividad** | Proyecto 1: Configuración Inicial del Backend  |
+| **Actividad** | Proyecto 2: Backend completo, internacionalizado y desplegado sin costo  |
 | **Equipo** | Equipo 3 |
 | **Alumnos** | Kevin Andrés Rosales Rodríguez<br>Edwin Noé Zaragoza Alvarado<br>Nohemí Posada Atayde<br>Manuel Ramirez Contreras |
 | **Matrículas** | 385814<br>385609<br>385520<br>385703 |
-| **Fecha de entrega** | 20/09/2026 |
+| **Fecha de entrega** | 08/11/2026 |
 
 ## Descripción
 
@@ -45,6 +45,7 @@ HTTP Request -> Express -> Route -> Controller -> Sequelize/Mongoose -> Database
 - Node.js
 - Express.js
 - JavaScript
+- Pug
 
 ### Base de datos
 - PostgreSQL con Sequelize
@@ -54,6 +55,11 @@ HTTP Request -> Express -> Route -> Controller -> Sequelize/Mongoose -> Database
 - JWT
 - express-jwt
 - bcrypt
+- AccessControl
+
+### Configuración y utilidades
+- Config
+- i18N
 
 ### Herramientas y calidad
 - Jest
@@ -177,7 +183,7 @@ JWT, PostgreSQL, MongoDB y bcrypt obtienen sus parametros mediante `config.get()
 Los comandos y requisitos de las suites se describen en la sección
 [Pruebas](#pruebas).
 
-### Produccion y Docker
+### API Publica: Produccion y Docker
 
 El despliegue de producción utiliza Docker y Render.
 
@@ -197,13 +203,11 @@ demostración y sus credenciales están documentados en la
 
 | Servicio | Plan | Región | Detalles |
 |---|---|---|---|
-| Render PostgreSQL | Gratuito | Oregon (US West) | Fecha de creación reportada: 11 de noviembre de 2026 (por confirmar); fecha de caducidad: 4 de diciembre de 2026 |
+| Render PostgreSQL | Gratuito | Oregon (US West) | Fecha de creación reportada: 4 de noviembre de 2026 (por confirmar); fecha de caducidad: 4 de diciembre de 2026 |
 | MongoDB Atlas | Cluster gratuito | AWS, Oregon (`us-west-2`) | Network Access permite `0.0.0.0/0` porque el plan gratuito de Render no tiene IP fija de salida |
 
-La fecha de creación de PostgreSQL indicada (11 de noviembre de 2026) es
-posterior a la fecha actual de esta documentación y conviene confirmarla en el
-panel de Render. La regla `0.0.0.0/0` permite conexiones desde cualquier IP;
-mantén las credenciales de MongoDB privadas y limita los permisos de la cuenta
+La regla `0.0.0.0/0` permite conexiones desde cualquier IP por ello se
+mantiene las credenciales de MongoDB privadas y limita los permisos de la cuenta
 de base de datos.
 
 ##### Secretos de producción
@@ -343,9 +347,6 @@ PUT    /api/products/:id
 DELETE /api/products/:id
 ```
 
-Las rutas de productos y sus permisos RBAC están definidos; el controlador
-actual todavía responde con datos simulados y no persiste productos.
-
 ### Variantes
 
 ```text
@@ -382,10 +383,6 @@ GET    /api/orders/:id
 POST   /api/orders
 PUT    /api/orders/:id
 ```
-
-Los pedidos y clientes usan modelos de MongoDB. La creación y el listado de
-pedidos consultan la base; la búsqueda individual y la actualización siguen
-siendo respuestas simuladas.
 
 ## Autenticación
 
@@ -582,6 +579,17 @@ Los permisos no están escritos en el código. `middleware/authorize.js` consult
 
 Estas contraseñas son exclusivas de estas cuentas de demostración y no se usan en ningún otro lugar.
 
+## Internacionalización (i18n)
+
+La API responde en español (`es`) y en inglés (`en`) con la librería `i18n`. Los textos están en `locales/es.json` y `locales/en.json`, organizados por recurso, y en el código se traducen con `req.__('clave')`.
+
+**Cómo se elige el idioma:** `?lang=es`, luego el header `Accept-Language`, y si no hay ninguno, el idioma por defecto. Un idioma no soportado (por ejemplo `fr`) responde en el idioma por defecto, y las variantes regionales (`es-MX`) se resuelven al idioma base (`es`).
+
+**Cómo agregar un idioma:**
+1. Crear `locales/<codigo>.json` con las mismas claves que `en.json`.
+2. Agregar el código a `locales` en `config/i18n.js`.
+3. Reiniciar la API. Una prueba comprueba que todos los archivos tengan las mismas claves.
+
 ## Pruebas
 
 El proyecto utiliza Jest y Supertest. Hay tres suites diferentes:
@@ -767,10 +775,13 @@ POST /api/products 201
 Stride-And-Co/
 ├── app.js
 ├── Dockerfile
-├── eslint.config.js
-├── package.json
 ├── README.md
-├── README_ACTUALIZADO.md
+├── eslint.config.js
+├── jest.config.js
+├── jest.e2e.config.js
+├── jest.integration.config.js
+├── package.json
+├── package-lock.json
 ├── bin/
 │   └── www
 ├── config/
@@ -795,19 +806,31 @@ Stride-And-Co/
 │   ├── roles.js
 │   ├── users.js
 │   └── variants.js
+├── docs/
+│   ├── evidence/
+│   │   ├── Evidencia1.png
+│   │   └── evidencias.md
+│   └── e2e-antigravity.md
+├── locales/
+│   ├── en.json
+│   └── es.json
 ├── middleware/
 │   └── authenticate.js
 │   └── authorize.js
 ├── models/
-│   ├── documents/
+│   ├── mongo/
 │   │   ├── customer.js
 │   │   ├── index.js
-│   │   └── order.js
-│   └── relationals/
-│       ├── index.js
+│   │   ├── order.js
+│   │   └── product.js
+│   └── sql/
+│       ├── inventory.js
 │       ├── Permissions.js
+│       ├── Product.js
 │       ├── Roles.js
-│       └── User.js
+│       ├── User.js
+│       ├── Variant.js
+│       └── index.js
 ├── public/
 │   └── stylesheets/
 │       └── style.css
@@ -823,8 +846,11 @@ Stride-And-Co/
 │   ├── users.js
 │   └── variants.js
 ├── scripts/
-│   └── create-admin.js
-│   └── seed-rbac.js
+│   ├── create-admin.js
+│   ├── seed-rbac.js
+│   ├── seed.js
+│   ├── setup-local.js
+│   └── setup-test.js
 ├── tests/
 │   ├── e2e/
 │   │   ├── auth.e2e.test.js
@@ -841,13 +867,19 @@ Stride-And-Co/
 │   │   ├── users.e2e.test.js
 │   │   └── variants.e2e.test.js
 │   ├── helpers/
+│   │   └── authenticated-request.js
 │   ├── integration/
+│   │   └── auth-rbac.integration.test.js
+│   ├── auth.test.js
+│   ├── config.test.js
 │   ├── customers.test.js
+│   ├── i18n.test.js
 │   ├── inventory.test.js
 │   ├── orders.test.js
 │   ├── permissions.test.js
 │   ├── products.test.js
 │   ├── roles.test.js
+│   ├── security.test.js
 │   ├── setup-unit.js
 │   ├── users.test.js
 │   └── variants.test.js
