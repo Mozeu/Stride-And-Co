@@ -6,6 +6,8 @@
     "start": "node ./bin/www",
     "dev": "supervisor ./bin/www",
     "seed": "node scripts/seed.js",
+    "setup:local": "node scripts/setup-local.js",
+    "setup:test": "node scripts/setup-test.js",
     "lint": "eslint .",
     "test": "npm run test:unit",
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",
