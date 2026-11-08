@@ -3633,3 +3633,496 @@ Se ha generado la suite de pruebas E2E customers.e2e.test.js con Jest y Supertes
 3. El “ya no existe” se comprueba solo con el listado. Después de borrar, falta un GET /api/customers/:id que responda 404. También faltan GET y PUT sobre un ObjectId válido pero inexistente (por ejemplo 000000000000000000000000), que el controlador debería responder con 404.
 
 
+
+## Prompt 10
+
+Genera test/e2e/orders.e2e.test.js con Jest, Supertest y la API real, usando únicamente request(baseUrl) y las funciones de test/e2e/helpers.js, sin modificar helpers.js, el backend ni el seed. Usa test/e2e/customers.e2e.test.js y test/e2e/products.e2e.test.js como referencia de estilo. Primero analiza rutas (routes/orders.js), controladores (controllers/orders.js), el modelo Mongoose de Order (models/mongo/order.js) y los permisos RBAC reales (alcances own y any) junto con el middleware de pertenencia (utils/checkOwnership.js). Basa las pruebas en lo que el backend realmente tiene: si una ruta no existe (como DELETE /api/orders/:id por motivos de diseño o auditoría), adapta la prueba al comportamiento real y documenta por qué. Cubre exhaustivamente:
+- Control de acceso (Autenticación y RBAC): 401 sin token y con token inválido; usuario con rol "user" recibe 403 al listar todas las órdenes (no tiene orders:read:any); roles con any (sales y admin) reciben 200 al listar; user recibe 403 al intentar crear una orden para un cliente ajeno; user recibe 403 al consultar o actualizar una orden de otro usuario.
+- Control de acceso por propiedad (Alcance own): user puede consultar su propia orden (200), actualizar su propia orden (200), y crear una orden para su propio cliente (201).
+- Validación de solicitudes y datos inválidos: cuerpo JSON malformado (400), creación sin customerId obligatorio (400), ID malformado (ObjectId no válido) con admin (400) y con user (403 por checkOwnership), ObjectId inexistente en GET y PUT (404).
+- Operaciones del ciclo de vida y verificación de relaciones con Admin: crear orden (201), consultar orden por ID (200) verificando que customerId esté poblado como objeto (populate de Mongoose), listar órdenes (200), actualizar orden (200), y comprobar que DELETE responde 404 por no estar expuesto en el diseño.
+- Seguridad de datos: verificar que nunca se expongan credenciales ni campos sensibles (password_hash, salt_key, password).
+- Aislamiento y restauración del seed: identifica las órdenes y clientes existentes del seed para las comprobaciones de propiedad, y restaura cualquier modificación en afterAll para garantizar idempotencia. Código sencillo, legible y explícito, sin mocks. Muéstrame los cambios y ejecuta solo esa suite.
+
+### Que genero la IA
+
+Se ha generado la suite de pruebas E2E orders.e2e.test.js con Jest y Supertest contra la API real, utilizando únicamente
+  request(baseUrl) y las funciones existentes de helpers.js (sin modificar el backend, helpers.js ni el seed).
+  ──────
+  ### 1. Revisión de Rutas, Controladores, Modelo Mongoose y RBAC
+
+  • Rutas y Alcances (orders.js):
+      • POST /api/orders → authorize('orders', 'create', 'own', getBodyCustomerOwnerId)
+      • GET /api/orders → authorize('orders', 'read', 'any')
+      • GET /api/orders/:id → authorize('orders', 'read', 'own', getOrderOwnerId)
+      • PUT /api/orders/:id → authorize('orders', 'update', 'own', getOrderOwnerId)
+      • Nota: No existe ruta DELETE /api/orders/:id registrada en el enrutador.
+  • Modelo Mongoose (order.js):
+      • Campos: customerId (ObjectId referenciado a Customer, requerido), salesPersonId (Number), paymentMethod (enum: cash, card, transfer, other), totals (subtotal, shipping, discount, total), shippingAddress, items (array de productos, cantidad y precio unitario), statusHistory (trazabilidad de estados).
+  • Controlador (orders.js):
+      • Funciones: create (201), list (200 con populate('customerId')), find (200 / 404 con populate('customerId')), update (200 / 404 con populate('customerId')).
+  • Permisos RBAC reales en el seed (seed-rbac.js):
+      • Rol admin: Posee permissions: orders:create:any, orders:read:any, orders:update:any, orders:read:own, orders:update:own.
+      • Rol sales: Posee permissions: orders:create:any, orders:read:any, orders:update:any, orders:read:own, orders:update:own.
+      • Rol user: Posee permissions: orders:create:own, orders:read:own, orders:update:own. No tiene ningún permiso any sobre órdenes (por tanto, listar /api/orders le responde 403).
+  • Comprobación de Propiedad (own vs foreign):
+      • En creación: getBodyCustomerOwnerId busca Customer.findById(req.body.customerId) y retorna su userId. Si coincide con req.user.id, la autorización aprueba la creación (201); si pertenece a otro usuario, responde 403 Forbidden.
+      • En consulta y actualización: getOrderOwnerId busca Order.findById(req.params.id) con populate('customerId') y extrae customerId.userId. Si coincide con req.user.id, responde 200 OK; si no, responde 403 Forbidden.
+
+  ──────
+  ### 2. Adaptaciones al Comportamiento Real del Backend
+
+  1. Inexistencia de eliminación física (DELETE /api/orders/:id):
+      • A diferencia de catálogos simples, las órdenes representan transacciones financieras y de auditoría comercial. El backend no expone un endpoint DELETE; la suite verifica de forma explícita que una petición DELETE responda 404 Not Found.
+  2. Validación de relaciones documentales (populate):
+      • El entregable requiere comprobar que "una orden devuelve los datos de su cliente". La suite comprueba que al consultar por ID o al listar, customerId no sea un simple string/ObjectId sino un objeto con propiedades del cliente (_id, userId, email, addresses).
+  3. Comportamiento ante ID malformado (400 vs 403):
+      • Cuando la petición la realiza un rol con alcance any (admin), el middleware authorize concede el paso directo al controlador y Mongoose lanza un CastError, el cual es transformado en 400 Bad Request por el manejador de errores de app.js.
+      • Cuando la petición la realiza user (alcance own), el middleware getOrderOwnerId evalúa previamente mongoose.isValidObjectId(req.params.id). Al ser inválido retorna null, provocando que authorize responda de manera segura con 403 Forbidden antes de invocar la base de datos.
+  4. Identificadores inexistentes:
+      • Se comprueba que un ObjectId con formato válido pero sin documento asociado (000000000000000000000000) responda 404 Not Found tanto en consulta (GET) como en actualización (PUT).
+  5. Aislamiento y restauración:
+      • Se aprovechan los clientes y órdenes inicializados por el seed para las validaciones de pertenencia (evitando crear datos huérfanos sin cliente). Cualquier modificación realizada a la orden del seed se restaura de forma segura en afterAll.
+
+  ──────
+  ### 3. Código de test/e2e/orders.e2e.test.js
+
+```javascript
+'use strict';
+
+const request = require('supertest');
+const { getBaseUrl, loginAs, authHeader } = require('./helpers');
+
+describe('E2E Orders', () => {
+  // NOTA: Por decisión de diseño del equipo y de negocio (auditoría y trazabilidad comercial),
+  // el recurso /api/orders no expone una operación de borrado físico (DELETE).
+  // Únicamente expone creación (POST), lectura (GET / y GET /:id) y actualización (PUT /:id).
+
+  const baseUrl = getBaseUrl();
+
+  let adminToken;
+  let salesToken;
+  let userToken;
+  let currentUserId;
+  let currentUserEmail;
+
+  let ownCustomerId;
+  let foreignCustomerId;
+  let ownOrderId;
+  let foreignOrderId;
+  let originalPaymentMethod;
+
+  let createdOrderId;
+
+  beforeAll(async () => {
+    adminToken = await loginAs('admin');
+    salesToken = await loginAs('sales');
+    userToken = await loginAs('user');
+
+    // Obtener información del usuario autenticado (rol 'user') para evaluar propiedad (own)
+    const meRes = await request(baseUrl)
+      .get('/api/auth/me')
+      .set(authHeader(userToken));
+
+    expect(meRes.status).toBe(200);
+    currentUserId = meRes.body.id;
+    currentUserEmail = meRes.body.email;
+
+    // Obtener clientes existentes para identificar el cliente propio y uno ajeno
+    const custRes = await request(baseUrl)
+      .get('/api/customers')
+      .set(authHeader(adminToken));
+
+    expect(custRes.status).toBe(200);
+    const customers = custRes.body.data || [];
+
+    const ownCustomer = customers.find(
+      (c) => c.userId === currentUserId || c.email === currentUserEmail
+    );
+    const foreignCustomer = customers.find(
+      (c) => c.userId !== currentUserId && c.email !== currentUserEmail
+    );
+
+    expect(ownCustomer).toBeDefined();
+    expect(foreignCustomer).toBeDefined();
+
+    ownCustomerId = ownCustomer._id;
+    foreignCustomerId = foreignCustomer._id;
+
+    // Obtener órdenes existentes del seed para las pruebas de control de acceso por propiedad
+    const ordersRes = await request(baseUrl)
+      .get('/api/orders')
+      .set(authHeader(adminToken));
+
+    expect(ordersRes.status).toBe(200);
+    const orders = ordersRes.body.data || [];
+
+    const ownOrder = orders.find(
+      (o) => o.customerId && (o.customerId.userId === currentUserId || o.customerId._id === ownCustomerId)
+    );
+    const foreignOrder = orders.find(
+      (o) => o.customerId && (o.customerId.userId !== currentUserId && o.customerId._id !== ownCustomerId)
+    );
+
+    expect(ownOrder).toBeDefined();
+    expect(foreignOrder).toBeDefined();
+
+    ownOrderId = ownOrder._id;
+    foreignOrderId = foreignOrder._id;
+    originalPaymentMethod = ownOrder.paymentMethod || 'card';
+  });
+
+  afterAll(async () => {
+    // Restaurar los datos modificados en la orden del seed al finalizar la suite
+    if (ownOrderId && originalPaymentMethod) {
+      await request(baseUrl)
+        .put(`/api/orders/${ownOrderId}`)
+        .set(authHeader(adminToken))
+        .send({ paymentMethod: originalPaymentMethod });
+    }
+  });
+
+  describe('Control de acceso (Autenticación y RBAC)', () => {
+    test('Petición sin token responde 401 Unauthorized', async () => {
+      const getRes = await request(baseUrl).get('/api/orders');
+      expect(getRes.status).toBe(401);
+
+      const postRes = await request(baseUrl).post('/api/orders').send({});
+      expect(postRes.status).toBe(401);
+    });
+
+    test('Petición con token inválido responde 401 Unauthorized', async () => {
+      const res = await request(baseUrl)
+        .get('/api/orders')
+        .set('Authorization', 'Bearer token_invalido_123');
+
+      expect(res.status).toBe(401);
+    });
+
+    test('Usuario sin permisos suficientes (user) responde 403 Forbidden al listar todas las órdenes', async () => {
+      const res = await request(baseUrl)
+        .get('/api/orders')
+        .set(authHeader(userToken));
+
+      expect(res.status).toBe(403);
+    });
+
+    test('Usuarios con alcance any (sales y admin) pueden listar órdenes responde 200', async () => {
+      const salesRes = await request(baseUrl)
+        .get('/api/orders')
+        .set(authHeader(salesToken));
+
+      expect(salesRes.status).toBe(200);
+      expect(Array.isArray(salesRes.body.data)).toBe(true);
+
+      const adminRes = await request(baseUrl)
+        .get('/api/orders')
+        .set(authHeader(adminToken));
+
+      expect(adminRes.status).toBe(200);
+      expect(Array.isArray(adminRes.body.data)).toBe(true);
+    });
+
+    test('Usuario con rol "user" responde 403 Forbidden al intentar crear una orden para un cliente ajeno', async () => {
+      expect(foreignCustomerId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .post('/api/orders')
+        .set(authHeader(userToken))
+        .send({
+          customerId: foreignCustomerId,
+          paymentMethod: 'cash',
+          items: [{ productId: 1, quantity: 1, unitPrice: 100 }]
+        });
+
+      expect(res.status).toBe(403);
+    });
+
+    test('Usuario con rol "user" responde 403 Forbidden al consultar orden de otro usuario', async () => {
+      expect(foreignOrderId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .get(`/api/orders/${foreignOrderId}`)
+        .set(authHeader(userToken));
+
+      expect(res.status).toBe(403);
+    });
+
+    test('Usuario con rol "user" responde 403 Forbidden al actualizar orden de otro usuario', async () => {
+      expect(foreignOrderId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .put(`/api/orders/${foreignOrderId}`)
+        .set(authHeader(userToken))
+        .send({
+          paymentMethod: 'cash'
+        });
+
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('Control de acceso por propiedad (Alcance own)', () => {
+    test('Usuario con rol "user" puede consultar su propia orden (GET /api/orders/:id) responde 200', async () => {
+      expect(ownOrderId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .get(`/api/orders/${ownOrderId}`)
+        .set(authHeader(userToken));
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data._id).toBe(ownOrderId);
+    });
+
+    test('Usuario con rol "user" puede actualizar su propia orden (PUT /api/orders/:id) responde 200', async () => {
+      expect(ownOrderId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .put(`/api/orders/${ownOrderId}`)
+        .set(authHeader(userToken))
+        .send({
+          paymentMethod: 'transfer'
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data.paymentMethod).toBe('transfer');
+    });
+
+    test('Usuario con rol "user" puede crear una orden para su propio cliente (POST /api/orders) responde 201', async () => {
+      expect(ownCustomerId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .post('/api/orders')
+        .set(authHeader(userToken))
+        .send({
+          customerId: ownCustomerId,
+          paymentMethod: 'card',
+          items: [{ productId: 1, quantity: 1, unitPrice: 250 }]
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data.customerId).toBe(ownCustomerId);
+    });
+  });
+
+  describe('Validación de solicitudes y datos inválidos', () => {
+    test('Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request', async () => {
+      const res = await request(baseUrl)
+        .post('/api/orders')
+        .set(authHeader(adminToken))
+        .set('Content-Type', 'application/json')
+        .send('{ "customerId": "malformed_json');
+
+      expect(res.status).toBe(400);
+    });
+
+    test('Crear orden sin customerId requerido responde 400 Bad Request por validación del modelo', async () => {
+      const res = await request(baseUrl)
+        .post('/api/orders')
+        .set(authHeader(adminToken))
+        .send({
+          paymentMethod: 'card',
+          items: []
+        });
+
+      expect(res.status).toBe(400);
+    });
+
+    test('Consultar orden con ID malformado (ObjectId no válido) con Admin responde 400 Bad Request', async () => {
+      const res = await request(baseUrl)
+        .get('/api/orders/123invalid')
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(400);
+    });
+
+    test('Consultar orden con ID malformado con rol user responde 403 Forbidden por checkOwnership', async () => {
+      // El middleware getOrderOwnerId valida mongoose.isValidObjectId.
+      // Al ser inválido retorna null y el RBAC rechaza con 403 antes de llegar al controlador.
+      const res = await request(baseUrl)
+        .get('/api/orders/123invalid')
+        .set(authHeader(userToken));
+
+      expect(res.status).toBe(403);
+    });
+
+    test('Consultar orden con ObjectId inexistente responde 404 Not Found', async () => {
+      const nonExistentId = '000000000000000000000000';
+      const res = await request(baseUrl)
+        .get(`/api/orders/${nonExistentId}`)
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(404);
+    });
+
+    test('Actualizar orden con ObjectId inexistente responde 404 Not Found', async () => {
+      const nonExistentId = '000000000000000000000000';
+      const res = await request(baseUrl)
+        .put(`/api/orders/${nonExistentId}`)
+        .set(authHeader(adminToken))
+        .send({ paymentMethod: 'cash' });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('Operaciones de ciclo de vida y verificación de relaciones con Admin', () => {
+    test('Crear orden (POST /api/orders) responde 201 y no expone credenciales ni datos sensibles', async () => {
+      expect(ownCustomerId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .post('/api/orders')
+        .set(authHeader(adminToken))
+        .send({
+          customerId: ownCustomerId,
+          salesPersonId: 2,
+          paymentMethod: 'transfer',
+          totals: {
+            subtotal: 599.00,
+            shipping: 50.00,
+            discount: 0.00,
+            total: 649.00
+          },
+          shippingAddress: {
+            street: 'Av. Tecnológico',
+            number: '1234',
+            city: 'Chihuahua',
+            country: 'Mexico'
+          },
+          items: [{
+            productId: 1,
+            quantity: 2,
+            unitPrice: 299.50
+          }]
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data).toHaveProperty('_id');
+      expect(res.body.data.customerId).toBe(ownCustomerId);
+
+      // Comprobar que no expone datos sensibles
+      expect(res.body.data).not.toHaveProperty('password_hash');
+      expect(res.body.data).not.toHaveProperty('salt_key');
+      expect(res.body.data).not.toHaveProperty('password');
+
+      createdOrderId = res.body.data._id;
+    });
+
+    test('Consultar orden por ID (GET /api/orders/:id) responde 200 y verifica la relación con el cliente (populate)', async () => {
+      expect(createdOrderId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .get(`/api/orders/${createdOrderId}`)
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data._id).toBe(createdOrderId);
+
+      // Verificación de la relación: customerId viene poblado como objeto del Cliente
+      expect(typeof res.body.data.customerId).toBe('object');
+      expect(res.body.data.customerId).toHaveProperty('_id');
+      expect(res.body.data.customerId._id).toBe(ownCustomerId);
+      expect(res.body.data.customerId).toHaveProperty('userId');
+      expect(res.body.data.customerId.userId).toBe(currentUserId);
+    });
+
+    test('Listar órdenes (GET /api/orders) responde 200 y contiene la orden creada con cliente poblado', async () => {
+      expect(createdOrderId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .get('/api/orders')
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBe(true);
+
+      const found = res.body.data.find((o) => o._id === createdOrderId);
+      expect(found).toBeDefined();
+      expect(typeof found.customerId).toBe('object');
+      expect(found.customerId).toHaveProperty('_id');
+    });
+
+    test('Actualizar orden (PUT /api/orders/:id) responde 200', async () => {
+      expect(createdOrderId).toBeDefined();
+
+      const res = await request(baseUrl)
+        .put(`/api/orders/${createdOrderId}`)
+        .set(authHeader(adminToken))
+        .send({
+          paymentMethod: 'card'
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data.paymentMethod).toBe('card');
+    });
+
+    test('Intentar eliminar orden (DELETE /api/orders/:id) responde 404 Not Found (no expuesto por diseño)', async () => {
+      expect(createdOrderId).toBeDefined();
+
+      // Por decisión de negocio, las órdenes no admiten eliminación física para conservar trazabilidad
+      const res = await request(baseUrl)
+        .delete(`/api/orders/${createdOrderId}`)
+        .set(authHeader(adminToken));
+
+      expect(res.status).toBe(404);
+    });
+  });
+});
+```
+
+  ──────
+  ### 4. Ejecución de la Suite
+
+  Comando ejecutado:
+
+    npx jest --config jest.e2e.config.js test/e2e/orders.e2e.test.js
+
+  Salida de la ejecución:
+
+    PASS test/e2e/orders.e2e.test.js
+      E2E Orders
+        Control de acceso (Autenticación y RBAC)
+          ✓ Petición sin token responde 401 Unauthorized (9 ms)
+          ✓ Petición con token inválido responde 401 Unauthorized (4 ms)
+          ✓ Usuario sin permisos suficientes (user) responde 403 Forbidden al listar todas las órdenes (7 ms)
+          ✓ Usuarios con alcance any (sales y admin) pueden listar órdenes responde 200 (27 ms)
+          ✓ Usuario con rol "user" responde 403 Forbidden al intentar crear una orden para un cliente ajeno (9 ms)
+          ✓ Usuario con rol "user" responde 403 Forbidden al consultar orden de otro usuario (13 ms)
+          ✓ Usuario con rol "user" responde 403 Forbidden al actualizar orden de otro usuario (11 ms)
+        Control de acceso por propiedad (Alcance own)
+          ✓ Usuario con rol "user" puede consultar su propia orden (GET /api/orders/:id) responde 200 (18 ms)
+          ✓ Usuario con rol "user" puede actualizar su propia orden (PUT /api/orders/:id) responde 200 (32 ms)
+          ✓ Usuario con rol "user" puede crear una orden para su propio cliente (POST /api/orders) responde 201 (12 ms)
+        Validación de solicitudes y datos inválidos
+          ✓ Petición con cuerpo de datos inválido (JSON malformado) responde 400 Bad Request (14 ms)
+          ✓ Crear orden sin customerId requerido responde 400 Bad Request por validación del modelo (16 ms)
+          ✓ Consultar orden con ID malformado (ObjectId no válido) con Admin responde 400 Bad Request (14 ms)
+          ✓ Consultar orden con ID malformado con rol user responde 403 Forbidden por checkOwnership (7 ms)
+          ✓ Consultar orden con ObjectId inexistente responde 404 Not Found (9 ms)
+          ✓ Actualizar orden con ObjectId inexistente responde 404 Not Found (10 ms)
+        Operaciones de ciclo de vida y verificación de relaciones con Admin
+          ✓ Crear orden (POST /api/orders) responde 201 y no expone credenciales ni datos sensibles (15 ms)
+          ✓ Consultar orden por ID (GET /api/orders/:id) responde 200 y verifica la relación con el cliente (populate) (13 ms)
+          ✓ Listar órdenes (GET /api/orders) responde 200 y contiene la orden creada con cliente poblado (16 ms)
+          ✓ Actualizar orden (PUT /api/orders/:id) responde 200 (13 ms)
+          ✓ Intentar eliminar orden (DELETE /api/orders/:id) responde 404 Not Found (no expuesto por diseño) (15 ms)
+
+    Test Suites: 1 passed, 1 total
+    Tests:       21 passed, 21 total
+    Snapshots:   0 total
+    Time:        1.087 s
+    Ran all test suites matching test/e2e/orders.e2e.test.js.
+
+### Correcciones
+
+1. **Ausencia de DELETE /api/orders/:id en el diseño**: Al igual que en inventario, el entregable general menciona un ciclo completo CRUD; sin embargo, en órdenes no existe eliminación directa física por trazabilidad y auditoría. La prueba fue adaptada para comprobar que una solicitud de eliminación responde 404 Not Found y documentar el motivo.
+2. **Validación de la relación documental (populate)**: Se verificó de manera rigurosa que el campo `customerId` en la respuesta de la orden sea devuelto como un objeto poblado con los datos del cliente (`_id`, `userId`, `email`, etc.) y no únicamente como un identificador simple, cumpliendo con el requisito del PDF de verificar relaciones entre recursos.
+3. **Manejo diferenciado de IDs inválidos según el rol**: Con rol admin (que tiene alcance any), la consulta llega a Mongoose y produce un `CastError` que el manejador global convierte en 400 Bad Request. Con rol user (alcance own), el middleware de propiedad `getOrderOwnerId` valida previamente la estructura del ObjectId con `isValidObjectId()`, retornando null y respondiendo 403 Forbidden de manera preventiva sin tocar la base de datos. Ambos casos se incluyeron en la suite para reflejar fielmente la seguridad del sistema.
+
