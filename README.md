@@ -731,8 +731,8 @@ Las E2E utilizan la API real mediante Supertest, sin mocks. Necesitan el backend
 4. Ejecucion de todas las E2E:
 
    ```bash
-   NODE_ENV=test npm run test:e2e -- --runTestsByPath test/e2e/health.e2e.test.js
-   NODE_ENV=test npm run test:e2e -- --runTestsByPath test/e2e/auth.e2e.test.js
+   NODE_ENV=test npm run test:e2e -- --runTestsByPath tests/e2e/health.e2e.test.js
+   NODE_ENV=test npm run test:e2e -- --runTestsByPath tests/e2e/auth.e2e.test.js
    NODE_ENV=test npm run test:e2e
    ```
 
@@ -825,24 +825,30 @@ Stride-And-Co/
 ├── scripts/
 │   └── create-admin.js
 │   └── seed-rbac.js
-├── test/
-│   └── e2e/
-│       ├── auth.e2e.test.js
-│       ├── health.e2e.test.js
-│       ├── helpers.js
-│       ├── i18n.e2e.test.js
-│       ├── permissions.e2e.test.js
-│       ├── rbac.e2e.test.js
-│       ├── roles.e2e.test.js
-│       └── users.e2e.test.js
 ├── tests/
-├── tests/
+│   ├── e2e/
+│   │   ├── auth.e2e.test.js
+│   │   ├── customers.e2e.test.js
+│   │   ├── health.e2e.test.js
+│   │   ├── helpers.js
+│   │   ├── i18n.e2e.test.js
+│   │   ├── inventory.e2e.test.js
+│   │   ├── orders.e2e.test.js
+│   │   ├── permissions.e2e.test.js
+│   │   ├── products.e2e.test.js
+│   │   ├── rbac.e2e.test.js
+│   │   ├── roles.e2e.test.js
+│   │   ├── users.e2e.test.js
+│   │   └── variants.e2e.test.js
+│   ├── helpers/
+│   ├── integration/
 │   ├── customers.test.js
 │   ├── inventory.test.js
 │   ├── orders.test.js
 │   ├── permissions.test.js
 │   ├── products.test.js
 │   ├── roles.test.js
+│   ├── setup-unit.js
 │   ├── users.test.js
 │   └── variants.test.js
 ├── utils/

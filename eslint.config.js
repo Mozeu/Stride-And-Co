@@ -25,7 +25,7 @@ module.exports = [
 
   // Tests
   {
-    files: ['tests/**/*.js', 'test/e2e/**/*.js'],
+    files: ['tests/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
@@ -47,9 +47,5 @@ module.exports = [
     rules: {
       'no-unused-vars': 'warn',
     },
-  },
-
-  {
-    ignores: ['tests/**/*.js', 'test/e2e/**/*.js'],
   },
 ];
