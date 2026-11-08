@@ -97,24 +97,61 @@ El proyecto utiliza `config` para administrar los parametros de la app segun el 
 
 ### Configuracion local
 
-Crear el archivo privado desde la plantilla:
+Para usar `npm run setup:local`, Docker debe estar instalado y activo. Si aún no
+tienes los contenedores, crea PostgreSQL y MongoDB así:
+
+```bash
+docker run --name stride-postgres -e POSTGRES_USER=root \
+  -e POSTGRES_PASSWORD='CAMBIAR_ESTA_CONTRASENA' \
+  -p 5432:5432 -v stride-postgres-data:/var/lib/postgresql/data -d postgres:16
+docker run --name stride-mongo -p 27017:27017 \
+  -v stride-mongo-data:/data/db -d mongo:8
+```
+
+Si ya existen los contenedores pero están detenidos, inícialos con
+`docker start stride-postgres stride-mongo`.
+
+Conéctate al PostgreSQL local como administrador:
+
+```bash
+docker exec -it stride-postgres psql -U root -d postgres
+```
+
+En `psql`, crea el rol y la base de desarrollo (usa una contraseña local
+propia; `\password` la solicita sin mostrarla ni guardarla en el historial):
+
+```text
+CREATE ROLE stride_app LOGIN;
+\password stride_app
+CREATE DATABASE stride_co OWNER stride_app;
+GRANT CONNECT, CREATE, TEMPORARY ON DATABASE stride_co TO stride_app;
+\connect stride_co
+GRANT USAGE, CREATE ON SCHEMA public TO stride_app;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO stride_app;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO stride_app;
+\q
+```
+
+Si el rol ya existe, usa `ALTER ROLE stride_app WITH LOGIN;` en lugar de
+`CREATE ROLE`. Si `stride_co` ya existe, omite `CREATE DATABASE` y ejecuta los
+comandos `GRANT` sobre esa base.
+
+Todo este proceso de configuración de PostgreSQL es automático en
+`setup-local.js`.
+
+Después crea y protege el archivo privado:
 
 ```bash
 cp config/local-development.example.json config/local-development.json
 chmod 600 config/local-development.json
-```
-
-Generar un secreto JWT:
-
-```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Completar `config/local-development.json` con:
-
-- `postgres.password`: contraseña de PostgreSQL.
-- `mongo.uri`: conexión a MongoDB.
-- `jwt.secret`: secreto JWT generado.
+En `config/local-development.json`, sustituye `postgres.password` por la misma
+contraseña que asignaste a `stride_app`, `jwt.secret` por el secreto generado y
+`mongo.uri` por la URI de tu MongoDB (por ejemplo,
+`mongodb://127.0.0.1:27017/stride_co`). Para PostgreSQL fuera de Docker, ejecuta
+el SQL desde `psql` local en lugar de `docker exec`.
 
 ### Variables de entorno
 
@@ -137,23 +174,72 @@ NODE_ENV=development PORT=8080 npm start
 
 JWT, PostgreSQL, MongoDB y bcrypt obtienen sus parametros mediante `config.get()`. La aplicacion requiere un secreto JWT válido para iniciar.
 
-### Pruebas
-
-Pruebas unitarias con mocks, sin bases de datos:
-
-```bash
-NODE_ENV=test npm test
-```
-
-Pruebas de integracion con PostgreSQL y MongoDB:
-
-```bash
-NODE_ENV=test npm run test:integration
-```
+Los comandos y requisitos de las suites se describen en la sección
+[Pruebas](#pruebas).
 
 ### Produccion y Docker
 
-Producción utiliza `config/local-production.json`, su configuracion en Render corresponde al despliegue.
+El despliegue de producción utiliza Docker y Render.
+
+#### Despliegue en Render
+
+| Dato | Valor |
+|---|---|
+| URL pública | [https://stride-and-co.onrender.com](https://stride-and-co.onrender.com) |
+| Health check y Health Check Path en Render | `GET /health` |
+| Variable de entorno configurada | `NODE_ENV=production` |
+
+El endpoint de salud responde `200` con `{"status":"UP"}`. Los usuarios de
+demostración y sus credenciales están documentados en la
+[matriz RBAC](#control-de-acceso-basado-en-roles).
+
+##### Bases de datos
+
+| Servicio | Plan | Región | Detalles |
+|---|---|---|---|
+| Render PostgreSQL | Gratuito | Oregon (US West) | Fecha de creación reportada: 11 de noviembre de 2026 (por confirmar); fecha de caducidad: 4 de diciembre de 2026 |
+| MongoDB Atlas | Cluster gratuito | AWS, Oregon (`us-west-2`) | Network Access permite `0.0.0.0/0` porque el plan gratuito de Render no tiene IP fija de salida |
+
+La fecha de creación de PostgreSQL indicada (11 de noviembre de 2026) es
+posterior a la fecha actual de esta documentación y conviene confirmarla en el
+panel de Render. La regla `0.0.0.0/0` permite conexiones desde cualquier IP;
+mantén las credenciales de MongoDB privadas y limita los permisos de la cuenta
+de base de datos.
+
+##### Secretos de producción
+
+`config/local-production.json` no se guarda en el repositorio ni se incluye en
+la imagen Docker: `.gitignore` y `.dockerignore` excluyen los archivos
+`config/local-*.json`. En Render se configura como **Secret File** del servicio,
+con el nombre `local-production.json`. Render lo monta en `/etc/secrets/` y el
+`Dockerfile` lo copia a `config/` al iniciar el contenedor.
+
+El archivo contiene el secreto JWT, la URI de MongoDB y los datos de conexión a
+PostgreSQL (host interno, usuario y contraseña).
+
+##### Ejemplo de uso de la API pública
+
+El ejemplo inicia sesión con la cuenta `user` de la tabla de demostración en la
+[sección RBAC](#control-de-acceso-basado-en-roles), consulta productos y prueba
+el acceso denegado a pedidos en español e inglés:
+
+```bash
+BASE=https://stride-and-co.onrender.com
+
+curl "$BASE/health"
+
+TOKEN=$(curl -s -X POST "$BASE/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@stride.test","password":"DemoUser!2026"}' \
+  | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.token')
+
+# Recurso permitido (200)
+curl -H "Authorization: Bearer $TOKEN" -H "Accept-Language: es" "$BASE/api/products"
+
+# Recurso denegado (403), en español y en inglés
+curl -H "Authorization: Bearer $TOKEN" "$BASE/api/orders?lang=es"
+curl -H "Authorization: Bearer $TOKEN" "$BASE/api/orders?lang=en"
+```
 
 Construir la imagen:
 
@@ -520,29 +606,68 @@ NODE_ENV=test npm test
 
 Los siguientes pasos se utilizan solo para integración y E2E:
 
-1. Inicia PostgreSQL en `127.0.0.1:5432` y MongoDB en `127.0.0.1:27017`.
-2. Verifica que el usuario PostgreSQL `stride_test` exista, tenga contraseña y permiso `CREATEDB`. Si todavía no existe, un administrador de PostgreSQL puede crearlo con:
+1. Asegúrate de que PostgreSQL esté disponible en `127.0.0.1:5432` y MongoDB
+   en `127.0.0.1:27017`. Si usas los contenedores Docker descritos en
+   [Configuración local](#configuracion-local), inícialos si están detenidos.
+2. Conéctate al PostgreSQL local como administrador:
 
-   ```sql
-   CREATE ROLE stride_test LOGIN CREATEDB PASSWORD 'CAMBIAR_POR_CONTRASEÑA_LOCAL';
+   ```bash
+   docker exec -it stride-postgres psql -U root -d postgres
    ```
 
-3. Crea el archivo privado `config/local-test.json`:
+   En `psql`, crea el rol y la base de pruebas. Si el rol ya existe, usa
+   `ALTER ROLE` en lugar de `CREATE ROLE`; si la base ya existe, no vuelvas a
+   crearla:
+
+   ```text
+   CREATE ROLE stride_test LOGIN CREATEDB;
+   \password stride_test
+   CREATE DATABASE stride_co_test OWNER stride_test;
+   GRANT CONNECT, CREATE, TEMPORARY ON DATABASE stride_co_test TO stride_test;
+   \connect stride_co_test
+   GRANT USAGE, CREATE ON SCHEMA public TO stride_test;
+   GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO stride_test;
+   GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO stride_test;
+   \q
+   ```
+
+   Anota la contraseña que escribiste en `\password`; la usarás en el archivo
+   de configuración. Si el rol ya existe, actualízalo así:
+
+   ```text
+   ALTER ROLE stride_test WITH LOGIN CREATEDB;
+   \password stride_test
+   ```
+
+   Si `stride_co_test` ya existe, omite `CREATE DATABASE` y ejecuta los
+   `GRANT` en esa base. Para PostgreSQL fuera de Docker, abre `psql` local como
+   administrador y ejecuta los mismos comandos.
+
+3. Crea `config/local-test.json` con la misma contraseña que asignaste a
+   `stride_test`, y protege el archivo:
+
+   ```bash
+   nano config/local-test.json
+   ```
 
    ```json
    {
      "postgres": {
-       "password": "CONTRASEÑA_REAL_DE_STRIDE_TEST"
+       "password": "CONTRASENA_TEST_LOCAL"
      }
    }
    ```
-
-   La contraseña debe coincidir con la que acepta PostgreSQL; `config/test.json` contiene un valor de ejemplo que puede no coincidir con la instalación local. Protege el archivo y comprueba su exclusión:
 
    ```bash
    chmod 600 config/local-test.json
    git check-ignore -v config/local-test.json
    ```
+
+   `config/test.json` contiene una contraseña de ejemplo que puede no coincidir
+   con la de tu PostgreSQL.
+
+   Todo este proceso de configuración de PostgreSQL es automático en
+   `setup-test.js`.
 ### Pruebas de integración
 
 Verifican la persistencia, autenticación JWT y autorización RBAC utilizando PostgreSQL y MongoDB.
@@ -600,7 +725,8 @@ Las E2E utilizan la API real mediante Supertest, sin mocks. Necesitan el backend
    export E2E_USER_PASSWORD
    ```
 
-   Las contraseñas de demostración son `DemoAdmin!2026`, `DemoSales!2026` y `DemoUser!2026`, respectivamente.
+   Las contraseñas de estas cuentas están documentadas en la
+   [matriz RBAC](#control-de-acceso-basado-en-roles).
 
 4. Ejecucion de todas las E2E:
 
