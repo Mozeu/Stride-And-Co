@@ -802,7 +802,7 @@ Stride-And-Co/
 ├── bin/
 │   └── www
 ├── config/
-│   └── default.json
+│   ├── default.json
 │   ├── development.json
 │   ├── test.json
 │   ├── production.json
@@ -826,6 +826,7 @@ Stride-And-Co/
 ├── docs/
 │   ├── evidence/
 │   │   ├── Evidencia1.png
+│   │   ├── e2e-render.png
 │   │   └── evidencias.md
 │   └── e2e-antigravity.md
 ├── locales/
