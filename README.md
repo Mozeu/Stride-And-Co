@@ -744,11 +744,28 @@ Las E2E utilizan la API real mediante Supertest, sin mocks. Necesitan el backend
    NODE_ENV=test npm run test:e2e
    ```
 
+El proceso de generación de las pruebas con Antigravity está documentado en [docs/e2e-antigravity.md](docs/e2e-antigravity.md).
+
 ### Resultados verificados
 
-- Pruebas unitarias: 58/58 exitosas.
+- Pruebas unitarias: 74/74 exitosas.
 - Pruebas de integración: 10/10 exitosas.
-- ESLint: 0 errores y 20 advertencias.
+- Pruebas e2e: 139/139 exitosas.
+- ESLint: 0 errores y 15 advertencias.
+
+### E2E contra Render
+
+Con la API desplegada en Render, la misma suite se ejecuta cambiando la URL base con `E2E_BASE_URL`. Primero se consulta `/health` para despertar el servicio gratuito:
+
+```bash
+curl https://stride-and-co.onrender.com/health
+E2E_BASE_URL=https://stride-and-co.onrender.com 
+NODE_ENV=test npm run test:e2e
+```
+
+Resultado de la ejecución contra Render:
+
+![Resultado de npm run test:e2e contra Render](docs/evidence/e2e-render.png)
 
 ## Calidad de código
 
