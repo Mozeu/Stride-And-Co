@@ -62,12 +62,15 @@ async function update(req, res, next) {
     const email = req.body.email;
     const role_id = req.body.role_id;
     const password = req.body.password;
+    const active = req.body.active;
 
     let changes = {};
     changes.first_name = name ? name : user.first_name;
     changes.last_name = lastName ? lastName : user.last_name;
     changes.email = email ? email : user.email;
     changes.role_id = role_id ? role_id : user.role_id;
+
+    if (typeof active === 'boolean') changes.active = active;
 
     if (password && password.trim() !== '') {
         const passwordData = await hashPassword(password);
