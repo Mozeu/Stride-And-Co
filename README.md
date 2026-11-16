@@ -579,6 +579,18 @@ Los permisos no están escritos en el código. `middleware/authorize.js` consult
 
 Estas contraseñas son exclusivas de estas cuentas de demostración y no se usan en ningún otro lugar.
 
+### Middleware allowFields
+
+En el RBAC se planteó que un usuario tendría permiso para editar su propio usuario. Esto se estableció con la intención de permitir que un usuario actualice campos como su nombre, correo, contraseña y, como se mencionó anteriormente, su estado de activo como una forma de "eliminar" su cuenta.
+
+Sin embargo, debido a estos permisos, también se le permite al usuario cambiar información sensible como el `user_id`, `rol_id` y, por consecuencia, sus permisos.
+
+Para combatir esto, se creó el middleware [allowFields.js](middleware/allowFields.js), el cual usamos para limitar los campos que un usuario tiene permitido editar cuando el alcance es `"own"`. Dentro de las rutas (`routes`), se coloca después del middleware `authorize` y, dentro de sus parámetros, se especifican aquellos campos que está permitido modificar.
+
+Esto se hace de esta forma para que cualquier campo nuevo que se añada en el futuro quede, por defecto, restringido para su edición.
+
+Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya que esta se considera el área más crítica que se debe proteger. Sin embargo, también podría aplicarse a otras rutas, como `customers.js` y `orders.js`, aunque este ultimo requeriría restricciones adicionales dependiendo del estado de la petición.
+
 ## Internacionalización (i18n)
 
 La API responde en español (`es`) y en inglés (`en`) con la librería `i18n`. Los textos están en `locales/es.json` y `locales/en.json`, organizados por recurso, y en el código se traducen con `req.__('clave')`.
@@ -833,6 +845,7 @@ Stride-And-Co/
 │   ├── en.json
 │   └── es.json
 ├── middleware/
+│   └── allowFields.js
 │   └── authenticate.js
 │   └── authorize.js
 ├── models/
