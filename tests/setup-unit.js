@@ -87,6 +87,7 @@ jest.mock('../models/sql/Product', () => ({
   belongsTo: jest.fn(),
   create: jest.fn(async (attributes) => ({ id: 1, ...attributes })),
   findAll: jest.fn(async () => []),
+  count: jest.fn(async () => 0),
   findByPk: jest.fn(async (id) => id === '999999' ? null : ({
     id: Number(id),
     name: 'Test Product',
