@@ -1,0 +1,76 @@
+extends ../layout
+
+block content
+  main.container.py-5
+    h1.fw-bold.mb-4= __('store.cart.title')
+    if error && form.action === 'remove'
+      p.alert.alert-danger(role='alert')= error
+    .row.g-4.align-items-start
+      .col-lg-8
+        section.store-panel.p-4
+          if lines.length
+            ul.list-unstyled.mb-0
+              each line in lines
+                - const variant = line.variant
+                - const hasError = error && form.action === 'update' && form.variantId === line.variantId
+                li.d-flex.flex-wrap.justify-content-between.align-items-start.gap-3.py-3.border-bottom
+                  div
+                    h2.h5.fw-bold= variant ? variant.product.name : __('store.cart.unavailable')
+                    if variant
+                      p.tiny.mb-1= variant.sku + ' · ' + __('store.cart.size', variant.size) + ' · ' + variant.color
+                      p.mb-1= __('store.cart.unitPrice', money(line.unitCents))
+                      p.tiny.mb-0= __('store.cart.available', line.available)
+                    if line.quantity > line.available
+                      p.text-danger.mb-0= __('store.cart.review')
+                    else
+                      p.fw-bold.mb-0= money(line.totalCents)
+                  .d-flex.flex-wrap.gap-2.align-items-end
+                    if variant && line.available
+                      form(method='post', action='/cart/items/' + line.variantId + '?lang=' + locale)
+                        - const fieldId = 'qty-' + line.variantId
+                        label.form-label(for=fieldId)= __('store.cart.quantity')
+                        .input-group
+                          input.form-control(id=fieldId, type='text', inputmode='numeric', pattern='[0-9]+', maxlength='3', required, name='quantity', size=3, value=hasError ? form.quantity : line.quantity, aria-invalid=hasError ? 'true' : null, aria-describedby=hasError ? fieldId + '-error' : null)
+                          button.btn.btn-outline-dark(type='submit')= __('store.cart.update')
+                        if hasError
+                          p.text-danger.small.mb-0(id=fieldId + '-error', role='alert')= error
+                    else
+                      p.tiny.mb-0= __('store.cart.inBag', line.quantity)
+                      if hasError
+                        p.text-danger.small.mb-0(role='alert')= error
+                    form(method='post', action='/cart/items/' + line.variantId + '/delete?lang=' + locale)
+                      button.btn.btn-outline-danger(type='submit')= __('store.cart.remove')
+          else
+            - const emptyMessage = __('store.cart.empty')
+            include ../partials/empty-state
+          if error && form.action === 'update' && !form.variantId
+            p.alert.alert-danger.mt-3(role='alert')= error
+        section.store-panel.p-4.mt-3
+          h2.h5.fw-bold= __('store.cart.addTitle')
+          if choices.length
+            - const adding = error && form.action === 'add'
+            form.row.g-3(method='post', action='/cart/items?lang=' + locale)
+              .col-md
+                label.form-label(for='cart-variant')= __('store.cart.variant')
+                select#cart-variant.form-select(name='variantId', required, aria-describedby=adding ? 'cart-add-error' : null)
+                  option(value='')= __('store.cart.select')
+                  each variant in choices
+                    option(value=variant.id, selected=adding && form.variantId === variant.id)= variant.product.name + ' · ' + __('store.cart.size', variant.size) + ' · ' + variant.color + ' · ' + variant.sku
+              .col-md-3
+                label.form-label(for='cart-add-qty')= __('store.cart.quantity')
+                input#cart-add-qty.form-control(type='text', inputmode='numeric', pattern='[0-9]+', maxlength='3', required, name='quantity', value=adding ? form.quantity : '1', aria-describedby=adding ? 'cart-add-error' : null)
+              if adding
+                p#cart-add-error.col-12.text-danger.mb-0(role='alert')= error
+              .col-12
+                button.btn.btn-dark(type='submit')= __('store.cart.add')
+          else
+            p.text-secondary.mb-0= __('store.cart.noChoices')
+            if error && form.action === 'add'
+              p.text-danger.mb-0(role='alert')= error
+      aside.col-lg-4
+        .store-panel.p-4
+          h2.h5.fw-bold= __('store.cart.summary')
+          .d-flex.justify-content-between.border-top.pt-3
+            span= __('store.cart.subtotal')
+            strong= money(subtotalCents)
+          a.btn.btn-outline-dark.w-100.mt-4(href='/?lang=' + locale + '#productos')= __('store.cart.continue')

@@ -7,6 +7,7 @@ const controller = require('../../controllers/index');
 router.get('/', controller.home);
 
 router.get('/health', controller.healthCheck);
+router.use(require('./cart'));
 
 
 module.exports = router;

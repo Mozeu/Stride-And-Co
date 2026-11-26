@@ -1,9 +1,5 @@
-const { Product, Variant, Inventory } = require('../models/sql');
-
-const variantIncludes = [
-    { model: Product, as: 'product' },
-    { model: Inventory, as: 'inventory' }
-];
+const { Variant } = require('../models/sql');
+const variantsService = require('../services/variants.service');
 
 async function create(req, res, next) {
     try {
@@ -16,7 +12,7 @@ async function create(req, res, next) {
 
 async function list(req, res, next) {
     try {
-        const variants = await Variant.findAll({ include: variantIncludes });
+        const variants = await variantsService.list();
         return res.json({ message: req.__("VariantsList.List"), data: variants });
     } catch (error) {
         return next(error);
@@ -25,7 +21,7 @@ async function list(req, res, next) {
 
 async function find(req, res, next) {
     try {
-        const variant = await Variant.findByPk(req.params.id, { include: variantIncludes });
+        const variant = await variantsService.find(req.params.id);
         if (!variant) return res.status(404).json({ message: req.__("VariantsList.VariantNotFound") });
         return res.json({ message: req.__("VariantsList.VariantById"), data: variant });
     } catch (error) {
