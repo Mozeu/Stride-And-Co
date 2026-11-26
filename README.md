@@ -194,10 +194,13 @@ El despliegue de producción utiliza Docker y Render.
 | URL pública | [https://stride-and-co.onrender.com](https://stride-and-co.onrender.com) |
 | Health check y Health Check Path en Render | `GET /health` |
 | Variable de entorno configurada | `NODE_ENV=production` |
+| Tienda web | [https://stride-and-co.onrender.com/](https://stride-and-co.onrender.com/) |
 
 El endpoint de salud responde `200` con `{"status":"UP"}`. Los usuarios de
 demostración y sus credenciales están documentados en la
 [matriz RBAC](#control-de-acceso-basado-en-roles).
+
+Para probar F1 (inicio de sesión web) en `/login` se usa la cuenta `user@stride.test`; sus credenciales están en la [matriz RBAC](#control-de-acceso-basado-en-roles).
 
 ##### Bases de datos
 
@@ -273,6 +276,7 @@ La ejecucion completa requiere conexiones válidas a PostgreSQL y MongoDB.
 | `npm run lint` | Ejecuta ESLint para analizar la calidad del código |
 | `npm run test:unit` | Ejecuta las pruebas unitarias con mocks |
 | `npm run test:integration` | Ejecuta las pruebas de integración con bases de prueba |
+| `npm run seed:products` | Crea productos de demostración en PostgreSQL |
 
 ## Recursos de la API
 
@@ -452,6 +456,10 @@ Authorization: Bearer <token>
 
 El token expira después del valor configurado en `jwt.expiresIn` (15 minutos en el ejemplo).
 
+### Cookie de sesión (web)
+
+En las rutas web, el mismo JWT se guarda en la cookie `access_token` (`HttpOnly`, `SameSite=Lax` y `Secure` en producción) al iniciar sesión en `/login`. El middleware `authenticate` lee el token del header `Authorization` (API) o, si no existe, de esa cookie.
+
 ## Control de acceso basado en roles
 
 La autorización usa RBAC con la librería `accesscontrol`. La autenticación (JWT) no cambia: el middleware `authorize` solo usa el usuario que ya deja `authenticate`, que se aplica de forma global a todo `/api`. Cada ruta protegida lleva `authorize(recurso, acción, alcance)`.
@@ -553,6 +561,9 @@ Todos los endpoints bajo `/api` exigen token (401 si falta o no es válido) y el
 | `GET /api/orders` | `orders:read:any` | Lista órdenes con su cliente |
 | `GET /api/orders/:id` | `orders:read:own` o `any` | Obtiene una orden con su cliente |
 | `PUT /api/orders/:id` | `orders:update:own` o `any` | Actualiza una orden |
+| `GET /login` | ninguno | Formulario de inicio de sesión (web) |
+| `POST /login` | ninguno | Valida credenciales y guarda el JWT en una cookie (web) |
+| `POST /logout` | ninguno | Elimina la cookie de sesión (web) |
 
 Donde dice "own o any", la ruta pide `own` con una función que busca al dueño, y `any` también pasa.
 
@@ -590,6 +601,30 @@ Para combatir esto, se creó el middleware [allowFields.js](middleware/allowFiel
 Esto se hace de esta forma para que cualquier campo nuevo que se añada en el futuro quede, por defecto, restringido para su edición.
 
 Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya que esta se considera el área más crítica que se debe proteger. Sin embargo, también podría aplicarse a otras rutas, como `customers.js` y `orders.js`, aunque este ultimo requeriría restricciones adicionales dependiendo del estado de la petición.
+
+## Funcionalidades SSR
+
+| ID | Funcionalidad | Rutas | Permiso | Responsable | Evidencia |
+|---|---|---|---|---|---|
+| F1 | Inicio y cierre de sesión | `/login`, `/logout` | Pública | Edwin Noé Zaragoza Alvarado | [docs/ssr/f1/](docs/ssr/f1/) |
+
+### Cómo se guarda la sesión
+
+1. `POST /login` valida el correo y la contraseña con `services/auth.service.js` (el mismo servicio que usa la API), rechaza a los usuarios inactivos y guarda el JWT en la cookie `access_token`.
+2. `middleware/session.js` (`loadSession`) lee la cookie en cada petición web, carga al usuario con su rol y permisos, y lo deja en `req.user` y `res.locals.user`. Si el token no es válido o expiró, borra la cookie.
+3. `requireLogin` redirige a `/login?returnTo=<url>` cuando no hay sesión; después de iniciar sesión se regresa a esa página. Solo se aceptan rutas internas en `returnTo`.
+4. `POST /logout` elimina la cookie y regresa a `/`.
+5. Los mensajes de confirmación (por ejemplo, "Inicio de sesión exitoso") viajan en una cookie de un solo uso que lee `middleware/flash.js`.
+
+El JWT expira a los 15 minutos (`jwt.expiresIn`); después, el usuario aparece como sin sesión y debe iniciar sesión de nuevo.
+
+### Cómo agregar una pantalla nueva
+
+1. **Servicio:** mover o crear la consulta en `services/<nombre>.service.js` (Sequelize / Mongoose).
+2. **Controller:** crear `controllers/web/<nombre>.js` con `res.render(...)` o `res.redirect(...)`; los errores van a `next(err)`.
+3. **Ruta:** definirla en `routes/web/<nombre>.js` y registrarla en `app.js`. Si es protegida: `requireLogin` y luego `authorize(recurso, acción, alcance)`.
+4. **Vista:** crear `views/<carpeta>/<nombre>.pug` que extienda `layout`, y pasar `title` y `metaDescription` desde el controller.
+5. **Traducciones:** agregar las claves en `locales/es.json` y `locales/en.json` al mismo tiempo; en Pug se usa `__('clave')`.
 
 ## Internacionalización (i18n)
 
@@ -837,19 +872,30 @@ Stride-And-Co/
 │   ├── roles.js
 │   ├── users.js
 │   └── variants.js
+│   └── web/
+│       └── auth.js
 ├── docs/
 │   ├── evidence/
 │   │   ├── Evidencia1.png
 │   │   ├── e2e-render.png
 │   │   └── evidencias.md
+│   ├── ssr/
+│   │   └── f1/
+│   │       ├── f1-prototype.png
+│   │       ├── f1-implementation.png
+│   │       ├── f1-view-source.png
+│   │       ├── f1-cookie.png
+│   │       └── f1-logout.png
 │   └── e2e-antigravity.md
 ├── locales/
 │   ├── en.json
 │   └── es.json
 ├── middleware/
-│   └── allowFields.js
-│   └── authenticate.js
-│   └── authorize.js
+│   ├── allowFields.js
+│   ├── authenticate.js
+│   ├── authorize.js
+│   ├── flash.js
+│   └── session.js
 ├── models/
 │   ├── mongo/
 │   │   ├── customer.js
@@ -868,22 +914,29 @@ Stride-And-Co/
 │   └── stylesheets/
 │       └── style.css
 ├── routes/
-│   ├── auth.js
-│   ├── customers.js
-│   ├── index.js
-│   ├── inventory.js
-│   ├── orders.js
-│   ├── permissions.js
-│   ├── products.js
-│   ├── roles.js
-│   ├── users.js
-│   └── variants.js
+│   ├── api/
+│   │   ├── auth.js
+│   │   ├── customers.js
+│   │   ├── index.js
+│   │   ├── inventory.js
+│   │   ├── orders.js
+│   │   ├── permissions.js
+│   │   ├── products.js
+│   │   ├── roles.js
+│   │   ├── users.js
+│   │   └── variants.js
+│   └── web/
+│       ├── auth.js
+│       └── index.js
 ├── scripts/
 │   ├── create-admin.js
-│   ├── seed-rbac.js
 │   ├── seed.js
+│   ├── seed-rbac.js
+│   ├── seed-products.js
 │   ├── setup-local.js
 │   └── setup-test.js
+├── services/
+│   └── auth.service.js
 ├── tests/
 │   ├── e2e/
 │   │   ├── auth.e2e.test.js
@@ -921,6 +974,8 @@ Stride-And-Co/
 │   └── checkOwnership.js
 │   └── password.js
 ├── views/
+│   ├── auth/
+│   │   └── login.pug
 │   ├── errors/
 │   │   ├── 404.pug
 │   │   └── 500.pug
