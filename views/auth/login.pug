@@ -1,0 +1,24 @@
+extends ../layout
+include ../mixins/form-field
+
+block content
+  .container.login-page
+    .card.login-card
+      .login-card-header.px-4.pt-4.pb-3
+        .brand.text-white
+          | STRIDE
+          span= ' & CO'
+        .small.text-white-50= __('auth.login.subtitle')
+      .card-body.p-4
+        h1.h4.fw-bold.mb-4= __('auth.login.title')
+
+        if formError
+          .alert.alert-danger.py-2.small(role='alert')= formError
+
+        form(method='post', action='/login', novalidate)
+          input(type='hidden', name='returnTo', value=returnTo)
+          +formField('email', __('auth.login.email'), email, 'email', errors.email, true)
+          +formField('password', __('auth.login.password'), null, 'password', errors.password, true)
+          button.btn.btn-dark.w-100.py-2.fw-semibold(type='submit')= __('auth.login.submit')
+
+        a.d-block.text-center.text-dark.mt-3(href='/')= __('auth.login.backToStore')

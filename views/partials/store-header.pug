@@ -7,3 +7,10 @@ header.store-header
     nav.store-nav.d-flex.align-items-center(aria-label=__('store.navigation'))
       a.nav-link(href='/')= __('store.home')
       a.nav-link(href='/#productos')= __('store.products')
+    .d-flex.align-items-center.gap-2
+      if user
+        span.small.text-secondary= user.first_name
+        form(method='post', action='/logout')
+          button.btn.btn-outline-dark.btn-sm(type='submit')= __('store.logout')
+      else
+        a.btn.btn-dark.btn-sm(href='/login')= __('store.login')

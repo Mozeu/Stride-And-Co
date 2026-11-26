@@ -198,3 +198,27 @@ body {
     border-radius: 12px;
   }
 }
+
+.login-page {
+  display: grid;
+  min-height: 65vh;
+  place-items: center;
+  padding-block: clamp(2rem, 8vw, 5rem);
+}
+
+.login-card {
+  width: min(100%, 440px);
+  overflow: hidden;
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 16px 42px #10182026;
+}
+
+.login-card-header {
+  background: #111a22;
+  border-bottom: 3px solid #bf1919;
+}
+
+.login-card .form-control {
+  padding: .7rem .85rem;
+}
