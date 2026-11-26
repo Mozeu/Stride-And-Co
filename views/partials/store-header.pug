@@ -11,6 +11,8 @@ header.store-header
       a.btn.btn-outline-dark.btn-sm(href='/cart')= __('store.cart.title')
       if user
         span.small.text-secondary= user.first_name
+        if user.role && user.role.permissions && user.role.permissions.some(permission => permission.key === 'orders:read:own')
+          a.btn.btn-outline-dark.btn-sm(href='/my/orders')= __('store.orders.title')
         form(method='post', action='/logout')
           button.btn.btn-outline-dark.btn-sm(type='submit')= __('store.logout')
       else

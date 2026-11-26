@@ -190,6 +190,49 @@
 			"removed": "Artículo retirado de la bolsa."
 		},
 		"login": "Iniciar sesión",
+		"orders": {
+			"title": "Mis pedidos",
+			"description": "Consulta el estado y el historial de tus pedidos.",
+			"detailTitle": "Detalle del pedido",
+			"detailDescription": "Consulta los artículos, importes y estados de tu pedido.",
+			"number": "Pedido",
+			"items": "Artículos",
+			"total": "Total",
+			"statusLabel": "Estado",
+			"detailLink": "Ver detalle",
+			"openOrder": "Ver pedido %s",
+			"empty": "Aún no tienes pedidos.",
+			"back": "Volver a mis pedidos",
+			"product": "Producto",
+			"quantity": "Cantidad",
+			"unitPrice": "Precio unitario",
+			"productNumber": "Producto #%s",
+			"noItems": "Este pedido no tiene artículos registrados.",
+			"history": "Historial de estados",
+			"noHistory": "Aún no hay cambios de estado registrados.",
+			"summary": "Resumen",
+			"subtotal": "Subtotal",
+			"shipping": "Envío",
+			"discount": "Descuento",
+			"paymentLabel": "Método de pago",
+			"address": "Dirección de envío",
+			"status": {
+				"pending": "Pendiente",
+				"confirmed": "Confirmado",
+				"processing": "En preparación",
+				"shipped": "Enviado",
+				"delivered": "Entregado",
+				"cancelled": "Cancelado",
+				"refunded": "Reembolsado",
+				"unknown": "Desconocido"
+			},
+			"payment": {
+				"cash": "Efectivo",
+				"card": "Tarjeta",
+				"transfer": "Transferencia",
+				"other": "Otro"
+			}
+		},
 		"logout": "Cerrar sesión"
 	},
 	"common": {
@@ -198,6 +241,8 @@
 		"next": "Siguiente"
 	},
 	"webErrors": {
+		"forbiddenTitle": "Acceso denegado",
+		"forbiddenMessage": "No tienes permiso para consultar este pedido.",
 		"notFoundTitle": "Página no encontrada",
 		"notFoundMessage": "La página que buscas no existe o fue movida.",
 		"serverErrorTitle": "Algo salió mal",

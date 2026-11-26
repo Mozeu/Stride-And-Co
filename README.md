@@ -610,6 +610,16 @@ Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya q
 | F1 | Inicio y cierre de sesión | `/login`, `/logout` | Pública | Edwin Noé Zaragoza Alvarado | [docs/ssr/f1/](docs/ssr/f1/) |
 | F4 | Bolsa de compra | `GET /cart`, `POST /cart/items`, `POST /cart/items/:variantId`, `POST /cart/items/:variantId/delete` | Pública | — | [Validación](docs/ssr/f4-bolsa-cantidad-supera-existencias.png) · [Bolsa vacía](docs/ssr/f4-bolsa-vacia-tras-retirar.png) · [HTML](docs/ssr/f4-bolsa-codigo-fuente.png) |
 
+### F6 · Mis pedidos
+
+| ID | Funcionalidad | Rutas | Permiso | Evidencia |
+|---|---|---|---|---|
+| F6 | Historial y detalle de pedidos propios | `GET /my/orders`, `GET /my/orders/:id` | `orders:read:own` | [Listado](docs/ssr/f6-mis-pedidos-listado.png) · [Detalle](docs/ssr/f6-mis-pedidos-detalle.png) · [Acceso denegado](docs/ssr/f6-mis-pedidos-acceso-denegado.png) · [HTML](docs/ssr/f6-mis-pedidos-codigo-fuente.png) |
+
+Con PostgreSQL y MongoDB configurados, ejecuta `NODE_ENV=development npm run seed` para cargar los usuarios y pedidos de demostración, y `NODE_ENV=development npm start` para abrir la tienda. Inicia sesión como `user@stride.test` con las credenciales de la [matriz RBAC](#control-de-acceso-basado-en-roles). Abre **Mis pedidos** y pulsa **Ver detalle**.
+
+Para comprobar el 403, inicia sesión como `sales@stride.test`, copia la URL de su pedido, cierra sesión y ábrela como `user@stride.test`. Para comprobar el 404, abre el detalle con un identificador válido que no exista. Las vistas usan los importes guardados en el pedido y muestran el nombre actual del producto cuando sigue en el catálogo.
+
 ### Cómo se guarda la sesión
 
 1. `POST /login` valida el correo y la contraseña con `services/auth.service.js` (el mismo servicio que usa la API), rechaza a los usuarios inactivos y guarda el JWT en la cookie `access_token`.

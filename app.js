@@ -25,6 +25,7 @@ const indexWebRouter = require('./routes/web/index');
 const { loadSession, requireLogin } = require('./middleware/session');
 const { readFlash } = require('./middleware/flash');
 const authWebRouter = require('./routes/web/auth');
+const myOrdersWebRouter = require('./routes/web/my-orders');
 
 var app = express();
 
@@ -46,6 +47,7 @@ app.use(readFlash);
 
 //Routes
 app.use('/', authWebRouter);
+app.use('/', myOrdersWebRouter);
 app.use('/', indexWebRouter);
 app.use('/health', indexRouter);
 app.use('/api/users', usersRouter);

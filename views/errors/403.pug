@@ -1,0 +1,9 @@
+extends ../layout
+
+block content
+  main.container.error-page
+    section.error-card(role='alert')
+      p.error-code 403
+      h1= __('webErrors.forbiddenTitle')
+      p= __('webErrors.forbiddenMessage')
+      a.btn.btn-dark.error-home(href='/')= __('webErrors.home')
