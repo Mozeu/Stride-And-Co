@@ -20,11 +20,11 @@ const ordersRouter = require('./routes/api/orders');
 const authRouter = require('./routes/api/auth');
 const indexWebRouter = require('./routes/web/index');
 
+const { loadSession, requireLogin } = require('./middleware/session');
+const { readFlash } = require('./middleware/flash');
+const authWebRouter = require('./routes/web/auth');
 
 var app = express();
-
-app.use(i18n.init);
-app.use(authenticate);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -33,10 +33,16 @@ app.set('view engine', 'pug');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser());                                   // now placed before i18n and authenticate
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(i18n.init);
+app.use(authenticate);
+app.use(loadSession); // reads cookie
+app.use(readFlash);
+
 //Routes
+app.use('/', authWebRouter);
 app.use('/', indexWebRouter);
 app.use('/health', indexRouter);
 app.use('/api/users', usersRouter);
