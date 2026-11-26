@@ -1,8 +1,34 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+:root {
+  --ink: #101820;
 }
 
-a {
-  color: #00B7FF;
+.store-header{
+  background: #fff;
+  border-bottom: 1px solid #e7e7e7;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.store-nav{
+  color: #444;
+  padding: .65rem .85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.brand{
+  font-size: 1.55rem;
+  font-weight: 900;
+  letter-spacing: -1.3px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.brand span{
+  color: #bf1919;
+}
+
+body {
+  background: #f5f6f7;
+  color: var(--ink);
 }

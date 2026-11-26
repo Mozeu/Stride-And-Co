@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
-const controller = require('../controllers/users');
-const { authorize } = require('../middleware/authorize');
-const { getUserOwnerId } = require('../utils/checkOwnership');
-const { allowFields } = require('../middleware/allowFields'); // debe ir despues de authorize
+const controller = require('../../controllers/users');
+const { authorize } = require('../../middleware/authorize');
+const { getUserOwnerId } = require('../../utils/checkOwnership');
+const { allowFields } = require('../../middleware/allowFields'); // debe ir despues de authorize
 
 /* POST user create: solo admin (users:create:own esta registrado, pero aun no exite sign-up) */
 router.post('/', authorize('users', 'create', 'any'), controller.create);

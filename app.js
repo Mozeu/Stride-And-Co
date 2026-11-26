@@ -8,16 +8,17 @@ const authenticate = require('./middleware/authenticate');
 const i18n = require('./config/i18n');
 
 //Router
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var rolesRouter = require('./routes/roles');
-var permissionsRouter = require('./routes/permissions');
-var productsRouter = require('./routes/products');
-var variantsRouter = require('./routes/variants');
-var inventoryRouter = require('./routes/inventory');
-var customersRouter = require('./routes/customers');
-var ordersRouter = require('./routes/orders');
-var authRouter = require('./routes/auth');
+const indexRouter = require('./routes/api/index');
+const usersRouter = require('./routes/api/users');
+const rolesRouter = require('./routes/api/roles');
+const permissionsRouter = require('./routes/api/permissions');
+const productsRouter = require('./routes/api/products');
+const variantsRouter = require('./routes/api/variants');
+const inventoryRouter = require('./routes/api/inventory');
+const customersRouter = require('./routes/api/customers');
+const ordersRouter = require('./routes/api/orders');
+const authRouter = require('./routes/api/auth');
+const indexWebRouter = require('./routes/web/index');
 
 
 var app = express();
@@ -36,7 +37,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 //Routes
-app.use('/', indexRouter);
+app.use('/', indexWebRouter);
+app.use('/health', indexRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/permissions', permissionsRouter);

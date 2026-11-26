@@ -1,78 +1,95 @@
 {
-	"auth" : {
-		"invalidCredentials" : "Credenciales Invalidas",
-		"LoginSuccessful" : "Inicio de sesión exitoso"
+	"auth": {
+		"invalidCredentials": "Credenciales Invalidas",
+		"LoginSuccessful": "Inicio de sesión exitoso"
 	},
-	"email" : {
-		"EmailandPassword" : "Se requieren email y contraseña"
+	"email": {
+		"EmailandPassword": "Se requieren email y contraseña"
 	},
-	"customerCreated" : {
-		"created" : "Cliente Creado"
+	"customerCreated": {
+		"created": "Cliente Creado"
 	},
-	"CustomerList" : {
-		"listCostumer" : "Lista de Clientes",
-		"customerNotFound" : "Cliente no encontrado",
-		"CustomerById" : "Cliente por ID",
-		"CustomerUpdated" : "Cliente Actualizado",
-		"CustomerDeleted" : "Cliente Eliminado"
+	"CustomerList": {
+		"listCostumer": "Lista de Clientes",
+		"customerNotFound": "Cliente no encontrado",
+		"CustomerById": "Cliente por ID",
+		"CustomerUpdated": "Cliente Actualizado",
+		"CustomerDeleted": "Cliente Eliminado"
 	},
-	"InventoryList" : {
-		"InventoryList" : "Lista de Inventario",
-		"InventoryNotFound" : "Inventario no encontrado",
-		"InventoryById" : "Inventario por ID",
-		"InventoryUpdated" : "Inventario Actualizado"
+	"InventoryList": {
+		"InventoryList": "Lista de Inventario",
+		"InventoryNotFound": "Inventario no encontrado",
+		"InventoryById": "Inventario por ID",
+		"InventoryUpdated": "Inventario Actualizado"
 	},
-	"OrderList" : {
-		"OrderCreated" : "Orden Creada",
-		"OrdersList" : "Lista de Ordenes",
-		"OrderNotFound" : "Orden no encontrada",
-		"OrderById" : "Orden por ID",
-		"OrderUpdated" : "Orden Actualizada"
+	"OrderList": {
+		"OrderCreated": "Orden Creada",
+		"OrdersList": "Lista de Ordenes",
+		"OrderNotFound": "Orden no encontrada",
+		"OrderById": "Orden por ID",
+		"OrderUpdated": "Orden Actualizada"
 	},
-	"PermissionsList" : {
-		"PermissionCreated" : "Permiso Creado",
-		"List" : "Lista de Permisos",
-		"PermissionNotFound" : "Permiso no encontrado",
-		"PermissionById" : "Permiso por ID",
-		"PermissionUpdated" : "Permiso Actualizado",
-		"PermissionDeleted" : "Permiso Eliminado"
+	"PermissionsList": {
+		"PermissionCreated": "Permiso Creado",
+		"List": "Lista de Permisos",
+		"PermissionNotFound": "Permiso no encontrado",
+		"PermissionById": "Permiso por ID",
+		"PermissionUpdated": "Permiso Actualizado",
+		"PermissionDeleted": "Permiso Eliminado"
 	},
-	"ProductsList" : {
+	"ProductsList": {
+		"ProductCreated": "Producto Creado",
+		"List": "Lista de Productos",
+		"ProductNotFound": "Producto no encontrado",
+		"ProductById": "Producto por ID",
+		"ProductUpdated": "Producto Actualizado",
+		"ProductDeleted": "Producto Eliminado"
+	},
+	"RolesList": {
+		"RoleCreated": "Rol Creado",
+		"List": "Lista de Roles",
+		"RoleNotFound": "Rol no encontrado",
+		"RoleById": "Rol por ID",
+		"RoleUpdated": "Rol Actualizado",
+		"RoleDeleted": "Rol Eliminado"
+	},
+	"UsersList": {
+		"UserCreated": "Usuario Creado",
+		"List": "Lista de Usuarios",
+		"UserNotFound": "Usuario no encontrado",
+		"UserById": "Usuario por ID",
+		"UserUpdated": "Usuario Actualizado",
+		"UserDeleted": "Usuario Eliminado"
+	},
+	"VariantsList": {
+		"VariantCreated": "Variante Creada",
+		"List": "Lista de Variantes",
+		"VariantNotFound": "Variante no encontrada",
+		"VariantById": "Variante por ID",
+		"VariantUpdated": "Variante Actualizada",
+		"VariantDeleted": "Variante Eliminada"
+	},
+	"authenticate": {
+		"Unauthorized": "No Autorizado"
+	},
+	"authorize": {
+		"Forbidden": "Prohibido"
+	},
+	"products":{
 		"ProductCreated" : "Producto Creado",
 		"List" : "Lista de Productos",
 		"ProductNotFound" : "Producto no encontrado",
 		"ProductById" : "Producto por ID",
 		"ProductUpdated" : "Producto Actualizado",
-		"ProductDeleted" : "Producto Eliminado"
-	},
-	"RolesList" : {
-		"RoleCreated" : "Rol Creado",
-		"List" : "Lista de Roles",
-		"RoleNotFound" : "Rol no encontrado",
-		"RoleById" : "Rol por ID",
-		"RoleUpdated" : "Rol Actualizado",
-		"RoleDeleted" : "Rol Eliminado"
-	},
-	"UsersList" : {
-		"UserCreated" : "Usuario Creado",
-		"List" : "Lista de Usuarios",
-		"UserNotFound" : "Usuario no encontrado",
-		"UserById" : "Usuario por ID",
-		"UserUpdated" : "Usuario Actualizado",
-		"UserDeleted" : "Usuario Eliminado"
-	},
-	"VariantsList" : {
-		"VariantCreated" : "Variante Creada",
-		"List" : "Lista de Variantes",
-		"VariantNotFound" : "Variante no encontrada",
-		"VariantById" : "Variante por ID",
-		"VariantUpdated" : "Variante Actualizada",
-		"VariantDeleted" : "Variante Eliminada"
-	},
-	"authenticate" : {
-		"Unauthorized" : "No Autorizado"
-	},
-	"authorize" : {
-		"Forbidden" : "Prohibido"
+		"ProductDeleted" : "Producto Eliminado",
+		"Name" : "Nombre",
+		"Description" : "Descripción",
+		"Price" : "Precio",
+		"Stock" : "Inventario",
+		"Image" : "Imagen",
+		"Category" : "Categoría",
+		"Brand" : "Marca",
+		"CreatedAt" : "Creado en",
+		"UpdatedAt" : "Actualizado en"
 	}
 }

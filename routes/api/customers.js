@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-const controller = require('../controllers/customers');
-const { authorize } = require('../middleware/authorize');
-const { getCustomerOwnerId } = require('../utils/checkOwnership');
+const controller = require('../../controllers/customers');
+const { authorize } = require('../../middleware/authorize');
+const { getCustomerOwnerId } = require('../../utils/checkOwnership');
 
 /* POST */
 router.post('/', authorize('customers', 'create', 'any'), controller.create);

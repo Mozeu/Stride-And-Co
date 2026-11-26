@@ -74,5 +74,22 @@
 	},
 	"authorize" : {
 		"Forbidden" : "Forbidden"
+	},
+	"products":{
+		"ProductCreated" : "Product Created",
+		"List" : "Products List",
+		"ProductNotFound" : "Product not found",
+		"ProductById" : "Product by ID",
+		"ProductUpdated" : "Product Updated",
+		"ProductDeleted" : "Product Deleted",
+		"Name" : "Name",
+		"Description" : "Description",
+		"Price" : "Price",
+		"Stock" : "Stock",
+		"Image" : "Image",
+		"Category" : "Category",
+		"Brand" : "Brand",
+		"CreatedAt" : "Created at",
+		"UpdatedAt" : "Updated at"
 	}
 }

@@ -3,8 +3,8 @@
 const express = require('express');
 const router = express.Router();
 
-const controller = require('../controllers/inventory');
-const { authorize } = require('../middleware/authorize');
+const controller = require('../../controllers/inventory');
+const { authorize } = require('../../middleware/authorize');
 
 /* GET */
 router.get('/', authorize('inventory', 'read', 'any'), controller.list);

@@ -1,5 +1,15 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  table 
+    thead
+      tr
+        th #{__('products.Name')}
+        th #{__('products.Price')}
+        th #{__('products.Description')}
+    tbody
+      each product in products
+        tr
+          td= product.name
+          td= product.price
+          td= product.description

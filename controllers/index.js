@@ -1,6 +1,8 @@
+const {Product} = require('../models/sql');
 
-function home (req, res, next) {
-  res.render('index', { title: 'Express' });
+async function home (req, res, next) {
+  const products = await Product.findAll();
+  res.render('index', { title: 'Stride & Co', products: products });
 }
 
 function healthCheck(req, res) {

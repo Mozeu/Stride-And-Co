@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const controller = require('../controllers/permissions');
-const { authorize } = require('../middleware/authorize');
+const controller = require('../../controllers/permissions');
+const { authorize } = require('../../middleware/authorize');
 
 /* POST */
 router.post('/', authorize('permissions', 'create', 'any'), controller.create);

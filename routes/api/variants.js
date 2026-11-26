@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const controller = require('../controllers/variants');
-const { authorize } = require('../middleware/authorize');
+const controller = require('../../controllers/variants');
+const { authorize } = require('../../middleware/authorize');
 
 /* POST */
 router.post('/', authorize('variants', 'create', 'any'), controller.create);
