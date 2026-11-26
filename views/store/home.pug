@@ -1,0 +1,20 @@
+extends ../layout
+include ../mixins/product-card
+
+block content
+  main
+    section.store-hero
+      .container.py-5
+        h1.fw-bold= __('store.landing.heading')
+        p.lead= __('store.landing.description')
+        a.btn.btn-lime.btn-lg(href='/products')= __('store.landing.browse')
+    section.container.py-5#productos
+      h2.fw-bold.mb-4= __('store.landing.featured')
+      if products.length
+        .row.row-cols-1.row-cols-sm-2.row-cols-lg-4.g-4
+          each product in products
+            .col
+              +productCard(product)
+      else
+        - const emptyMessage = __('products.Empty')
+        include ../partials/empty-state

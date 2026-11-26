@@ -114,6 +114,21 @@
 		"navigation": "Navegación de la tienda",
 		"home": "Inicio",
 		"products": "Productos",
+		"landing": {
+			"heading": "Muévete a tu manera",
+			"description": "Encuentra calzado para correr, entrenar y moverte todos los días.",
+			"browse": "Explorar catálogo",
+			"featured": "Productos destacados"
+		},
+		"catalog": {
+			"title": "Catálogo",
+			"description": "Encuentra tu próximo par en el catálogo de Stride & Co.",
+			"search": "Buscar por nombre o marca",
+			"allCategories": "Todas las categorías",
+			"categoryNumber": "Categoría %s",
+			"apply": "Buscar",
+			"empty": "No se encontraron productos."
+		},
 		"footerLinks": "Catálogo · Pedidos · Soporte",
 		"copyright": "© 2026 Stride & Co. Todos los derechos reservados.",
 		"login": "Iniciar sesión",

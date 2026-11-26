@@ -6,7 +6,7 @@ header.store-header
       small.d-block.fw-normal.text-secondary MOVE YOUR WAY
     nav.store-nav.d-flex.align-items-center(aria-label=__('store.navigation'))
       a.nav-link(href='/')= __('store.home')
-      a.nav-link(href='/#productos')= __('store.products')
+      a.nav-link(href='/products')= __('store.products')
     .d-flex.align-items-center.gap-2
       if user
         span.small.text-secondary= user.first_name
@@ -14,3 +14,7 @@ header.store-header
           button.btn.btn-outline-dark.btn-sm(type='submit')= __('store.logout')
       else
         a.btn.btn-dark.btn-sm(href='/login')= __('store.login')
+      if languageLinks
+        .d-flex
+          each link in languageLinks
+            a.btn.btn-sm.btn-link.link-dark(href=link.url, hreflang=link.lang, lang=link.lang, aria-current=locale === link.lang ? 'true' : null)= link.lang.toUpperCase()

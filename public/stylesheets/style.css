@@ -222,3 +222,26 @@ body {
 .login-card .form-control {
   padding: .7rem .85rem;
 }
+
+.store-hero {
+  display: flex;
+  align-items: center;
+  min-height: clamp(290px, 35vw, 360px);
+  background: linear-gradient(110deg, #121b22, #283c47);
+  color: #fff;
+}
+
+.store-hero h1 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  letter-spacing: -.035em;
+}
+
+.btn-lime {
+  --bs-btn-color: #171e15;
+  --bs-btn-bg: var(--lime);
+  --bs-btn-border-color: var(--lime);
+  --bs-btn-hover-color: #171e15;
+  --bs-btn-hover-bg: #c9f044;
+  --bs-btn-hover-border-color: #c9f044;
+  font-weight: 700;
+}

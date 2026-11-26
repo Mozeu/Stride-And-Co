@@ -3,8 +3,7 @@ const router = express.Router();
 
 const controller = require('../../controllers/index');
 
-/* GET home page. */
-router.get('/', controller.home);
+router.use(require('./catalog'));
 
 router.get('/health', controller.healthCheck);
 

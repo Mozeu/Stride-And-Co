@@ -1,10 +1,5 @@
-const { Product, Variant, Inventory } = require('../models/sql');
-
-const productIncludes = [{
-    model: Variant,
-    as: 'variants',
-    include: [{ model: Inventory, as: 'inventory' }]
-}];
+const { Product } = require('../models/sql');
+const productsService = require('../services/products.service');
 
 async function create(req, res, next) {
     try {
@@ -17,7 +12,7 @@ async function create(req, res, next) {
 
 async function list(req, res, next) {
     try {
-        const products = await Product.findAll({ include: productIncludes });
+        const products = await productsService.list();
         return res.json({ message: req.__("ProductsList.List"), data: products });
     } catch (error) {
         return next(error);
@@ -26,7 +21,7 @@ async function list(req, res, next) {
 
 async function find(req, res, next) {
     try {
-        const product = await Product.findByPk(req.params.id, { include: productIncludes });
+        const product = await productsService.find(req.params.id);
         if (!product) return res.status(404).json({ message: req.__("ProductsList.ProductNotFound") });
         return res.json({ message: req.__("ProductsList.ProductById"), data: product });
     } catch (error) {

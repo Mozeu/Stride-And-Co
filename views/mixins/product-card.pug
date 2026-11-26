@@ -13,4 +13,4 @@ mixin productCard(product)
       h2.h5.fw-bold= product.name
       if product.description
         p.text-secondary.mb-3= product.description
-      p.fw-bold.mb-0= '$' + product.price
+      p.fw-bold.mb-0= new Intl.NumberFormat(locale === 'en' ? 'en-MX' : 'es-MX', { style: 'currency', currency: 'MXN' }).format(product.price)

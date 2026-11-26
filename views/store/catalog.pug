@@ -1,0 +1,31 @@
+extends ../layout
+include ../mixins/product-card
+
+block content
+  main.container.py-5
+    h1.fw-bold.mb-4= __('store.catalog.title')
+    form.store-panel.p-3.mb-4(method='get', action='/products', role='search')
+      input(type='hidden', name='lang', value=locale)
+      .row.g-3.align-items-end
+        .col-md
+          label.form-label(for='catalog-query')= __('store.catalog.search')
+          input#catalog-query.form-control(type='search', name='q', maxlength='150', value=q)
+        .col-md-4
+          label.form-label(for='catalog-category')= __('products.Category')
+          select#catalog-category.form-select(name='category')
+            option(value='')= __('store.catalog.allCategories')
+            if category !== null && !categories.includes(category)
+              option(value=category, selected)= __('store.catalog.categoryNumber', category)
+            each id in categories
+              option(value=id, selected=category === id)= __('store.catalog.categoryNumber', id)
+        .col-md-auto.d-grid
+          button.btn.btn-dark(type='submit')= __('store.catalog.apply')
+    if products.length
+      .row.row-cols-1.row-cols-sm-2.row-cols-lg-3.g-4.mb-4
+        each product in products
+          .col
+            +productCard(product)
+      include ../partials/pagination
+    else
+      - const emptyMessage = __('store.catalog.empty')
+      include ../partials/empty-state

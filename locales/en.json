@@ -114,6 +114,21 @@
 		"navigation": "Store navigation",
 		"home": "Home",
 		"products": "Products",
+		"landing": {
+			"heading": "Move your way",
+			"description": "Find shoes for running, training and everyday wear.",
+			"browse": "Browse catalog",
+			"featured": "Featured products"
+		},
+		"catalog": {
+			"title": "Catalog",
+			"description": "Find your next pair in the Stride & Co catalog.",
+			"search": "Search by name or brand",
+			"allCategories": "All categories",
+			"categoryNumber": "Category %s",
+			"apply": "Search",
+			"empty": "No products found."
+		},
 		"footerLinks": "Catalog · Orders · Support",
 		"copyright": "© 2026 Stride & Co. All rights reserved.",
 		"login": "Sign in",
