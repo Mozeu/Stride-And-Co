@@ -6,6 +6,7 @@
     "start": "node ./bin/www",
     "dev": "supervisor ./bin/www",
     "seed": "node scripts/seed.js",
+    "seed:products": "node scripts/seed-products.js",
     "setup:local": "node scripts/setup-local.js",
     "setup:test": "node scripts/setup-test.js",
     "lint": "eslint .",
