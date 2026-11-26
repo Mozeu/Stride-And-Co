@@ -1,7 +1,22 @@
 {
 	"auth" : {
 		"invalidCredentials" : "Invalid Credentials",
-		"LoginSuccessful" : "Login successful"
+		"LoginSuccessful" : "Login successful",
+		"LogoutSuccessful" : "Logout successful",
+		"login" : {
+			"pageTitle" : "Sign in | Stride & Co.",
+			"metaDescription" : "Sign in to your Stride & Co. account.",
+			"title" : "Sign in",
+			"subtitle" : "Access your account",
+			"email" : "Email",
+			"password" : "Password",
+			"submit" : "Sign in",
+			"backToStore" : "Back to the store",
+			"errors" : {
+				"email" : "Enter a valid email address",
+				"password" : "Enter your password"
+			}
+		}
 	},
 	"email" : {
 		"EmailandPassword" : "Email and password are required"
@@ -100,7 +115,9 @@
 		"home": "Home",
 		"products": "Products",
 		"footerLinks": "Catalog · Orders · Support",
-		"copyright": "© 2026 Stride & Co. All rights reserved."
+		"copyright": "© 2026 Stride & Co. All rights reserved.",
+		"login": "Sign in",
+		"logout": "Sign out"
 	},
 	"common": {
 		"pagination": "Pagination",
