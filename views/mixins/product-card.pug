@@ -1,0 +1,16 @@
+mixin productCard(product)
+  article.product-tile.h-100
+    .shoe-art
+      if product.image_url
+        img.product-image(src=product.image_url, alt=product.name, loading='lazy')
+      else
+        span.shoe(role='img', aria-label=__('products.ImagePlaceholder')) 👟
+      if product.active === false
+        span.tag.badge.text-bg-secondary= __('products.Inactive')
+    .p-3
+      if product.brand
+        p.tiny.text-uppercase.mb-1= product.brand
+      h2.h5.fw-bold= product.name
+      if product.description
+        p.text-secondary.mb-3= product.description
+      p.fw-bold.mb-0= '$' + product.price

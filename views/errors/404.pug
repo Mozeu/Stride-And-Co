@@ -1,0 +1,9 @@
+extends ../layout
+
+block content
+  main.container.error-page
+    section.error-card(role='alert')
+      p.error-code 404
+      h1= __('webErrors.notFoundTitle')
+      p= __('webErrors.notFoundMessage')
+      a.btn.btn-dark.error-home(href='/')= __('webErrors.home')

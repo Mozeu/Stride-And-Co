@@ -78,6 +78,7 @@
 	"products":{
 		"ProductCreated" : "Product Created",
 		"List" : "Products List",
+		"Empty" : "No products are available.",
 		"ProductNotFound" : "Product not found",
 		"ProductById" : "Product by ID",
 		"ProductUpdated" : "Product Updated",
@@ -90,6 +91,30 @@
 		"Category" : "Category",
 		"Brand" : "Brand",
 		"CreatedAt" : "Created at",
-		"UpdatedAt" : "Updated at"
+		"UpdatedAt" : "Updated at",
+		"ImagePlaceholder" : "Product image coming soon",
+		"Inactive" : "Inactive"
+	},
+	"store": {
+		"navigation": "Store navigation",
+		"home": "Home",
+		"products": "Products",
+		"footerLinks": "Catalog · Orders · Support",
+		"copyright": "© 2026 Stride & Co. All rights reserved."
+	},
+	"common": {
+		"pagination": "Pagination",
+		"previous": "Previous",
+		"next": "Next"
+	},
+	"webErrors": {
+		"notFoundTitle": "Page not found",
+		"notFoundMessage": "The page you are looking for does not exist or has moved.",
+		"serverErrorTitle": "Something went wrong",
+		"serverErrorMessage": "We could not complete your request. Please try again later.",
+		"genericTitle": "An error occurred",
+		"genericMessage": "The request could not be completed.",
+		"home": "Back to home",
+		"details": "Technical details"
 	}
 }

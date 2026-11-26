@@ -1,0 +1,13 @@
+extends ../layout
+
+block content
+  main.container.error-page
+    section.error-card(role='alert')
+      p.error-code 500
+      h1= __('webErrors.serverErrorTitle')
+      p= __('webErrors.serverErrorMessage')
+      a.btn.btn-dark.error-home(href='/')= __('webErrors.home')
+      if error && error.stack
+        details.error-details
+          summary= __('webErrors.details')
+          pre= error.stack

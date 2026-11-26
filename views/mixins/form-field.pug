@@ -1,0 +1,14 @@
+mixin formField(name, label, value, type, error, required)
+  .mb-3
+    label.form-label(for=name)= label
+    input.form-control(
+      id=name
+      name=name
+      type=type || 'text'
+      value=value == null ? '' : value
+      required=required || false
+      class=error ? 'is-invalid' : null
+      aria-describedby=error ? name + '-error' : null
+    )
+    if error
+      .invalid-feedback(id=name + '-error')= error

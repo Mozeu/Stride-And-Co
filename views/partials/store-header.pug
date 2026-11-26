@@ -1,0 +1,9 @@
+header.store-header
+  .container.py-2.d-flex.justify-content-between.align-items-center.gap-3
+    a.brand(href='/')
+      | STRIDE
+      span= ' & CO'
+      small.d-block.fw-normal.text-secondary MOVE YOUR WAY
+    nav.store-nav.d-flex.align-items-center(aria-label=__('store.navigation'))
+      a.nav-link(href='/')= __('store.home')
+      a.nav-link(href='/#productos')= __('store.products')

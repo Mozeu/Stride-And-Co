@@ -1,0 +1,5 @@
+if errors && errors.length
+  .alert.alert-danger(role='alert')
+    ul.mb-0
+      each error in errors
+        li= error.msg || error

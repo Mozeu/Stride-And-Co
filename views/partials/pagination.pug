@@ -1,0 +1,12 @@
+if pagination && pagination.pages && pagination.pages.length
+  nav(aria-label=__('common.pagination'))
+    ul.pagination.justify-content-center
+      if pagination.previousUrl
+        li.page-item
+          a.page-link(href=pagination.previousUrl)= __('common.previous')
+      each page in pagination.pages
+        li.page-item(class=page.current ? 'active' : null)
+          a.page-link(href=page.url, aria-current=page.current ? 'page' : null)= page.number
+      if pagination.nextUrl
+        li.page-item
+          a.page-link(href=pagination.nextUrl)= __('common.next')

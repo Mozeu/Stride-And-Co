@@ -1,0 +1,14 @@
+mixin statusBadge(status, label)
+  -
+    const statusClasses = {
+      active: 'text-bg-success',
+      cancelled: 'text-bg-danger',
+      confirmed: 'text-bg-info',
+      delivered: 'text-bg-success',
+      inactive: 'text-bg-secondary',
+      pending: 'text-bg-warning',
+      processing: 'text-bg-primary',
+      refunded: 'text-bg-secondary',
+      shipped: 'text-bg-primary'
+    };
+  span.badge(class=statusClasses[status] || 'text-bg-secondary')= label || status

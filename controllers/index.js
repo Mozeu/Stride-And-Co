@@ -1,8 +1,16 @@
 const {Product} = require('../models/sql');
 
-async function home (req, res, next) {
-  const products = await Product.findAll();
-  res.render('index', { title: 'Stride & Co', products: products });
+async function home(req, res, next) {
+  try {
+    const products = await Product.findAll();
+    return res.render('index', {
+      title: 'Stride & Co',
+      products,
+      locale: req.getLocale()
+    });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 function healthCheck(req, res) {

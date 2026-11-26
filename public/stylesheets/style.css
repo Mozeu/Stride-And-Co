@@ -1,5 +1,8 @@
 :root {
   --ink: #101820;
+  --lime: #dfff65;
+  --muted: #737b84;
+  --brand-green: #719400;
 }
 
 .store-header{
@@ -31,4 +34,167 @@
 body {
   background: #f5f6f7;
   color: var(--ink);
+}
+
+.store-nav .nav-link {
+  color: #444;
+  padding: .65rem .85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.store-nav .nav-link:hover,
+.store-nav .nav-link:focus {
+  color: var(--ink);
+  box-shadow: inset 0 -3px var(--lime);
+}
+
+.store-header .brand small {
+  font-size: .59rem;
+  letter-spacing: 2px;
+}
+
+.product-tile {
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid #e7e8ea;
+  border-radius: 13px;
+  background: #fff;
+  transition: transform .15s, box-shadow .15s;
+}
+
+.product-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px #10182018;
+}
+
+.shoe-art {
+  position: relative;
+  display: flex;
+  height: 210px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(140deg, #edf0f1, #dfe4e5);
+}
+
+.shoe-art .shoe {
+  font-size: 6rem;
+  filter: drop-shadow(0 12px 7px #0002);
+  transform: rotate(-14deg);
+}
+
+.shoe-art .tag {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tiny {
+  color: #67727b;
+  font-size: .83rem;
+}
+
+.empty-state,
+.store-panel {
+  border: 1px solid #e8e8e8;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.shop-footer {
+  margin-top: 70px;
+  background: #111a22;
+  color: #c4cbd0;
+}
+
+.error-page {
+  display: grid;
+  min-height: 65vh;
+  place-items: center;
+  padding-block: clamp(2rem, 8vw, 6rem);
+}
+
+.error-card {
+  width: min(100%, 620px);
+  padding: clamp(1.5rem, 6vw, 3.5rem);
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 16px 42px #10182012;
+}
+
+.error-code {
+  margin-bottom: .75rem;
+  color: #bf1919;
+  font-size: clamp(3.5rem, 14vw, 6.5rem);
+  font-weight: 900;
+  letter-spacing: -.08em;
+  line-height: 1;
+}
+
+.error-card h1 {
+  font-size: clamp(1.5rem, 6vw, 2.25rem);
+  font-weight: 800;
+}
+
+.error-card > p:not(.error-code) {
+  max-width: 42ch;
+  margin: 0 auto 1.5rem;
+  color: var(--muted);
+}
+
+.error-home {
+  min-height: 44px;
+  padding: .7rem 1.25rem;
+  font-weight: 700;
+}
+
+.error-details {
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.error-details pre {
+  max-height: 16rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 575.98px) {
+  .store-header .container {
+    flex-wrap: wrap;
+    row-gap: .5rem;
+  }
+
+  .store-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .store-nav .nav-link {
+    padding: .55rem .45rem;
+    font-size: .9rem;
+  }
+
+  .shoe-art {
+    height: 185px;
+  }
+
+  .shop-footer .container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .error-card {
+    border-radius: 12px;
+  }
 }

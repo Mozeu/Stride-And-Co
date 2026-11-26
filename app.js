@@ -83,13 +83,35 @@ app.use(function(err, req, res, next) {
     return res.status(401).json({ message: req.__("authenticate.Unauthorized") });
   }
 
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  const status = err.status || 500;
+  const locale = req.getLocale();
+  const isDevelopment = req.app.get('env') === 'development';
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+  res.locals.message = err.message;
+  res.locals.error = isDevelopment ? err : {};
+  res.locals.status = status;
+
+  res.status(status);
+
+  if (status === 404) {
+    return res.render('errors/404', {
+      title: req.__('webErrors.notFoundTitle'),
+      locale
+    });
+  }
+
+  if (status >= 500) {
+    return res.render('errors/500', {
+      title: req.__('webErrors.serverErrorTitle'),
+      locale,
+      error: isDevelopment ? err : {}
+    });
+  }
+
+  return res.render('error', {
+    title: req.__('webErrors.genericTitle'),
+    locale
+  });
 });
 
 module.exports = app;

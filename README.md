@@ -800,6 +800,8 @@ POST /api/products 201
 
 ## Estructura del proyecto
 
+Las vistas web se renderizan en el servidor con Pug. La ruta `/` muestra el catálogo y las plantillas `views/errors/` presentan los errores 404 y 500 en el idioma seleccionado; `tests/web.test.js` cubre esas respuestas.
+
 ```text
 Stride-And-Co/
 ├── app.js
@@ -913,11 +915,27 @@ Stride-And-Co/
 │   ├── security.test.js
 │   ├── setup-unit.js
 │   ├── users.test.js
-│   └── variants.test.js
+│   ├── variants.test.js
+│   └── web.test.js
 ├── utils/
 │   └── checkOwnership.js
 │   └── password.js
 ├── views/
+│   ├── errors/
+│   │   ├── 404.pug
+│   │   └── 500.pug
+│   ├── mixins/
+│   │   ├── data-table.pug
+│   │   ├── form-field.pug
+│   │   ├── product-card.pug
+│   │   └── status-badge.pug
+│   ├── partials/
+│   │   ├── empty-state.pug
+│   │   ├── flash-message.pug
+│   │   ├── form-errors.pug
+│   │   ├── pagination.pug
+│   │   ├── store-footer.pug
+│   │   └── store-header.pug
 │   ├── error.pug
 │   ├── index.pug
 │   └── layout.pug

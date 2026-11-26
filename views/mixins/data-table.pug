@@ -1,0 +1,15 @@
+mixin dataTable(columns, rows, emptyMessage)
+  if rows && rows.length
+    .table-responsive
+      table.table.table-hover.align-middle.mb-0
+        thead.table-light
+          tr
+            each column in columns
+              th(scope='col')= column.label
+        tbody
+          each row in rows
+            tr
+              each column in columns
+                td= row[column.key]
+  else
+    include ../partials/empty-state
