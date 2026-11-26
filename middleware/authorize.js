@@ -1,3 +1,4 @@
+const createError = require('http-errors');
 const { Role, Permission } = require('../models/sql');
 
 let ac = null; // variable para la config. RBAC
@@ -29,10 +30,23 @@ async function loadAccessControl() {
     ac = grants.length > 0 ? new AccessControl(grants) : null;
 }
 
-// authorize('orders', 'read', 'own', getOwnerId)
-function authorize(resource, action, possession, getOwnerId) {
+async function matchesOwner(req, getOwnerId) {
+    const ownerId = await getOwnerId(req);
+    return ownerId !== null && ownerId !== undefined && Number(ownerId) === Number(req.user.id);
+}
+
+// strictOwn uses the session's explicit grant. A route without getOwnerId must scope its queries.
+function authorize(resource, action, possession, getOwnerId, { strictOwn = false } = {}) {
     return async function (req, res, next) {
         try {
+            if (strictOwn) {
+                const key = resource + ':' + action + ':own';
+                const permissions = req.user?.role?.permissions;
+                const granted = possession === 'own' && permissions?.some(permission => permission.key === key);
+                if (granted && (!getOwnerId || await matchesOwner(req, getOwnerId))) return next();
+                return next(createError(403));
+            }
+
             if (!ac) await loadAccessControl();
 
             const roleName = req.user && req.user.role ? req.user.role.name : null;
@@ -50,10 +64,7 @@ function authorize(resource, action, possession, getOwnerId) {
 
             // Si tiene own, el recurso debe ser del usuario
             if (possession === 'own' && hasOwn && getOwnerId) {
-                const ownerId = await getOwnerId(req);
-                if (ownerId !== null && ownerId !== undefined && Number(ownerId) === Number(req.user.id)) {
-                    return next();
-                }
+                if (await matchesOwner(req, getOwnerId)) return next();
             }
             return res.status(403).json({ message: req.__("authorize.Forbidden") });
 

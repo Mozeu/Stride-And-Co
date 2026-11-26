@@ -117,6 +117,49 @@
 		"footerLinks": "Catalog · Orders · Support",
 		"copyright": "© 2026 Stride & Co. All rights reserved.",
 		"login": "Sign in",
+		"orders": {
+			"title": "My orders",
+			"description": "View the status and history of your orders.",
+			"detailTitle": "Order details",
+			"detailDescription": "View your order items, amounts and status history.",
+			"number": "Order",
+			"items": "Items",
+			"total": "Total",
+			"statusLabel": "Status",
+			"detailLink": "View details",
+			"openOrder": "View order %s",
+			"empty": "You have no orders yet.",
+			"back": "Back to my orders",
+			"product": "Product",
+			"quantity": "Quantity",
+			"unitPrice": "Unit price",
+			"productNumber": "Product #%s",
+			"noItems": "There are no items recorded for this order.",
+			"history": "Status history",
+			"noHistory": "No status changes have been recorded yet.",
+			"summary": "Summary",
+			"subtotal": "Subtotal",
+			"shipping": "Shipping",
+			"discount": "Discount",
+			"paymentLabel": "Payment method",
+			"address": "Shipping address",
+			"status": {
+				"pending": "Pending",
+				"confirmed": "Confirmed",
+				"processing": "Processing",
+				"shipped": "Shipped",
+				"delivered": "Delivered",
+				"cancelled": "Cancelled",
+				"refunded": "Refunded",
+				"unknown": "Unknown"
+			},
+			"payment": {
+				"cash": "Cash",
+				"card": "Card",
+				"transfer": "Bank transfer",
+				"other": "Other"
+			}
+		},
 		"logout": "Sign out"
 	},
 	"common": {
@@ -125,6 +168,8 @@
 		"next": "Next"
 	},
 	"webErrors": {
+		"forbiddenTitle": "Access denied",
+		"forbiddenMessage": "You do not have permission to view this order.",
 		"notFoundTitle": "Page not found",
 		"notFoundMessage": "The page you are looking for does not exist or has moved.",
 		"serverErrorTitle": "Something went wrong",

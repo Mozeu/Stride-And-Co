@@ -10,7 +10,13 @@ header.store-header
     .d-flex.align-items-center.gap-2
       if user
         span.small.text-secondary= user.first_name
+        if user.role && user.role.permissions && user.role.permissions.some(permission => permission.key === 'orders:read:own')
+          a.btn.btn-outline-dark.btn-sm(href='/my/orders')= __('store.orders.title')
         form(method='post', action='/logout')
           button.btn.btn-outline-dark.btn-sm(type='submit')= __('store.logout')
       else
         a.btn.btn-dark.btn-sm(href='/login')= __('store.login')
+      if languageLinks
+        .d-flex
+          each link in languageLinks
+            a.btn.btn-sm.btn-link.link-dark(href=link.url, hreflang=link.lang, lang=link.lang, aria-current=locale === link.lang ? 'true' : null)= link.lang.toUpperCase()

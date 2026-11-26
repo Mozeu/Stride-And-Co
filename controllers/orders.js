@@ -1,4 +1,5 @@
 const { Order } = require('../models/mongo');
+const ordersService = require('../services/orders.service');
 
 async function create(req, res, next) {
     try {
@@ -12,7 +13,7 @@ async function create(req, res, next) {
 
 async function list(req, res, next) {
     try {
-        const orders = await Order.find().populate('customerId');
+        const orders = await ordersService.list();
         return res.json({ message:req.__("OrderList.OrdersList"), data: orders });
     } catch (error) {
         return next(error);
@@ -21,7 +22,7 @@ async function list(req, res, next) {
 
 async function find(req, res, next) {
     try {
-        const order = await Order.findById(req.params.id).populate('customerId');
+        const order = await ordersService.find(req.params.id);
         if (!order) return res.status(404).json({ message: req.__("OrderList.OrderNotFound") });
         return res.json({ message:req.__("OrderList.OrderById"), data: order });
     } catch (error) {

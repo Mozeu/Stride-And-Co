@@ -1,0 +1,62 @@
+extends ../layout
+include ../mixins/status-badge
+
+block content
+  main.container.py-5
+    a.btn.btn-link.link-dark.ps-0.mb-2(href='/my/orders?lang=' + locale)= __('store.orders.back')
+    h1.fw-bold.mb-2= __('store.orders.detailTitle')
+    - const status = currentStatus(order)
+    - const totals = order.totals || {}
+    p.d-flex.align-items-center.flex-wrap.gap-2.mb-4
+      span= order._id
+      span.text-secondary= date(order.createdAt)
+      +statusBadge(status, statusLabel(status))
+
+    .row.g-4
+      .col-lg-8
+        section.store-panel.p-3.mb-4
+          h2.h5.fw-bold= __('store.orders.items')
+          if order.items.length
+            .table-responsive
+              table.table.align-middle.mb-0
+                thead.table-light
+                  tr
+                    th(scope='col')= __('store.orders.product')
+                    th(scope='col')= __('store.orders.quantity')
+                    th(scope='col')= __('store.orders.unitPrice')
+                tbody
+                  each item in order.items
+                    tr
+                      th(scope='row')= item.name || __('store.orders.productNumber', item.productId)
+                      td= item.quantity
+                      td= money(item.unitPrice)
+          else
+            p.text-secondary.mb-0= __('store.orders.noItems')
+        section.store-panel.p-3
+          h2.h5.fw-bold= __('store.orders.history')
+          if order.statusHistory && order.statusHistory.length
+            ol.list-group.list-group-flush
+              each event in order.statusHistory
+                li.list-group-item.d-flex.justify-content-between.gap-3.px-0
+                  +statusBadge(event.status, statusLabel(event.status))
+                  span.text-secondary= date(event.changedAt)
+          else
+            p.text-secondary.mb-0= __('store.orders.noHistory')
+      .col-lg-4
+        aside.store-panel.p-3
+          h2.h5.fw-bold= __('store.orders.summary')
+          dl.row.mb-0
+            dt.col-6= __('store.orders.subtotal')
+            dd.col-6.text-end= money(totals.subtotal)
+            dt.col-6= __('store.orders.shipping')
+            dd.col-6.text-end= money(totals.shipping)
+            dt.col-6= __('store.orders.discount')
+            dd.col-6.text-end= money(totals.discount)
+            dt.col-6.border-top.pt-2= __('store.orders.total')
+            dd.col-6.border-top.pt-2.fw-bold.text-end= money(totals.total)
+          if order.paymentMethod
+            h3.h6.fw-bold.mt-3= __('store.orders.paymentLabel')
+            p.mb-0= paymentLabel(order.paymentMethod)
+          if address
+            h3.h6.fw-bold.mt-3= __('store.orders.address')
+            p.mb-0= address

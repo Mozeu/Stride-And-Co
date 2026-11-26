@@ -1,0 +1,33 @@
+extends ../layout
+include ../mixins/status-badge
+
+block content
+  main.container.py-5
+    h1.fw-bold.mb-4= __('store.orders.title')
+    if orders.length
+      .store-panel.p-3
+        .table-responsive
+          table.table.align-middle.mb-0
+            thead.table-light
+              tr
+                th(scope='col')= __('store.orders.number')
+                th(scope='col')= __('store.orders.items')
+                th(scope='col')= __('store.orders.total')
+                th(scope='col')= __('store.orders.statusLabel')
+                th(scope='col')= __('store.orders.detailLink')
+            tbody
+              each order in orders
+                - const status = currentStatus(order)
+                tr
+                  th(scope='row')
+                    span.d-block= order._id
+                    small.text-secondary.fw-normal= date(order.createdAt)
+                  td= (order.items || []).reduce((sum, item) => sum + item.quantity, 0)
+                  td= money(order.totals && order.totals.total)
+                  td
+                    +statusBadge(status, statusLabel(status))
+                  td
+                    a.btn.btn-outline-dark.btn-sm(href='/my/orders/' + order._id + '?lang=' + locale, aria-label=__('store.orders.openOrder', String(order._id)))= __('store.orders.detailLink')
+    else
+      - const emptyMessage = __('store.orders.empty')
+      include ../partials/empty-state
