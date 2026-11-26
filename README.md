@@ -606,6 +606,7 @@ Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya q
 
 | ID | Funcionalidad | Rutas | Permiso | Responsable | Evidencia |
 |---|---|---|---|---|---|
+| F2 | Inicio y catálogo | `GET /`, `GET /products` | Pública | — | [Inicio](docs/ssr/f2-inicio-productos-destacados.png) · [Búsqueda y filtro](docs/ssr/f2-catalogo-busqueda-y-filtro.png) · [Página 2](docs/ssr/f2-catalogo-pagina-2.png) · [HTML](docs/ssr/f2-catalogo-codigo-fuente.png) |
 | F1 | Inicio y cierre de sesión | `/login`, `/logout` | Pública | Edwin Noé Zaragoza Alvarado | [docs/ssr/f1/](docs/ssr/f1/) |
 
 ### Cómo se guarda la sesión
@@ -625,6 +626,12 @@ El JWT expira a los 15 minutos (`jwt.expiresIn`); después, el usuario aparece c
 3. **Ruta:** definirla en `routes/web/<nombre>.js` y registrarla en `app.js`. Si es protegida: `requireLogin` y luego `authorize(recurso, acción, alcance)`.
 4. **Vista:** crear `views/<carpeta>/<nombre>.pug` que extienda `layout`, y pasar `title` y `metaDescription` desde el controller.
 5. **Traducciones:** agregar las claves en `locales/es.json` y `locales/en.json` al mismo tiempo; en Pug se usa `__('clave')`.
+
+### F2 · Inicio y catálogo
+
+El inicio destaca los cuatro productos activos más recientes. El catálogo busca por nombre o marca, filtra por `category_id` y muestra 12 productos por página. Prueba `/products?q=runner&category=1&page=2&lang=es` con datos que tengan categorías asignadas.
+
+Las capturas manuales se tomaron antes de incorporar la cabecera de F1 y documentan el flujo del catálogo.
 
 ## Internacionalización (i18n)
 
