@@ -8,6 +8,7 @@ header.store-header
       a.nav-link(href='/')= __('store.home')
       a.nav-link(href='/products')= __('store.products')
     .d-flex.align-items-center.gap-2
+      a.btn.btn-outline-dark.btn-sm(href='/cart')= __('store.cart.title')
       if user
         span.small.text-secondary= user.first_name
         form(method='post', action='/logout')

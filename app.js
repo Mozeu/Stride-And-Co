@@ -3,6 +3,8 @@ const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const { createHmac } = require('node:crypto');
+const { secret } = require('./config/jwt');
 const logger = require('morgan');
 const authenticate = require('./middleware/authenticate');
 const i18n = require('./config/i18n');
@@ -33,7 +35,8 @@ app.set('view engine', 'pug');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());                                   // now placed before i18n and authenticate
+const cartCookieSecret = createHmac('sha256', secret).update('stride-cart-cookie').digest('hex');
+app.use(cookieParser(cartCookieSecret));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(i18n.init);
