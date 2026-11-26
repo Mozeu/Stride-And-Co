@@ -607,6 +607,7 @@ Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya q
 | ID | Funcionalidad | Rutas | Permiso | Responsable | Evidencia |
 |---|---|---|---|---|---|
 | F1 | Inicio y cierre de sesión | `/login`, `/logout` | Pública | Edwin Noé Zaragoza Alvarado | [docs/ssr/f1/](docs/ssr/f1/) |
+| F4 | Bolsa de compra | `GET /cart`, `POST /cart/items`, `POST /cart/items/:variantId`, `POST /cart/items/:variantId/delete` | Pública | — | [Validación](docs/ssr/f4-bolsa-cantidad-supera-existencias.png) · [Bolsa vacía](docs/ssr/f4-bolsa-vacia-tras-retirar.png) · [HTML](docs/ssr/f4-bolsa-codigo-fuente.png) |
 
 ### Cómo se guarda la sesión
 
@@ -617,6 +618,12 @@ Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya q
 5. Los mensajes de confirmación (por ejemplo, "Inicio de sesión exitoso") viajan en una cookie de un solo uso que lee `middleware/flash.js`.
 
 El JWT expira a los 15 minutos (`jwt.expiresIn`); después, el usuario aparece como sin sesión y debe iniciar sesión de nuevo.
+
+### F4 · Bolsa de compra
+
+En `/cart` se pueden agregar variantes, cambiar su cantidad y retirarlas. La cookie firmada guarda sus identificadores y cantidades. El servidor consulta PostgreSQL para calcular los importes y la disponibilidad (`stock - reserved`). Las líneas que excedan las existencias se conservan para su revisión y se excluyen del subtotal. La bolsa no reserva stock.
+
+La bolsa funciona con o sin sesión y reutiliza los mensajes de confirmación del layout de F1. Las capturas manuales muestran el flujo de la bolsa con la cabecera previa a F1.
 
 ### Cómo agregar una pantalla nueva
 
