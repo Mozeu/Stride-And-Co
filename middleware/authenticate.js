@@ -1,12 +1,15 @@
-const { User, Role, Permission } = require('../models/sql');
 const { expressjwt } = require('express-jwt');
 const jwtConfig = require('../config/jwt');
+const { findSessionUser } = require('../services/auth.service');
 
 const verifyToken = expressjwt({
     secret: jwtConfig.secret,
     algorithms: ['HS256'],
     issuer: jwtConfig.issuer,
-    audience: jwtConfig.audience
+    audience: jwtConfig.audience,
+    // primero lee API clients, segundo el cookie del browser. Tests funcionan hasta sin cookieParser
+    getToken: (req) => req.headers.authorization?.replace(/^Bearer /, '')
+        || req.cookies?.access_token
 });
 
 function authenticate(req, res, next) {
@@ -19,18 +22,7 @@ function authenticate(req, res, next) {
         if (error) return next(error);
 
         try {
-            const user = await User.findByPk(req.auth.sub, {
-                attributes: { exclude: ['password_hash', 'salt_key'] },
-                include: [{
-                    model: Role,
-                    as: 'role',
-                    include: [{
-                        model: Permission,
-                        as: 'permissions',
-                        attributes: ['id', 'key']
-                    }]
-                }]
-            });
+            const user = await findSessionUser(req.auth.sub);
 
             if (!user || !user.active) {
                 return res.status(401).json({ message: req.__("authenticate.Unauthorized") });

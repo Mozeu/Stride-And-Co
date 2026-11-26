@@ -1,22 +1,10 @@
 const {User} = require('../models/sql');
 const { verifyPassword } = require('../utils/password');
 const jwt = require('jsonwebtoken');
+const authService = require('../services/auth.service');
 const jwtConfig = require('../config/jwt');
 
 //const INVALID_CREDENTIALS = { message: 'Invalid credentials' };
-
-function signToken(user) {
-    return jwt.sign(
-        { sub: String(user.id) },
-        jwtConfig.secret,
-        {
-            expiresIn: jwtConfig.expiresIn,
-            issuer: jwtConfig.issuer,
-            audience: jwtConfig.audience,
-            algorithm: 'HS256'
-        }
-    );
-}
 
 function me(req, res) {
     const user = req.user;
@@ -31,8 +19,6 @@ function me(req, res) {
     });
 }
 
-
-
 async function login(req, res, next) {
     const { email, password } = req.body || {};
 
@@ -43,19 +29,16 @@ async function login(req, res, next) {
     }
 
     try {
-        const user = await User.findOne({ where: { email: email.trim() } });
+        const user = await authService.checkCredentials(email, password);
 
-        if (!user || !user.active) {
-            return res.status(401).json({message: req.__('auth.invalidCredentials')});
+        if (!user) {
+            return res.status(401).json({ message: req.__('auth.invalidCredentials') });
         }
-
-        const valid = await verifyPassword(password, user.password_hash);
-        if (!valid) return res.status(401).json({message: req.__('auth.invalidCredentials')});
 
         return res.json({
             message: req.__("auth.LoginSuccessful"),
             data: {
-                token: signToken(user),
+                token: authService.signToken(user),
                 tokenType: 'Bearer',
                 expiresIn: jwtConfig.expiresIn
             }
