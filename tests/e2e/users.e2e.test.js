@@ -181,4 +181,31 @@ describe('E2E Users', () => {
       createdUserId = null;
     });
   });
+
+  describe('allowFields (user editing their own account)', () => {
+    let ownId;
+
+    beforeAll(async () => {
+      const me = await request(baseUrl).get('/api/auth/me').set(authHeader(userToken));
+      ownId = me.body.id;
+    });
+
+    test('user cannot change their own role_id: 403', async () => {
+      const res = await request(baseUrl)
+        .put(`/api/users/${ownId}`)
+        .set(authHeader(userToken))
+        .send({ role_id: 1 });
+
+      expect(res.status).toBe(403);
+    });
+
+    test('user can update an allowed field of their own account: 200', async () => {
+      const res = await request(baseUrl)
+        .put(`/api/users/${ownId}`)
+        .set(authHeader(userToken))
+        .send({ name: 'user' });
+
+      expect(res.status).toBe(200);
+    });
+  });
 });
