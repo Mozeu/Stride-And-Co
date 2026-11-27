@@ -1,114 +1,114 @@
 {
-	"auth" : {
-		"invalidCredentials" : "Invalid Credentials",
-		"LoginSuccessful" : "Login successful",
-		"LogoutSuccessful" : "Logout successful",
-		"login" : {
-			"pageTitle" : "Sign in | Stride & Co.",
-			"metaDescription" : "Sign in to your Stride & Co. account.",
-			"title" : "Sign in",
-			"subtitle" : "Access your account",
-			"email" : "Email",
-			"password" : "Password",
-			"submit" : "Sign in",
-			"backToStore" : "Back to the store",
-			"errors" : {
-				"email" : "Enter a valid email address",
-				"password" : "Enter your password"
+	"auth": {
+		"invalidCredentials": "Invalid Credentials",
+		"LoginSuccessful": "Login successful",
+		"LogoutSuccessful": "Logout successful",
+		"login": {
+			"pageTitle": "Sign in | Stride & Co.",
+			"metaDescription": "Sign in to your Stride & Co. account.",
+			"title": "Sign in",
+			"subtitle": "Access your account",
+			"email": "Email",
+			"password": "Password",
+			"submit": "Sign in",
+			"backToStore": "Back to the store",
+			"errors": {
+				"email": "Enter a valid email address",
+				"password": "Enter your password"
 			}
 		}
 	},
-	"email" : {
-		"EmailandPassword" : "Email and password are required"
+	"email": {
+		"EmailandPassword": "Email and password are required"
 	},
-	"customerCreated" : {
-		"created" : "Customer Created"
+	"customerCreated": {
+		"created": "Customer Created"
 	},
-	"CustomerList" : {
-		"listCostumer" : "Customers List",
-		"customerNotFound" : "Customer not found",
-		"CustomerById" : "Customer by ID",
-		"CustomerUpdated" : "Customer Updated",
-		"CustomerDeleted" : "Customer Deleted"
+	"CustomerList": {
+		"listCostumer": "Customers List",
+		"customerNotFound": "Customer not found",
+		"CustomerById": "Customer by ID",
+		"CustomerUpdated": "Customer Updated",
+		"CustomerDeleted": "Customer Deleted"
 	},
-	"InventoryList" : {
-		"InventoryList" : "Inventory List",
-		"InventoryNotFound" : "Inventory not found",
-		"InventoryById" : "Inventory by ID",
-		"InventoryUpdated" : "Inventory Updated"
+	"InventoryList": {
+		"InventoryList": "Inventory List",
+		"InventoryNotFound": "Inventory not found",
+		"InventoryById": "Inventory by ID",
+		"InventoryUpdated": "Inventory Updated"
 	},
-	"OrderList" : {
-		"OrderCreated" : "Order Created",
-		"OrdersList" : "Orders List",
-		"OrderNotFound" : "Order not found",
-		"OrderById" : "Order by ID",
-		"OrderUpdated" : "Order Updated"
+	"OrderList": {
+		"OrderCreated": "Order Created",
+		"OrdersList": "Orders List",
+		"OrderNotFound": "Order not found",
+		"OrderById": "Order by ID",
+		"OrderUpdated": "Order Updated"
 	},
-	"PermissionsList" : {
-		"PermissionCreated" : "Permission Created",
-		"List" : "Permission List",
-		"PermissionNotFound" : "Permission not found",
-		"PermissionById" : "Permission by ID",
-		"PermissionUpdated" : "Permission Updated",
-		"PermissionDeleted" : "Permission Deleted"
+	"PermissionsList": {
+		"PermissionCreated": "Permission Created",
+		"List": "Permission List",
+		"PermissionNotFound": "Permission not found",
+		"PermissionById": "Permission by ID",
+		"PermissionUpdated": "Permission Updated",
+		"PermissionDeleted": "Permission Deleted"
 	},
-	"ProductsList" : {
-		"ProductCreated" : "Product Created",
-		"List" : "Products List",
-		"ProductNotFound" : "Product not found",
-		"ProductById" : "Product by ID",
-		"ProductUpdated" : "Product Updated",
-		"ProductDeleted" : "Product Deleted"
+	"ProductsList": {
+		"ProductCreated": "Product Created",
+		"List": "Products List",
+		"ProductNotFound": "Product not found",
+		"ProductById": "Product by ID",
+		"ProductUpdated": "Product Updated",
+		"ProductDeleted": "Product Deleted"
 	},
-	"RolesList" : {
-		"RoleCreated" : "Role Created",
-		"List" : "Roles List",
-		"RoleNotFound" : "Role not found",
-		"RoleById" : "Role by ID",
-		"RoleUpdated" : "Role Updated",
-		"RoleDeleted" : "Role Deleted"
+	"RolesList": {
+		"RoleCreated": "Role Created",
+		"List": "Roles List",
+		"RoleNotFound": "Role not found",
+		"RoleById": "Role by ID",
+		"RoleUpdated": "Role Updated",
+		"RoleDeleted": "Role Deleted"
 	},
-	"UsersList" : {
-		"UserCreated" : "User Created",
-		"List" : "Users List",
-		"UserNotFound" : "User not found",
-		"UserById" : "User by ID",
-		"UserUpdated" : "User Updated",
-		"UserDeleted" : "User Deleted"
+	"UsersList": {
+		"UserCreated": "User Created",
+		"List": "Users List",
+		"UserNotFound": "User not found",
+		"UserById": "User by ID",
+		"UserUpdated": "User Updated",
+		"UserDeleted": "User Deleted"
 	},
-	"VariantsList" : {
-		"VariantCreated" : "Variant Created",
-		"List" : "Variants List",
-		"VariantNotFound" : "Variant not found",
-		"VariantById" : "Variant by ID",
-		"VariantUpdated" : "Variant Updated",
-		"VariantDeleted" : "Variant Deleted"
+	"VariantsList": {
+		"VariantCreated": "Variant Created",
+		"List": "Variants List",
+		"VariantNotFound": "Variant not found",
+		"VariantById": "Variant by ID",
+		"VariantUpdated": "Variant Updated",
+		"VariantDeleted": "Variant Deleted"
 	},
-	"authenticate" : {
-		"Unauthorized" : "Unauthorized"
+	"authenticate": {
+		"Unauthorized": "Unauthorized"
 	},
-	"authorize" : {
-		"Forbidden" : "Forbidden"
+	"authorize": {
+		"Forbidden": "Forbidden"
 	},
-	"products":{
-		"ProductCreated" : "Product Created",
-		"List" : "Products List",
-		"Empty" : "No products are available.",
-		"ProductNotFound" : "Product not found",
-		"ProductById" : "Product by ID",
-		"ProductUpdated" : "Product Updated",
-		"ProductDeleted" : "Product Deleted",
-		"Name" : "Name",
-		"Description" : "Description",
-		"Price" : "Price",
-		"Stock" : "Stock",
-		"Image" : "Image",
-		"Category" : "Category",
-		"Brand" : "Brand",
-		"CreatedAt" : "Created at",
-		"UpdatedAt" : "Updated at",
-		"ImagePlaceholder" : "Product image coming soon",
-		"Inactive" : "Inactive"
+	"products": {
+		"ProductCreated": "Product Created",
+		"List": "Products List",
+		"Empty": "No products are available.",
+		"ProductNotFound": "Product not found",
+		"ProductById": "Product by ID",
+		"ProductUpdated": "Product Updated",
+		"ProductDeleted": "Product Deleted",
+		"Name": "Name",
+		"Description": "Description",
+		"Price": "Price",
+		"Stock": "Stock",
+		"Image": "Image",
+		"Category": "Category",
+		"Brand": "Brand",
+		"CreatedAt": "Created at",
+		"UpdatedAt": "Updated at",
+		"ImagePlaceholder": "Product image coming soon",
+		"Inactive": "Inactive"
 	},
 	"store": {
 		"navigation": "Store navigation",
@@ -126,6 +126,11 @@
 			"search": "Search by name or brand",
 			"allCategories": "All categories",
 			"categoryNumber": "Category %s",
+			"categories": {
+				"shoes": "Shoes",
+				"clothing": "Clothing",
+				"backpacks": "Backpacks"
+			},
 			"apply": "Search",
 			"empty": "No products found."
 		},
@@ -210,6 +215,31 @@
 		"pagination": "Pagination",
 		"previous": "Previous",
 		"next": "Next"
+	},
+	"admin": {
+		"navigation": "Admin",
+		"dashboard": {
+			"title": "Admin dashboard",
+			"description": "View product, variant, inventory and order metrics.",
+			"products": "Products",
+			"variants": "Variants",
+			"availableUnits": "Available units",
+			"orders": "Orders",
+			"recentOrders": "Recent orders",
+			"noOrders": "No orders have been recorded.",
+			"productStock": "Stock by product",
+			"stockTable": "Inventory by product",
+			"stockChart": "Stock chart",
+			"orderChart": "Orders by status",
+			"stock": "Stock",
+			"reserved": "Reserved",
+			"available": "Available",
+			"userId": "ID",
+			"userRole": "Role",
+			"userName": "Name",
+			"ordersByStatus": "Orders by status",
+			"ordersCount": "Orders count"
+		}
 	},
 	"webErrors": {
 		"forbiddenTitle": "Access denied",

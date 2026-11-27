@@ -78,6 +78,24 @@ describe('F2 storefront', () => {
       }
     });
     expect(Product.findAll).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 12, limit: 12 }));
+    expect(Product.findAll).toHaveBeenLastCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ active: true, category_id: 7 })
+    }));
+  });
+
+  test('shows translated category names in the catalog selector', async () => {
+    Product.count.mockResolvedValueOnce(0);
+    Product.findAll.mockResolvedValueOnce([
+      { category_id: 1 },
+      { category_id: 2 },
+      { category_id: 3 }
+    ]).mockResolvedValueOnce([]);
+
+    const response = await request(app).get('/products?lang=es').expect(200);
+    expect(response.text).toContain('Zapatos');
+    expect(response.text).toContain('Ropa');
+    expect(response.text).toContain('Mochilas');
+    expect(response.text).toContain('onchange="this.form.submit()"');
   });
 
   test('keeps the selected language and handles invalid filter inputs', async () => {

@@ -7,6 +7,7 @@ function isApiPath(path) {
 // Corre con un request y llena req.user y res.locals.user
 async function loadSession(req, res, next) {
     res.locals.user = null;
+    res.locals.can = () => false;
 
     if (isApiPath(req.path)) return next();
 
@@ -24,6 +25,10 @@ async function loadSession(req, res, next) {
 
         req.user = user;
         res.locals.user = user;
+        res.locals.can = (resource, action, possession = 'any') => {
+            const key = `${resource}:${action}:${possession}`;
+            return Boolean(user.role?.permissions?.some(permission => permission.key === key));
+        };
         return next();
     } catch (error) {
         return next(error);

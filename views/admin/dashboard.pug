@@ -1,0 +1,105 @@
+extends ../layout
+include ../mixins/status-badge
+
+block content
+  main.container.py-5
+    section.admin-dashboard-shell.p-4.p-md-5
+      .admin-user-meta.d-flex.flex-wrap.gap-3.mb-3
+        small
+          strong= __('admin.dashboard.userId') + ': '
+          span= user.id
+        small
+          strong= __('admin.dashboard.userRole') + ': '
+          span= user.role && user.role.name ? user.role.name : '—'
+        small
+          strong= __('admin.dashboard.userName') + ': '
+          span= [user.first_name, user.last_name].filter(Boolean).join(' ')
+      h1.fw-bold.mb-4= __('admin.dashboard.title')
+
+      .row.g-3
+        .col-12.col-sm-6.col-lg-3
+          .admin-metric.p-4
+            span.d-block= __('admin.dashboard.products')
+            strong.fs-2= productCount
+        .col-12.col-sm-6.col-lg-3
+          .admin-metric.p-4
+            span.d-block= __('admin.dashboard.variants')
+            strong.fs-2= variantCount
+        .col-12.col-sm-6.col-lg-3
+          .admin-metric.p-4
+            span.d-block= __('admin.dashboard.availableUnits')
+            strong.fs-2= availableUnits
+        .col-12.col-sm-6.col-lg-3
+          .admin-metric.p-4
+            span.d-block= __('admin.dashboard.orders')
+            strong.fs-2= orderCount
+
+    section.store-panel.admin-data-panel.p-3.mt-4
+      h2.h4.mb-3= __('admin.dashboard.recentOrders')
+      if recentOrders.length
+        .table-responsive
+          table.table.align-middle.mb-0
+            thead.table-light
+              tr
+                th(scope='col')= __('store.orders.number')
+                th(scope='col')= __('store.orders.items')
+                th(scope='col')= __('store.orders.total')
+                th(scope='col')= __('store.orders.statusLabel')
+            tbody
+              each order in recentOrders
+                - const status = currentStatus(order)
+                tr
+                  th(scope='row')
+                    span.d-block= order._id
+                    small.text-secondary.fw-normal= date(order.createdAt)
+                  td= (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+                  td= money(order.totals && order.totals.total)
+                  td
+                    +statusBadge(status, statusLabel(status))
+      else
+        - const emptyMessage = __('admin.dashboard.noOrders')
+        include ../partials/empty-state
+
+    section.store-panel.admin-data-panel.p-3.mt-4
+      h2.h4.mb-3= __('admin.dashboard.productStock')
+      if productStock.length
+        .row.g-4
+          .col-12
+            h3.h6= __('admin.dashboard.stockTable')
+            .table-responsive
+              table.table.align-middle.mb-0
+                thead.table-light
+                  tr
+                    th(scope='col')= __('products.Name')
+                    th(scope='col')= __('admin.dashboard.stock')
+                    th(scope='col')= __('admin.dashboard.reserved')
+                    th(scope='col')= __('admin.dashboard.available')
+                tbody
+                  each product in productStock
+                    tr
+                      td= product.name
+                      td= product.stock
+                      td= product.reserved
+                      td= product.available
+      else
+        - const emptyMessage = __('admin.dashboard.noOrders')
+        include ../partials/empty-state
+
+    section.store-panel.admin-data-panel.p-3.mt-4
+      h2.h4.mb-3= __('admin.dashboard.ordersByStatus')
+      if orderStatusCounts.length
+        .table-responsive
+          table.table.align-middle.mb-0
+            thead.table-light
+              tr
+                th(scope='col')= __('store.orders.statusLabel')
+                th(scope='col')= __('admin.dashboard.ordersCount')
+            tbody
+              each item in orderStatusCounts
+                tr
+                  td
+                    +statusBadge(item.status, statusLabel(item.status))
+                  td= item.count
+      else
+        - const emptyMessage = __('admin.dashboard.noOrders')
+        include ../partials/empty-state

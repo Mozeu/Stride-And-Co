@@ -119,25 +119,25 @@
 	"authorize": {
 		"Forbidden": "Prohibido"
 	},
-	"products":{
-		"ProductCreated" : "Producto Creado",
-		"List" : "Lista de Productos",
-		"Empty" : "No hay productos disponibles.",
-		"ProductNotFound" : "Producto no encontrado",
-		"ProductById" : "Producto por ID",
-		"ProductUpdated" : "Producto Actualizado",
-		"ProductDeleted" : "Producto Eliminado",
-		"Name" : "Nombre",
-		"Description" : "Descripción",
-		"Price" : "Precio",
-		"Stock" : "Inventario",
-		"Image" : "Imagen",
-		"Category" : "Categoría",
-		"Brand" : "Marca",
-		"CreatedAt" : "Creado en",
-		"UpdatedAt" : "Actualizado en",
-		"ImagePlaceholder" : "Imagen de producto pendiente",
-		"Inactive" : "Inactivo"
+	"products": {
+		"ProductCreated": "Producto Creado",
+		"List": "Lista de Productos",
+		"Empty": "No hay productos disponibles.",
+		"ProductNotFound": "Producto no encontrado",
+		"ProductById": "Producto por ID",
+		"ProductUpdated": "Producto Actualizado",
+		"ProductDeleted": "Producto Eliminado",
+		"Name": "Nombre",
+		"Description": "Descripción",
+		"Price": "Precio",
+		"Stock": "Inventario",
+		"Image": "Imagen",
+		"Category": "Categoría",
+		"Brand": "Marca",
+		"CreatedAt": "Creado en",
+		"UpdatedAt": "Actualizado en",
+		"ImagePlaceholder": "Imagen de producto pendiente",
+		"Inactive": "Inactivo"
 	},
 	"store": {
 		"navigation": "Navegación de la tienda",
@@ -155,6 +155,11 @@
 			"search": "Buscar por nombre o marca",
 			"allCategories": "Todas las categorías",
 			"categoryNumber": "Categoría %s",
+			"categories": {
+				"shoes": "Zapatos",
+				"clothing": "Ropa",
+				"backpacks": "Mochilas"
+			},
 			"apply": "Buscar",
 			"empty": "No se encontraron productos."
 		},
@@ -239,6 +244,31 @@
 		"pagination": "Paginación",
 		"previous": "Anterior",
 		"next": "Siguiente"
+	},
+	"admin": {
+		"navigation": "Administración",
+		"dashboard": {
+			"title": "Dashboard administrativo",
+			"description": "Consulta las métricas de productos, variantes, inventario y pedidos.",
+			"products": "Productos",
+			"variants": "Variantes",
+			"availableUnits": "Unidades disponibles",
+			"orders": "Pedidos",
+			"recentOrders": "Pedidos recientes",
+			"noOrders": "No hay pedidos registrados.",
+			"productStock": "Stock por producto",
+			"stockTable": "Inventario por producto",
+			"stockChart": "Gráfica de stock",
+			"orderChart": "Pedidos por estado",
+			"stock": "Stock",
+			"reserved": "Reservado",
+			"available": "Disponible",
+			"userId": "ID",
+			"userRole": "Rol",
+			"userName": "Nombre",
+			"ordersByStatus": "Pedidos por estado",
+			"ordersCount": "Conteo de pedidos"
+		}
 	},
 	"webErrors": {
 		"forbiddenTitle": "Acceso denegado",

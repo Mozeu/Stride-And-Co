@@ -105,6 +105,7 @@ jest.mock('../models/sql/Variant', () => ({
   belongsTo: jest.fn(),
   create: jest.fn(async (attributes) => ({ id: 1, ...attributes })),
   findAll: jest.fn(async () => []),
+  count: jest.fn(async () => 0),
   findByPk: jest.fn(async (id) => id === '999999' ? null : ({
     id: Number(id),
     name: 'Test Variant',
@@ -140,7 +141,15 @@ jest.mock('../models/mongo', () => ({
   },
   Order: {
     create: jest.fn(async (attributes) => ({ _id: 'order-test-id', ...attributes })),
-    find: jest.fn(() => ({ populate: jest.fn(async () => []) })),
+    aggregate: jest.fn(async () => []),
+    find: jest.fn(() => ({
+      populate: jest.fn(async () => []),
+      select: jest.fn(function () { return this; }),
+      sort: jest.fn(function () { return this; }),
+      limit: jest.fn(function () { return this; }),
+      lean: jest.fn(async () => [])
+    })),
+    countDocuments: jest.fn(async () => 0),
     findById: jest.fn((id) => ({
       populate: jest.fn(async () => id === '999999' ? null : ({ _id: id }))
     })),

@@ -608,6 +608,7 @@ Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya q
 |---|---|---|---|---|---|
 | F2 | Inicio y catálogo | `GET /`, `GET /products` | Pública | — | [Inicio](docs/ssr/f2-inicio-productos-destacados.png) · [Búsqueda y filtro](docs/ssr/f2-catalogo-busqueda-y-filtro.png) · [Página 2](docs/ssr/f2-catalogo-pagina-2.png) · [HTML](docs/ssr/f2-catalogo-codigo-fuente.png) |
 | F1 | Inicio y cierre de sesión | `/login`, `/logout` | Pública | Edwin Noé Zaragoza Alvarado | [docs/ssr/f1/](docs/ssr/f1/) |
+| F7 | Dashboard administrativo | `GET /admin` | `products:read:any`, `orders:read:any` | — | Código SSR y pruebas automatizadas |
 | F4 | Bolsa de compra | `GET /cart`, `POST /cart/items`, `POST /cart/items/:variantId`, `POST /cart/items/:variantId/delete` | Pública | — | [Validación](docs/ssr/f4-bolsa-cantidad-supera-existencias.png) · [Bolsa vacía](docs/ssr/f4-bolsa-vacia-tras-retirar.png) · [HTML](docs/ssr/f4-bolsa-codigo-fuente.png) |
 
 ### F6 · Mis pedidos
@@ -646,7 +647,7 @@ La bolsa funciona con o sin sesión y reutiliza los mensajes de confirmación de
 
 ### F2 · Inicio y catálogo
 
-El inicio destaca los cuatro productos activos más recientes. El catálogo busca por nombre o marca, filtra por `category_id` y muestra 12 productos por página. Prueba `/products?q=runner&category=1&page=2&lang=es` con datos que tengan categorías asignadas.
+El inicio destaca los cuatro productos activos más recientes. El catálogo busca por nombre o marca, filtra por `category_id` y muestra 12 productos por página. Las categorías de prueba son Zapatos (1), Ropa (2) y Mochilas (3); el seeder las agrega al selector y asigna los productos por tipo. Prueba `/products?q=runner&category=1&page=2&lang=es`.
 
 Las capturas manuales se tomaron antes de incorporar la cabecera de F1 y documentan el flujo del catálogo.
 

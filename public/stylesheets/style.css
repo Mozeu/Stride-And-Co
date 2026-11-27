@@ -1,8 +1,10 @@
 :root {
   --ink: #101820;
-  --lime: #dfff65;
+  --lime: #bf1919;
   --muted: #737b84;
-  --brand-green: #719400;
+  --brand-green: #961818;
+  --app-red: #bf1919;
+  --app-red-dark: #8f1212;
 }
 
 .store-header{
@@ -52,6 +54,51 @@ body {
 .store-header .brand small {
   font-size: .59rem;
   letter-spacing: 2px;
+}
+
+.account-user {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.account-symbol {
+  color: var(--app-red);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.admin-dashboard-shell {
+  border: 1px solid var(--app-red-dark);
+  border-radius: 0;
+  background: var(--app-red);
+  color: #fff;
+}
+
+.admin-dashboard-shell h1 {
+  color: #fff;
+}
+
+.admin-user-meta {
+  letter-spacing: .02em;
+  opacity: .95;
+}
+
+.admin-metric {
+  min-height: 112px;
+  border: 1px solid #ffffff55;
+  border-radius: 0;
+  background: #8f1212;
+}
+
+.admin-metric span {
+  margin-bottom: .25rem;
+  color: #fff;
+  opacity: .85;
+}
+
+.admin-data-panel {
+  border-radius: 0;
 }
 
 .product-tile {
@@ -237,11 +284,11 @@ body {
 }
 
 .btn-lime {
-  --bs-btn-color: #171e15;
+  --bs-btn-color: #fff;
   --bs-btn-bg: var(--lime);
   --bs-btn-border-color: var(--lime);
-  --bs-btn-hover-color: #171e15;
-  --bs-btn-hover-bg: #c9f044;
-  --bs-btn-hover-border-color: #c9f044;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--app-red-dark);
+  --bs-btn-hover-border-color: var(--app-red-dark);
   font-weight: 700;
 }

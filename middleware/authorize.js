@@ -39,10 +39,14 @@ async function matchesOwner(req, getOwnerId) {
 function authorize(resource, action, possession, getOwnerId, { strictOwn = false } = {}) {
     return async function (req, res, next) {
         try {
+            const key = resource + ':' + action + ':' + possession;
+            const sessionPermissions = req.user?.role?.permissions;
+            if (possession !== 'own' && sessionPermissions?.some(permission => permission.key === key)) {
+                return next();
+            }
+
             if (strictOwn) {
-                const key = resource + ':' + action + ':own';
-                const permissions = req.user?.role?.permissions;
-                const granted = possession === 'own' && permissions?.some(permission => permission.key === key);
+                const granted = possession === 'own' && sessionPermissions?.some(permission => permission.key === key);
                 if (granted && (!getOwnerId || await matchesOwner(req, getOwnerId))) return next();
                 return next(createError(403));
             }
@@ -51,6 +55,12 @@ function authorize(resource, action, possession, getOwnerId, { strictOwn = false
 
             const roleName = req.user && req.user.role ? req.user.role.name : null;
             if (!roleName || !ac || !ac.hasRole(roleName)) {
+                if (req.path && !req.path.startsWith('/api')) {
+                    return res.status(403).render('errors/403', {
+                        title: req.__('webErrors.forbiddenTitle'),
+                        locale: req.getLocale()
+                    });
+                }
                 return res.status(403).json({ message: req.__("authorize.Forbidden") });
             }
 
@@ -65,6 +75,12 @@ function authorize(resource, action, possession, getOwnerId, { strictOwn = false
             // Si tiene own, el recurso debe ser del usuario
             if (possession === 'own' && hasOwn && getOwnerId) {
                 if (await matchesOwner(req, getOwnerId)) return next();
+            }
+            if (req.path && !req.path.startsWith('/api')) {
+                return res.status(403).render('errors/403', {
+                    title: req.__('webErrors.forbiddenTitle'),
+                    locale: req.getLocale()
+                });
             }
             return res.status(403).json({ message: req.__("authorize.Forbidden") });
 

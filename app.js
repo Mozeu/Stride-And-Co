@@ -26,6 +26,7 @@ const { loadSession, requireLogin } = require('./middleware/session');
 const { readFlash } = require('./middleware/flash');
 const authWebRouter = require('./routes/web/auth');
 const myOrdersWebRouter = require('./routes/web/my-orders');
+const adminWebRouter = require('./routes/web/admin');
 
 var app = express();
 
@@ -48,6 +49,7 @@ app.use(readFlash);
 //Routes
 app.use('/', authWebRouter);
 app.use('/', myOrdersWebRouter);
+app.use('/', adminWebRouter);
 app.use('/', indexWebRouter);
 app.use('/health', indexRouter);
 app.use('/api/users', usersRouter);
@@ -103,6 +105,23 @@ app.use(function(err, req, res, next) {
   res.locals.status = status;
 
   res.status(status);
+
+  if (req.path === '/api' || req.path.startsWith('/api/')) {
+    return res.json({ message: status === 404
+      ? req.__('webErrors.notFoundTitle')
+      : status === 403
+        ? req.__('authorize.Forbidden')
+        : status >= 500
+          ? req.__('webErrors.serverErrorTitle')
+          : err.message });
+  }
+
+  if (status === 403) {
+    return res.render('errors/403', {
+      title: req.__('webErrors.forbiddenTitle'),
+      locale
+    });
+  }
 
   if (status === 404) {
     return res.render('errors/404', {
