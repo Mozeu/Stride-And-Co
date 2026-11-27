@@ -4,7 +4,7 @@ const { getBaseUrl } = require('./helpers');
 describe('E2E Web session', () => {
   const baseUrl = getBaseUrl();
 
-  test('login -> authenticated request -> logout -> rejected', async () => {
+  test('login -> protected SSR page -> logout -> protected page redirects to login', async () => {
     const agent = request.agent(baseUrl);
 
     const login = await agent
@@ -16,14 +16,16 @@ describe('E2E Web session', () => {
       });
     expect(login.status).toBe(302);
 
-    const me = await agent.get('/api/auth/me');
-    expect(me.status).toBe(200);
+    const orders = await agent.get('/my/orders');
+    expect(orders.status).toBe(200);
+    expect(orders.headers['content-type']).toMatch(/text\/html/);
 
     const logout = await agent.post('/logout');
     expect(logout.status).toBe(302);
 
-    const after = await agent.get('/api/auth/me');
-    expect(after.status).toBe(401);
+    await agent.get('/my/orders')
+      .expect(302)
+      .expect('Location', '/login?returnTo=%2Fmy%2Forders');
   });
 
   test('wrong password re-renders the form with 401', async () => {
