@@ -268,6 +268,55 @@
 			"userName": "Nombre",
 			"ordersByStatus": "Pedidos por estado",
 			"ordersCount": "Conteo de pedidos"
+		},
+		"products": {
+			"title": "Administración de productos",
+			"description": "Crea, edita, activa o elimina los productos del catálogo de Stride & Co.",
+			"formDescription": "Formulario para crear o editar un producto del catálogo.",
+			"new": "Nuevo producto",
+			"newTitle": "Nuevo producto",
+			"editTitle": "Editar producto",
+			"search": "Buscar por nombre o marca",
+			"searchButton": "Buscar",
+			"empty": "No hay productos que coincidan.",
+			"back": "Volver a productos",
+			"noCategory": "Sin categoría",
+			"actions": "Acciones",
+			"edit": "Editar",
+			"delete": "Eliminar",
+			"activate": "Activar",
+			"deactivate": "Desactivar",
+			"save": "Guardar cambios",
+			"createButton": "Crear producto",
+			"cancel": "Cancelar",
+			"confirmDelete": "¿Eliminar el producto %s? Esta acción no se puede deshacer.",
+			"status": {
+				"label": "Estado",
+				"active": "Activo",
+				"inactive": "Inactivo"
+			},
+			"fields": {
+				"name": "Nombre",
+				"brand": "Marca",
+				"description": "Descripción",
+				"price": "Precio (MXN)",
+				"category": "Categoría",
+				"active": "Producto activo (visible en la tienda)"
+			},
+			"errors": {
+				"name": "El nombre es obligatorio.",
+				"nameLength": "El nombre no puede tener más de 150 caracteres.",
+				"brand": "La marca no puede tener más de 100 caracteres.",
+				"description": "La descripción no puede tener más de 2000 caracteres.",
+				"price": "Ingresa un precio válido, por ejemplo 1899.00.",
+				"category": "Selecciona una categoría válida."
+			},
+			"created": "Producto creado",
+			"updated": "Producto actualizado",
+			"activated": "Producto activado",
+			"deactivated": "Producto desactivado",
+			"deleted": "Producto eliminado",
+			"hasVariants": "No se puede eliminar un producto con variantes. Desactívalo en su lugar."
 		}
 	},
 	"webErrors": {

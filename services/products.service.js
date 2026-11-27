@@ -57,4 +57,49 @@ async function catalog({ q, category, page }) {
   return { products, currentPage, totalPages };
 }
 
-module.exports = { list, find, featured, categories, catalog };
+// Administración: incluye productos inactivos
+async function adminList({ q, page }) {
+  const pageSize = 10;
+  const where = {};
+
+  if (q) {
+    const pattern = '%' + q.replace(/[\\%_]/g, '\\$&') + '%';
+    where[Op.or] = [
+      { name: { [Op.iLike]: pattern } },
+      { brand: { [Op.iLike]: pattern } }
+    ];
+  }
+
+  const count = await Product.count({ where });
+  const totalPages = Math.max(1, Math.ceil(count / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const products = await Product.findAll({
+    where,
+    order: newestFirst,
+    limit: pageSize,
+    offset: (currentPage - 1) * pageSize
+  });
+  return { products, currentPage, totalPages };
+}
+
+function create(attributes) {
+  return Product.create(attributes);
+}
+
+// Devuelve null si el producto no existe
+async function update(id, attributes) {
+  const product = await Product.findByPk(id);
+  if (!product) return null;
+  await product.update(attributes);
+  return product;
+}
+
+// Devuelve null si el producto no existe
+async function remove(id) {
+  const product = await Product.findByPk(id);
+  if (!product) return null;
+  await product.destroy();
+  return product;
+}
+
+module.exports = { list, find, featured, categories, catalog, adminList, create, update, remove };

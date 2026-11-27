@@ -9,6 +9,8 @@ header.store-header
       a.nav-link(href='/products')= __('store.products')
       if can && can('products', 'read', 'any') && can('orders', 'read', 'any')
         a.nav-link(href='/admin')= __('admin.navigation')
+      if can && can('products', 'read', 'any') && can('products', 'update', 'any')
+        a.nav-link(href='/admin/products')= __('admin.products.title')
     .d-flex.align-items-center.gap-2
       a.btn.btn-outline-dark.btn-sm(href='/cart')= __('store.cart.title')
       if user

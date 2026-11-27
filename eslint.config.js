@@ -22,7 +22,16 @@ module.exports = [
       'no-unused-vars': 'warn',
     },
   },
-
+  // Scripts del navegador (mejoras progresivas)
+  {
+    files: ['public/js/**/*.js'],
+    languageOptions: {
+      globals: {
+        document: 'readonly',
+        window: 'readonly',
+      },
+    },
+  },
   // Tests
   {
     files: ['tests/**/*.js'],

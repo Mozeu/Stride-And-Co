@@ -239,6 +239,55 @@
 			"userName": "Name",
 			"ordersByStatus": "Orders by status",
 			"ordersCount": "Orders count"
+		},
+		"products": {
+			"title": "Product administration",
+			"description": "Create, edit, activate or delete the products in the Stride & Co catalog.",
+			"formDescription": "Form to create or edit a catalog product.",
+			"new": "New product",
+			"newTitle": "New product",
+			"editTitle": "Edit product",
+			"search": "Search by name or brand",
+			"searchButton": "Search",
+			"empty": "No matching products.",
+			"back": "Back to products",
+			"noCategory": "No category",
+			"actions": "Actions",
+			"edit": "Edit",
+			"delete": "Delete",
+			"activate": "Activate",
+			"deactivate": "Deactivate",
+			"save": "Save changes",
+			"createButton": "Create product",
+			"cancel": "Cancel",
+			"confirmDelete": "Delete the product %s? This cannot be undone.",
+			"status": {
+				"label": "Status",
+				"active": "Active",
+				"inactive": "Inactive"
+			},
+			"fields": {
+				"name": "Name",
+				"brand": "Brand",
+				"description": "Description",
+				"price": "Price (MXN)",
+				"category": "Category",
+				"active": "Active product (visible in the store)"
+			},
+			"errors": {
+				"name": "Name is required.",
+				"nameLength": "Name cannot be longer than 150 characters.",
+				"brand": "Brand cannot be longer than 100 characters.",
+				"description": "Description cannot be longer than 2000 characters.",
+				"price": "Enter a valid price, for example 1899.00.",
+				"category": "Select a valid category."
+			},
+			"created": "Product created",
+			"updated": "Product updated",
+			"activated": "Product activated",
+			"deactivated": "Product deactivated",
+			"deleted": "Product deleted",
+			"hasVariants": "A product with variants cannot be deleted. Deactivate it instead."
 		}
 	},
 	"webErrors": {

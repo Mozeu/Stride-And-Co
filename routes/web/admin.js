@@ -22,4 +22,6 @@ router.get('/admin',
   admin.dashboard
 );
 
+router.use('/admin/products', require('./admin-products'));
+
 module.exports = router;

@@ -1,9 +1,8 @@
-const { Product } = require('../models/sql');
 const productsService = require('../services/products.service');
 
 async function create(req, res, next) {
     try {
-        const product = await Product.create(req.body);
+        const product = await productsService.create(req.body);
         return res.status(201).json({ message:req.__("ProductsList.ProductCreated"), data: product });
     } catch (error) {
         return next(error);
@@ -31,9 +30,8 @@ async function find(req, res, next) {
 
 async function update(req, res, next) {
     try {
-        const product = await Product.findByPk(req.params.id);
+        const product = await productsService.update(req.params.id, req.body);
         if (!product) return res.status(404).json({ message: req.__("ProductsList.ProductNotFound")});
-        await product.update(req.body);
         return res.json({ message: req.__("ProductsList.ProductUpdated"), data: product });
     } catch (error) {
         return next(error);
@@ -42,9 +40,8 @@ async function update(req, res, next) {
 
 async function destroy(req, res, next) {
     try {
-        const product = await Product.findByPk(req.params.id);
+        const product = await productsService.remove(req.params.id);
         if (!product) return res.status(404).json({ message: req.__("ProductsList.ProductNotFound")});
-        await product.destroy();
         return res.json({ message: req.__("ProductsList.ProductDeleted"), data: product });
     } catch (error) {
         return next(error);

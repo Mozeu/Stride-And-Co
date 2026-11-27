@@ -1,0 +1,55 @@
+extends ../../layout
+include ../../mixins/status-badge
+
+block content
+  main.container.py-5
+    section.store-panel.admin-data-panel.p-3.p-md-4
+      .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2.mb-3
+        h1.h3.fw-bold.mb-0= __('admin.products.title')
+        if can('products', 'create', 'any')
+          a.btn.btn-dark(href='/admin/products/new')
+            i.bi.bi-plus-lg.me-1(aria-hidden='true')
+            = __('admin.products.new')
+
+      form.d-flex.gap-2.mb-3(method='get', action='/admin/products', role='search')
+        input.form-control(type='search', name='q', value=q, placeholder=__('admin.products.search'), aria-label=__('admin.products.search'))
+        button.btn.btn-outline-dark(type='submit')= __('admin.products.searchButton')
+
+      if products.length
+        .table-responsive
+          table.table.align-middle.mb-0
+            thead.table-light
+              tr
+                th(scope='col')= __('admin.products.fields.name')
+                th(scope='col')= __('admin.products.fields.category')
+                th(scope='col')= __('admin.products.fields.price')
+                th(scope='col')= __('admin.products.status.label')
+                th.text-end(scope='col')= __('admin.products.actions')
+            tbody
+              each product in products
+                tr
+                  th(scope='row')
+                    span.d-block= product.name
+                    if product.brand
+                      small.text-secondary.fw-normal= product.brand
+                  td= categoryLabel(product.category_id)
+                  td= money(product.price)
+                  td
+                    if product.active
+                      +statusBadge('active', __('admin.products.status.active'))
+                    else
+                      +statusBadge('inactive', __('admin.products.status.inactive'))
+                  td.text-end
+                    .d-inline-flex.flex-wrap.justify-content-end.gap-1
+                      if can('products', 'update', 'any')
+                        a.btn.btn-sm.btn-outline-dark(href='/admin/products/' + product.id + '/edit')= __('admin.products.edit')
+                        form(method='post', action='/admin/products/' + product.id + '/active')
+                          button.btn.btn-sm.btn-outline-secondary(type='submit')= product.active ? __('admin.products.deactivate') : __('admin.products.activate')
+                      if can('products', 'delete', 'any')
+                        form(method='post', action='/admin/products/' + product.id + '/delete', data-confirm=__('admin.products.confirmDelete', product.name))
+                          button.btn.btn-sm.btn-outline-danger(type='submit')= __('admin.products.delete')
+        include ../../partials/pagination
+      else
+        - const emptyMessage = __('admin.products.empty')
+        include ../../partials/empty-state
+  script(src='/js/confirm-submit.js')
