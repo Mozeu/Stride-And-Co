@@ -18,9 +18,8 @@ header.store-header
           a.btn.btn-outline-dark.btn-sm(href='/my/orders')= __('store.orders.title')
         form(method='post', action='/logout')
           button.btn.btn-outline-dark.btn-sm(type='submit')= __('store.logout')
-        - const accountRole = user.role && user.role.name ? user.role.name : 'user'
-        - const accountSymbol = accountRole === 'admin' ? '★' : accountRole === 'sales' ? '◆' : '●'
-        span.account-user.small.text-secondary(title=accountRole)
+        - const accountSymbol = can && can('users', 'delete', 'any') ? '★' : can && can('orders', 'update', 'any') ? '◆' : '●'
+        span.account-user.small.text-secondary(title=user.role && user.role.name ? user.role.name : 'user')
           span.account-symbol.me-1(aria-hidden='true')= accountSymbol
           = user.first_name
       else

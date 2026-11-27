@@ -51,9 +51,18 @@ describe('F7 admin dashboard', () => {
   test('shows account identity and hides administration from users without both grants', async () => {
     const response = await signedIn('/?lang=en', ['orders:read:own'])
       .expect(200);
-    expect(response.text).toContain('★');
+    expect(response.text).toContain('●');
     expect(response.text).toContain('Admin');
     expect(response.text).not.toContain('href="/admin"');
+  });
+
+  test.each([
+    [['users:delete:any'], '★'],
+    [['orders:update:any'], '◆'],
+    [['orders:read:own'], '●']
+  ])('selects the account symbol from permissions %j', async (permissions, symbol) => {
+    const response = await signedIn('/?lang=en', permissions).expect(200);
+    expect(response.text).toContain(symbol);
   });
 
   test('requires both product and order read-any grants', async () => {
