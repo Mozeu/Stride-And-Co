@@ -12,12 +12,12 @@ block content
           input#catalog-query.form-control(type='search', name='q', maxlength='150', value=q)
         .col-md-4
           label.form-label(for='catalog-category')= __('products.Category')
-          select#catalog-category.form-select(name='category')
+          select#catalog-category.form-select(name='category', onchange='this.form.submit()')
             option(value='')= __('store.catalog.allCategories')
-            if category !== null && !categories.includes(category)
-              option(value=category, selected)= __('store.catalog.categoryNumber', category)
-            each id in categories
-              option(value=id, selected=category === id)= __('store.catalog.categoryNumber', id)
+            if category !== null && !categories.some(option => option.id === category)
+              option(value=category, selected)= categoryLabel(category)
+            each option in categories
+              option(value=option.id, selected=category === option.id)= option.label
         .col-md-auto.d-grid
           button.btn.btn-dark(type='submit')= __('store.catalog.apply')
     if products.length

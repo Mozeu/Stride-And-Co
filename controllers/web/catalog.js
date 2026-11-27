@@ -1,5 +1,17 @@
 const { URLSearchParams } = require('node:url');
 const productsService = require('../../services/products.service');
+const productCategoryIds = require('../../config/product-categories');
+
+const categoryKeys = new Map(
+  Object.entries(productCategoryIds).map(([key, id]) => [id, key])
+);
+
+function categoryLabel(req, id) {
+  const key = categoryKeys.get(id);
+  return key
+    ? req.__('store.catalog.categories.' + key)
+    : req.__('store.catalog.categoryNumber', String(id));
+}
 
 function integer(value) {
   if (typeof value !== 'string' || !/^-?\d+$/.test(value)) return null;
@@ -55,16 +67,18 @@ async function catalog(req, res, next) {
     const category = categoryId !== null && categoryId >= -2147483648 && categoryId <= 2147483647 ? categoryId : null;
     const page = Math.max(1, integer(req.query.page) || 1);
     const filters = { q, category, locale };
-    const [{ products, currentPage, totalPages }, categories] = await Promise.all([
+    const [{ products, currentPage, totalPages }, categoryIds] = await Promise.all([
       productsService.catalog({ ...filters, page }),
       productsService.categories()
     ]);
+    const categories = categoryIds.map(id => ({ id, label: categoryLabel(req, id) }));
     return res.render('store/catalog', {
       title: req.__('store.catalog.title') + ' | Stride & Co',
       metaDescription: req.__('store.catalog.description'),
       locale,
       q,
       category,
+      categoryLabel: id => categoryLabel(req, id),
       categories,
       products,
       pagination: makePagination(filters, currentPage, totalPages)
