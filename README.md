@@ -606,17 +606,17 @@ Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya q
 
 | ID | Funcionalidad | Rutas | Permiso | Responsable | Evidencia |
 |---|---|---|---|---|---|
-| F2 | Inicio y catálogo | `GET /`, `GET /products` | Pública | — | [Inicio](docs/ssr/f2-inicio-productos-destacados.png) · [Búsqueda y filtro](docs/ssr/f2-catalogo-busqueda-y-filtro.png) · [Página 2](docs/ssr/f2-catalogo-pagina-2.png) · [HTML](docs/ssr/f2-catalogo-codigo-fuente.png) |
+| F2 | Inicio y catálogo | `GET /`, `GET /products` | Pública | Kevin Andrés Rosales Rodríguez | [Inicio](docs/ssr/f2-inicio-productos-destacados.png) · [Búsqueda y filtro](docs/ssr/f2-catalogo-busqueda-y-filtro.png) · [Página 2](docs/ssr/f2-catalogo-pagina-2.png) · [HTML](docs/ssr/f2-catalogo-codigo-fuente.png) |
 | F1 | Inicio y cierre de sesión | `/login`, `/logout` | Pública | Edwin Noé Zaragoza Alvarado | [docs/ssr/f1/](docs/ssr/f1/) |
-| F7 | Dashboard administrativo | `GET /admin` | `products:read:any`, `orders:read:any` | — | Código SSR y pruebas automatizadas |
-| F4 | Bolsa de compra | `GET /cart`, `POST /cart/items`, `POST /cart/items/:variantId`, `POST /cart/items/:variantId/delete` | Pública | — | [Validación](docs/ssr/f4-bolsa-cantidad-supera-existencias.png) · [Bolsa vacía](docs/ssr/f4-bolsa-vacia-tras-retirar.png) · [HTML](docs/ssr/f4-bolsa-codigo-fuente.png) |
+| F7 | Dashboard administrativo | `GET /admin` | `products:read:any`, `orders:read:any` | Manuel Ramirez Contreras | [Dashboard](docs/ssr/f7/admin-dashborard.png) · [Ventas](docs/ssr/f7/sales-dashboard.png) · [Acceso denegado](docs/ssr/f7/user-dashboard.png) · [HTML](docs/ssr/f7/view-source.png) · [Pruebas](docs/ssr/f7/pruebas.png) |
+| F4 | Bolsa de compra | `GET /cart`, `POST /cart/items`, `POST /cart/items/:variantId`, `POST /cart/items/:variantId/delete` | Pública | Kevin Andrés Rosales Rodríguez | [Validación](docs/ssr/f4-bolsa-cantidad-supera-existencias.png) · [Bolsa vacía](docs/ssr/f4-bolsa-vacia-tras-retirar.png) · [HTML](docs/ssr/f4-bolsa-codigo-fuente.png) |
 | F8 | Administración de productos | `GET /admin/products`, `GET /admin/products/new`, `POST /admin/products`, `GET /admin/products/:id/edit`, `POST /admin/products/:id`, `POST /admin/products/:id/active`, `POST /admin/products/:id/delete` | `products:read:any` + `products:update:any` (lista y edición), `products:create:any`, `products:delete:any` | Nohemi Posada Atayde | [Prototipo vs implementación](docs/ssr/f8/f8-prototipo-vs-implementacion.png) · [Implementacion](docs/ssr/f8/f8-productos-listado.png) · [Crear](docs/ssr/f8/f8-crear.png) · [Validación](docs/ssr/f8/f8-validacion.png) · [Editar](docs/ssr/f8/f8-editar.png) · [Activar](docs/ssr/f8/f8-activado1.png) · [Activado](docs/ssr/f8/f8-activado2.png) · [Desactivar](docs/ssr/f8/f8-desactivar1.png) · [Desactivado](docs/ssr/f8/f8-desactivar2.png) · [Eliminar](docs/ssr/f8/f8-eliminar1.png) · [Aviso con variantes](docs/ssr/f8/f8-eliminarAvisoVariante.png) · [Eliminar con variantes](docs/ssr/f8/f8-eliminarConVariante.png) · [Inglés](docs/ssr/f8/f8-ingles.png) · [HTML](docs/ssr/f8/f8-codigoFuente.png) |
 
 ### F6 · Mis pedidos
 
-| ID | Funcionalidad | Rutas | Permiso | Evidencia |
-|---|---|---|---|---|
-| F6 | Historial y detalle de pedidos propios | `GET /my/orders`, `GET /my/orders/:id` | `orders:read:own` | [Listado](docs/ssr/f6-mis-pedidos-listado.png) · [Detalle](docs/ssr/f6-mis-pedidos-detalle.png) · [Acceso denegado](docs/ssr/f6-mis-pedidos-acceso-denegado.png) · [HTML](docs/ssr/f6-mis-pedidos-codigo-fuente.png) |
+| ID | Funcionalidad | Rutas | Permiso | Responsable | Evidencia |
+|---|---|---|---|---|---|
+| F6 | Historial y detalle de pedidos propios | `GET /my/orders`, `GET /my/orders/:id` | `orders:read:own` | Kevin Andrés Rosales Rodríguez | [Listado](docs/ssr/f6-mis-pedidos-listado.png) · [Detalle](docs/ssr/f6-mis-pedidos-detalle.png) · [Acceso denegado](docs/ssr/f6-mis-pedidos-acceso-denegado.png) · [HTML](docs/ssr/f6-mis-pedidos-codigo-fuente.png) |
 
 Con PostgreSQL y MongoDB configurados, ejecuta `NODE_ENV=development npm run seed` para cargar los usuarios y pedidos de demostración, y `NODE_ENV=development npm start` para abrir la tienda. Inicia sesión como `user@stride.test` con las credenciales de la [matriz RBAC](#control-de-acceso-basado-en-roles). Abre **Mis pedidos** y pulsa **Ver detalle**.
 
