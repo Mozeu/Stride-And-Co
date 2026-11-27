@@ -21,6 +21,8 @@ describe('F4 shopping bag', () => {
     const agent = request.agent(app);
     const spanish = await agent.get('/cart?lang=es').expect(200).expect('Content-Type', /text\/html/);
     expect(spanish.text).toContain('Tu bolsa está vacía.');
+    expect(spanish.text).toContain('aria-label="Bolsa de compra"');
+    expect(spanish.text).toContain('bi bi-bag');
     expect(spanish.text).toContain('Daily Runner');
     expect(spanish.text).toContain('<meta name="description"');
     await agent.get('/cart?lang=en').expect(200);

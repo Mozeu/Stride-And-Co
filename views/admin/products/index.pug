@@ -1,16 +1,38 @@
 extends ../../layout
 include ../../mixins/status-badge
 
-block content
-  main.container.py-5
-    section.store-panel.admin-data-panel.p-3.p-md-4
-      .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2.mb-3
-        h1.h3.fw-bold.mb-0= __('admin.products.title')
-        if can('products', 'create', 'any')
-          a.btn.btn-dark(href='/admin/products/new')
-            i.bi.bi-plus-lg.me-1(aria-hidden='true')
-            = __('admin.products.new')
+block pageHeader
+  include ../../partials/admin-products-sidebar
 
+block flashMessages
+  .admin-main-flash
+    include ../../partials/flash-message
+
+block content
+  main.admin-main
+    header.admin-top
+      .tiny= __('admin.navigation') + ' / ' + __('admin.products.title')
+      .d-flex.flex-wrap.align-items-center.gap-2
+        - const accountSymbol = can && can('users', 'delete', 'any') ? '★' : can && can('orders', 'update', 'any') ? '◆' : '●'
+        span.pill
+          span.account-symbol.me-1(aria-hidden='true')= accountSymbol
+          = [user.first_name, user.last_name].filter(Boolean).join(' ')
+        form(method='post', action='/logout')
+          button.btn.btn-outline-dark.btn-sm(type='submit')
+            = __('store.logout')
+            i.bi.bi-box-arrow-right.ms-1(aria-hidden='true')
+
+    section.admin-dashboard-shell.p-4.p-md-5.mb-4
+      h1.fw-bold.mb-2= __('admin.products.title')
+      p.mb-0= __('admin.products.description')
+
+    if can('products', 'create', 'any')
+      .d-flex.justify-content-end.mb-3
+        a.btn.btn-outline-dark.btn-sm(href='/admin/products/new')
+          i.bi.bi-plus-lg.me-1(aria-hidden='true')
+          = __('admin.products.new')
+
+    section.store-panel.admin-data-panel.p-3.p-md-4
       form.d-flex.gap-2.mb-3(method='get', action='/admin/products', role='search')
         input.form-control(type='search', name='q', value=q, placeholder=__('admin.products.search'), aria-label=__('admin.products.search'))
         button.btn.btn-outline-dark(type='submit')= __('admin.products.searchButton')

@@ -1,8 +1,44 @@
 extends ../layout
 include ../mixins/status-badge
 
+block pageHeader
+  aside.admin-sidebar(aria-label=__('admin.navigation'))
+    a.brand.sidebar-brand(href='/', aria-label=__('store.home'))
+      | STRIDE
+      span= ' & CO'
+    .sidebar-label.text-uppercase= __('admin.navigation')
+    nav.nav.flex-column(aria-label=__('admin.navigation'))
+      a.nav-link.admin-nav-link(href='/admin', aria-current='page', aria-label=__('admin.dashboard.title'), title=__('admin.dashboard.title'))
+        i.bi.bi-grid(aria-hidden='true')
+        span.sidebar-link-label= __('admin.dashboard.title')
+      if can && can('products', 'read', 'any') && can('products', 'update', 'any')
+        a.nav-link.admin-nav-link(href='/admin/products', aria-label=__('admin.products.shortTitle'), title=__('admin.products.shortTitle'))
+          i.bi.bi-box-seam(aria-hidden='true')
+          span.sidebar-link-label= __('admin.products.shortTitle')
+    .sidebar-bottom
+      a.btn.btn-outline-light.w-100.btn-sm(href='/', aria-label=__('admin.dashboard.viewStore'), title=__('admin.dashboard.viewStore'))
+        i.bi.bi-shop.me-1(aria-hidden='true')
+        span.sidebar-link-label= __('admin.dashboard.viewStore')
+
+block flashMessages
+  .admin-main-flash
+    include ../partials/flash-message
+
 block content
-  main.container.py-5
+  main.admin-main
+    header.admin-top
+      div
+        .tiny= __('admin.navigation') + ' / ' + __('admin.dashboard.title')
+      .d-flex.flex-wrap.align-items-center.gap-2
+        - const accountSymbol = can && can('users', 'delete', 'any') ? '★' : can && can('orders', 'update', 'any') ? '◆' : '●'
+        span.pill
+          span.account-symbol.me-1(aria-hidden='true')= accountSymbol
+          = [user.first_name, user.last_name].filter(Boolean).join(' ')
+        form(method='post', action='/logout')
+          button.btn.btn-outline-secondary.btn-sm(type='submit')
+            = __('store.logout')
+            i.bi.bi-box-arrow-right.ms-1(aria-hidden='true')
+
     section.admin-dashboard-shell.p-4.p-md-5
       .admin-user-meta.d-flex.flex-wrap.gap-3.mb-3
         small
@@ -34,58 +70,70 @@ block content
             span.d-block= __('admin.dashboard.orders')
             strong.fs-2= orderCount
 
-    section.store-panel.admin-data-panel.p-3.mt-4
-      h2.h4.mb-3= __('admin.dashboard.recentOrders')
-      if recentOrders.length
-        .table-responsive
-          table.table.align-middle.mb-0
-            thead.table-light
-              tr
-                th(scope='col')= __('store.orders.number')
-                th(scope='col')= __('store.orders.items')
-                th(scope='col')= __('store.orders.total')
-                th(scope='col')= __('store.orders.statusLabel')
-            tbody
-              each order in recentOrders
-                - const status = currentStatus(order)
-                tr
-                  th(scope='row')
-                    span.d-block= order._id
-                    small.text-secondary.fw-normal= date(order.createdAt)
-                  td= (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0)
-                  td= money(order.totals && order.totals.total)
-                  td
-                    +statusBadge(status, statusLabel(status))
-      else
-        - const emptyMessage = __('admin.dashboard.noOrders')
-        include ../partials/empty-state
-
-    section.store-panel.admin-data-panel.p-3.mt-4
-      h2.h4.mb-3= __('admin.dashboard.productStock')
-      if productStock.length
-        .row.g-4
-          .col-12
-            h3.h6= __('admin.dashboard.stockTable')
+    .row.g-4.mt-1
+      .col-lg-8
+        section.store-panel.admin-data-panel.p-3.h-100
+          h2.h4.mb-3= __('admin.dashboard.recentOrders')
+          if recentOrders.length
             .table-responsive
               table.table.align-middle.mb-0
                 thead.table-light
                   tr
-                    th(scope='col')= __('products.Name')
-                    th(scope='col')= __('admin.dashboard.stock')
-                    th(scope='col')= __('admin.dashboard.reserved')
-                    th(scope='col')= __('admin.dashboard.available')
+                    th(scope='col')= __('store.orders.number')
+                    th(scope='col')= __('store.orders.items')
+                    th(scope='col')= __('store.orders.total')
+                    th(scope='col')= __('store.orders.statusLabel')
                 tbody
-                  each product in productStock
+                  each order in recentOrders
+                    - const status = currentStatus(order)
                     tr
-                      td= product.name
-                      td= product.stock
-                      td= product.reserved
-                      td= product.available
+                      th(scope='row')
+                        span.d-block= order._id
+                        small.text-secondary.fw-normal= date(order.createdAt)
+                      td= (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+                      td= money(order.totals && order.totals.total)
+                      td
+                        +statusBadge(status, statusLabel(status))
+          else
+            - const emptyMessage = __('admin.dashboard.noOrders')
+            include ../partials/empty-state
+      .col-lg-4
+        section.store-panel.admin-data-panel.admin-quick-actions.p-3.h-100
+          h2.h4.mb-3= __('admin.dashboard.quickActions')
+          if can && can('products', 'read', 'any') && can('products', 'update', 'any')
+            a.btn.btn-outline-dark.w-100.mb-2(href='/admin/products')
+              i.bi.bi-box-seam.me-1(aria-hidden='true')
+              = __('admin.products.title')
+          a.btn.btn-outline-dark.w-100.mb-2(href='#product-stock')
+            i.bi.bi-stack.me-1(aria-hidden='true')
+            = __('admin.dashboard.productStock')
+          a.btn.btn-outline-dark.w-100(href='#orders-by-status')
+            i.bi.bi-receipt.me-1(aria-hidden='true')
+            = __('admin.dashboard.ordersByStatus')
+
+    section#product-stock.store-panel.admin-data-panel.p-3.mt-4
+      h2.h4.mb-3= __('admin.dashboard.productStock')
+      if productStock.length
+        .table-responsive
+          table.table.align-middle.mb-0
+            thead.table-light
+              tr
+                th(scope='col')= __('products.Name')
+                th(scope='col')= __('admin.dashboard.stock')
+                th(scope='col')= __('admin.dashboard.reserved')
+                th(scope='col')= __('admin.dashboard.available')
+            tbody
+              each product in productStock
+                tr
+                  td= product.name
+                  td= product.stock
+                  td= product.reserved
+                  td= product.available
       else
         - const emptyMessage = __('admin.dashboard.noProducts')
         include ../partials/empty-state
 
-    section.store-panel.admin-data-panel.p-3.mt-4
+    section#orders-by-status.store-panel.admin-data-panel.p-3.mt-4
       h2.h4.mb-3= __('admin.dashboard.ordersByStatus')
       if orderStatusCounts.length
         .table-responsive
@@ -103,3 +151,5 @@ block content
       else
         - const emptyMessage = __('admin.dashboard.noOrders')
         include ../partials/empty-state
+
+block pageFooter

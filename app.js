@@ -22,7 +22,7 @@ const ordersRouter = require('./routes/api/orders');
 const authRouter = require('./routes/api/auth');
 const indexWebRouter = require('./routes/web/index');
 
-const { loadSession, requireLogin } = require('./middleware/session');
+const { loadSession } = require('./middleware/session');
 const { readFlash } = require('./middleware/flash');
 const authWebRouter = require('./routes/web/auth');
 const myOrdersWebRouter = require('./routes/web/my-orders');
@@ -67,7 +67,7 @@ app.use(function(req, res, next) {
   next(createError(404));
 });
 
-app.use(function(err, req, res, next) {
+app.use(function(err, _req, _res, next) {
   if (!err.status) {
     const isSequelizeValidation =
       err.name === 'SequelizeValidationError' ||
@@ -91,7 +91,7 @@ app.use(function(err, req, res, next) {
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function(err, req, res, _next) {
   if (err.name === 'UnauthorizedError') {
     return res.status(401).json({ message: req.__("authenticate.Unauthorized") });
   }

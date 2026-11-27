@@ -268,10 +268,13 @@
 			"userRole": "Rol",
 			"userName": "Nombre",
 			"ordersByStatus": "Pedidos por estado",
-			"ordersCount": "Conteo de pedidos"
+			"ordersCount": "Conteo de pedidos",
+			"viewStore": "Ver tienda",
+			"quickActions": "Acciones rápidas"
 		},
 		"products": {
 			"title": "Administración de productos",
+			"shortTitle": "A. Productos",
 			"description": "Crea, edita, activa o elimina los productos del catálogo de Stride & Co.",
 			"formDescription": "Formulario para crear o editar un producto del catálogo.",
 			"new": "Nuevo producto",

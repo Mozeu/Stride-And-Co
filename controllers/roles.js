@@ -27,7 +27,7 @@ async function create(req, res, next) {
 }
 
 // READ
-async function list (req, res, next) {
+async function list (req, res) {
   const roles = await Roles.findAll({include: {model: Permission, as:'permissions'}});
   res.json({
     message: req.__("RolesList.List"),
@@ -35,7 +35,7 @@ async function list (req, res, next) {
   });
 }
 
-async function find(req, res, next) {
+async function find(req, res) {
     const role = await Roles.findByPk(req.params.id, {include: {model: Permission, as:'permissions'}});
     res.json({
         message: req.__("RolesList.RoleById"),
@@ -75,7 +75,7 @@ async function update(req, res, next) {
 };
 
 // DELETE
-async function destroy(req, res, next){
+async function destroy(req, res){
     const id = req.params.id;
     const role = await Roles.findByPk(id);
     if(!role) res.status(404).json({ message: req.__("RolesList.RoleNotFound") });

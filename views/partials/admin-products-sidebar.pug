@@ -1,0 +1,17 @@
+aside.admin-sidebar(aria-label=__('admin.navigation'))
+  a.brand.sidebar-brand(href='/', aria-label=__('store.home'))
+    | STRIDE
+    span= ' & CO'
+  .sidebar-label.text-uppercase= __('admin.navigation')
+  nav.nav.flex-column(aria-label=__('admin.navigation'))
+    if can && can('products', 'read', 'any') && can('orders', 'read', 'any')
+      a.nav-link.admin-nav-link(href='/admin', aria-label=__('admin.dashboard.title'), title=__('admin.dashboard.title'))
+        i.bi.bi-grid(aria-hidden='true')
+        span.sidebar-link-label= __('admin.dashboard.title')
+    a.nav-link.admin-nav-link(href='/admin/products', aria-current='page', aria-label=__('admin.products.shortTitle'), title=__('admin.products.shortTitle'))
+      i.bi.bi-box-seam(aria-hidden='true')
+      span.sidebar-link-label= __('admin.products.shortTitle')
+  .sidebar-bottom
+    a.btn.btn-outline-light.w-100.btn-sm(href='/', aria-label=__('admin.dashboard.viewStore'), title=__('admin.dashboard.viewStore'))
+      i.bi.bi-shop.me-1(aria-hidden='true')
+      span.sidebar-link-label= __('admin.dashboard.viewStore')

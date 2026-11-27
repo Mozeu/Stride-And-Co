@@ -1,14 +1,31 @@
 extends ../../layout
 include ../../mixins/form-field
 
-block content
-  main.container.py-5
-    section.store-panel.admin-data-panel.p-3.p-md-4
-      a.small.text-secondary.d-inline-block.mb-3(href='/admin/products')
-        i.bi.bi-arrow-left.me-1(aria-hidden='true')
-        = __('admin.products.back')
-      h1.h3.fw-bold.mb-4= product ? __('admin.products.editTitle') : __('admin.products.newTitle')
+block pageHeader
+  include ../../partials/admin-products-sidebar
 
+block flashMessages
+  .admin-main-flash
+    include ../../partials/flash-message
+
+block content
+  main.admin-main
+    header.admin-top
+      .tiny= __('admin.navigation') + ' / ' + __('admin.products.title') + ' / ' + (product ? __('admin.products.editTitle') : __('admin.products.newTitle'))
+      .d-flex.flex-wrap.align-items-center.gap-2
+        a.btn.btn-outline-dark.btn-sm(href='/admin/products')
+          i.bi.bi-arrow-left.me-1(aria-hidden='true')
+          = __('admin.products.back')
+        form(method='post', action='/logout')
+          button.btn.btn-outline-dark.btn-sm(type='submit')
+            = __('store.logout')
+            i.bi.bi-box-arrow-right.ms-1(aria-hidden='true')
+
+    section.admin-dashboard-shell.p-4.p-md-5.mb-4
+      h1.fw-bold.mb-2= product ? __('admin.products.editTitle') : __('admin.products.newTitle')
+      p.mb-0= __('admin.products.formDescription')
+
+    section.store-panel.admin-data-panel.p-3.p-md-4
       form(method='post', action=action, novalidate)
         +formField('name', __('admin.products.fields.name'), values.name, 'text', errors.name, true)
         +formField('brand', __('admin.products.fields.brand'), values.brand, 'text', errors.brand, false)

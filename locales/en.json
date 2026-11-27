@@ -222,6 +222,8 @@
 			"title": "Admin dashboard",
 			"description": "View product, variant, inventory and order metrics.",
 			"noProducts": "No products are registered.",
+			"quickActions": "Quick actions",
+			"viewStore": "View store",
 			"products": "Products",
 			"variants": "Variants",
 			"availableUnits": "Available units",
@@ -243,6 +245,7 @@
 		},
 		"products": {
 			"title": "Product administration",
+			"shortTitle": "Admin products",
 			"description": "Create, edit, activate or delete the products in the Stride & Co catalog.",
 			"formDescription": "Form to create or edit a catalog product.",
 			"new": "New product",

@@ -1,6 +1,6 @@
 const Permissions = require('../models/sql/Permissions');
 // CREATE
-async function create(req, res, next) {
+async function create(req, res) {
     const key = req.body.key;
     const description = req.body.description;
 
@@ -16,7 +16,7 @@ async function create(req, res, next) {
 }
 
 // READ
-async function list (req, res, next) {
+async function list (req, res) {
   const permissions = await Permissions.findAll();
   res.json({
     message: req.__("PermissionsList.List"),
@@ -24,7 +24,7 @@ async function list (req, res, next) {
   });
 }
 
-async function find(req, res, next) {
+async function find(req, res) {
     const id = req.params.id;
     const permission = await Permissions.findByPk(id);
     res.json({
@@ -34,7 +34,7 @@ async function find(req, res, next) {
 };
 
 // UPDATE
-async function update(req, res, next) {
+async function update(req, res) {
     const id = req.params.id;
     const permission = await Permissions.findByPk(id);
     if(!permission) res.status(404).json({ message: req.__("PermissionsList.PermissionNotFound") });
@@ -52,7 +52,7 @@ async function update(req, res, next) {
 };
 
 // DELETE
-async function destroy(req, res, next){
+async function destroy(req, res){
     const id = req.params.id;
     const permission = await Permissions.findByPk(id);
     if(!permission) res.status(404).json({ message: req.__("PermissionsList.PermissionNotFound") });

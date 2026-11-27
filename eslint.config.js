@@ -19,7 +19,7 @@ module.exports = [
       },
     },
     rules: {
-      'no-unused-vars': 'warn',
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },
   // Scripts del navegador (mejoras progresivas)

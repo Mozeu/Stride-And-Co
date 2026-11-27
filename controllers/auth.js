@@ -1,6 +1,3 @@
-const {User} = require('../models/sql');
-const { verifyPassword } = require('../utils/password');
-const jwt = require('jsonwebtoken');
 const authService = require('../services/auth.service');
 const jwtConfig = require('../config/jwt');
 

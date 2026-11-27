@@ -105,6 +105,10 @@ describe('F8 administración de productos', () => {
       expect(response.text).toContain('<html lang="es">');
       expect(response.text).toContain('<title>Administración de productos | Stride &amp; Co</title>');
       expect(response.text).toContain('<meta name="description"');
+      expect(response.text).toContain('class="admin-sidebar"');
+      expect(response.text).toContain('class="admin-main"');
+      expect(response.text).toContain('aria-current="page"');
+      expect(response.text).toContain('A. Productos');
       expect(response.text).toContain('&lt;Runner&gt;');
       expect(response.text).not.toContain('<Runner>');
       expect(response.text).toContain('Activo');
@@ -112,6 +116,8 @@ describe('F8 administración de productos', () => {
       expect(response.text).toContain('Activar');
       expect(response.text).toContain('Desactivar');
       expect(response.text).toContain('href="/admin/products/new"');
+      expect(response.text.indexOf('href="/admin/products/new"'))
+        .toBeLessThan(response.text.indexOf('class="store-panel admin-data-panel'));
       expect(response.text).toContain('href="/admin/products/7/edit"');
       expect(response.text).not.toContain('password_hash');
       expect(response.text).not.toContain('salt_key');
@@ -162,6 +168,8 @@ describe('F8 administración de productos', () => {
   describe('crear', () => {
     test('GET /admin/products/new muestra el formulario vacío', async () => {
       const response = await as('get', '/admin/products/new?lang=es', manage).expect(200);
+      expect(response.text).toContain('class="admin-sidebar"');
+      expect(response.text).toContain('class="admin-main"');
       expect(response.text).toContain('Nuevo producto');
       expect(response.text).toContain('action="/admin/products"');
       expect(response.text).toContain('Crear producto');

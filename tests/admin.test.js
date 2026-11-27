@@ -38,6 +38,7 @@ function recentOrdersQuery(orders) {
 describe('F7 admin dashboard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    Order.find.mockReturnValue(recentOrdersQuery([]));
   });
 
   test('redirects visitors to login and preserves the dashboard URL', async () => {
@@ -54,6 +55,23 @@ describe('F7 admin dashboard', () => {
     expect(response.text).toContain('●');
     expect(response.text).toContain('Admin');
     expect(response.text).not.toContain('href="/admin"');
+  });
+
+  test('places administration links with the header action buttons', async () => {
+    const response = await signedIn('/?lang=es', [
+      'products:read:any',
+      'products:update:any',
+      'orders:read:any'
+    ]).expect(200);
+    const navStart = response.text.indexOf('<nav class="store-nav');
+    const navEnd = response.text.indexOf('</nav>', navStart);
+    const headerEnd = response.text.indexOf('</header>');
+
+    expect(navStart).toBeGreaterThanOrEqual(0);
+    expect(response.text.slice(navStart, navEnd)).not.toContain('/admin');
+    expect(response.text.slice(navEnd, headerEnd)).toContain('class="btn btn-outline-dark btn-sm" href="/admin"');
+    expect(response.text.slice(navEnd, headerEnd)).toContain('class="btn btn-outline-dark btn-sm" href="/admin/products"');
+    expect(response.text.slice(navEnd, headerEnd)).toContain('A. Productos');
   });
 
   test.each([
@@ -73,6 +91,27 @@ describe('F7 admin dashboard', () => {
     expect(Product.count).not.toHaveBeenCalled();
 
     await signedIn(adminPath + '?lang=es', ['orders:read:any']).expect(403);
+  });
+
+  test('renders dashboard navigation and only links to permitted features', async () => {
+    const viewer = await signedIn(adminPath + '?lang=es', [
+      'products:read:any',
+      'orders:read:any'
+    ]).expect(200);
+    expect(viewer.text).toContain('class="admin-sidebar"');
+    expect(viewer.text).toContain('Acciones rápidas');
+    expect(viewer.text).toContain('Ver tienda');
+    expect(viewer.text).toContain('href="#product-stock"');
+    expect(viewer.text).toContain('href="#orders-by-status"');
+    expect(viewer.text).not.toContain('href="/admin/products"');
+
+    const manager = await signedIn(adminPath + '?lang=en', [
+      'products:read:any',
+      'products:update:any',
+      'orders:read:any'
+    ]).expect(200);
+    expect(manager.text).toContain('href="/admin/products"');
+    expect(manager.text).toContain('Admin products');
   });
 
   test('renders real dashboard metrics and recent orders in Spanish', async () => {
