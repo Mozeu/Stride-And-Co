@@ -44,6 +44,27 @@ describe('GET /login', () => {
     expect(res.text).toContain('<html lang="es">');
   });
 
+  test('shows language links and preserves the selected language after an invalid login', async () => {
+    const agent = request.agent(app);
+    const loginPage = await agent.get('/login?lang=en').expect(200);
+
+    expect(loginPage.text).toContain('href="/login?lang=es"');
+    expect(loginPage.text).toContain('href="/login?lang=en"');
+    expect(loginPage.headers['set-cookie'].join(';')).toContain('lang=en');
+
+    const invalidLogin = await agent
+      .post('/login')
+      .type('form')
+      .send({ email: 'nobody@example.com', password: 'wrong-password' })
+      .expect(401);
+
+    expect(invalidLogin.text).toContain('Invalid Credentials');
+    expect(invalidLogin.text).toContain('<html lang="en">');
+
+    const homePage = await agent.get('/').expect(200);
+    expect(homePage.text).toContain('<html lang="en">');
+  });
+
   test('redirects to / when there is already a session', async () => {
     User.findByPk.mockResolvedValue(activeUser);
 
@@ -75,7 +96,7 @@ describe('POST /login', () => {
 
     expect(res.status).toBe(401);
     expect(res.text).toContain('Invalid Credentials');
-    expect(res.headers['set-cookie']).toBeUndefined();
+    expect(res.headers['set-cookie'].join(';')).not.toContain('access_token=');
   });
 
   test('401 for inactive user', async () => {
