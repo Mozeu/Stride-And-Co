@@ -250,6 +250,7 @@
 		"dashboard": {
 			"title": "Dashboard administrativo",
 			"description": "Consulta las métricas de productos, variantes, inventario y pedidos.",
+			"noProducts": "No hay productos registrados.",
 			"products": "Productos",
 			"variants": "Variantes",
 			"availableUnits": "Unidades disponibles",

@@ -68,6 +68,17 @@ describe('F7 admin dashboard', () => {
 
   test('renders real dashboard metrics and recent orders in Spanish', async () => {
     Product.count.mockResolvedValueOnce(12);
+    Product.findAll.mockResolvedValueOnce([
+      { id: 1, name: 'Product without variants', variants: [] },
+      {
+        id: 2,
+        name: 'Product with variants',
+        variants: [
+          { inventory: { stock: 10, reserved: 2 } },
+          { inventory: { stock: 5, reserved: 1 } }
+        ]
+      }
+    ]);
     Variant.count.mockResolvedValueOnce(28);
     Inventory.findAll.mockResolvedValueOnce([
       { stock: 20, reserved: 3 },
@@ -95,12 +106,15 @@ describe('F7 admin dashboard', () => {
     expect(response.text).toContain('34');
     expect(response.text).toContain('650002000000000000000001');
     expect(response.text).toContain('Enviado');
+    expect(response.text).toMatch(/Product without variants<\/td>\s*<td>0<\/td>\s*<td>0<\/td>\s*<td>0<\/td>/);
+    expect(response.text).toMatch(/Product with variants<\/td>\s*<td>15<\/td>\s*<td>3<\/td>\s*<td>12<\/td>/);
     expect(response.text).not.toContain('password_hash');
     expect(response.text).not.toContain('salt_key');
   });
 
   test('renders the dashboard in English', async () => {
     Product.count.mockResolvedValueOnce(3);
+    Product.findAll.mockResolvedValueOnce([]);
     Variant.count.mockResolvedValueOnce(8);
     Inventory.findAll.mockResolvedValueOnce([]);
     Order.countDocuments.mockResolvedValueOnce(0);
@@ -112,6 +126,7 @@ describe('F7 admin dashboard', () => {
     expect(response.text).toContain('Admin dashboard');
     expect(response.text).toContain('Available units');
     expect(response.text).toContain('No orders have been recorded.');
+    expect(response.text).toContain('No products are registered.');
   });
 
   test('shows a safe 500 page if dashboard metrics fail', async () => {

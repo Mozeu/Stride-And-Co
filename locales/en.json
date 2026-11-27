@@ -221,6 +221,7 @@
 		"dashboard": {
 			"title": "Admin dashboard",
 			"description": "View product, variant, inventory and order metrics.",
+			"noProducts": "No products are registered.",
 			"products": "Products",
 			"variants": "Variants",
 			"availableUnits": "Available units",

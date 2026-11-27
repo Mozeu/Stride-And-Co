@@ -12,13 +12,21 @@ async function getDashboard() {
       .sort({ createdAt: -1, _id: -1 })
       .limit(5)
       .lean(),
-    Variant.findAll({
-      attributes: ['id', 'product_id', 'size', 'color'],
+    Product.findAll({
+      attributes: ['id', 'name'],
       include: [
-        { model: Product, as: 'product', attributes: ['id', 'name', 'brand'] },
-        { model: Inventory, as: 'inventory', attributes: ['stock', 'reserved'] }
+        {
+          model: Variant,
+          as: 'variants',
+          attributes: ['id'],
+          include: [{
+            model: Inventory,
+            as: 'inventory',
+            attributes: ['stock', 'reserved']
+          }]
+        }
       ],
-      order: [['id', 'ASC']]
+      order: [['name', 'ASC'], ['id', 'ASC']]
     }),
     Order.aggregate([
       {
@@ -41,26 +49,20 @@ async function getDashboard() {
     return sum + Math.max(0, Number(row.stock || 0) - Number(row.reserved || 0));
   }, 0);
 
-  const productsById = new Map();
-  for (const row of stockRows) {
-    const product = row.product;
-    const productId = row.product_id;
-    if (!productId) continue;
-    const entry = productsById.get(productId) || {
-      id: productId,
-      name: product?.name || `Product #${productId}`,
-      stock: 0,
-      reserved: 0
-    };
-    entry.stock += Number(row.inventory?.stock || 0);
-    entry.reserved += Number(row.inventory?.reserved || 0);
-    productsById.set(productId, entry);
-  }
+  const productStock = stockRows.map(product => {
+    const stock = (product.variants || []).reduce((total, variant) => ({
+      stock: total.stock + Number(variant.inventory?.stock || 0),
+      reserved: total.reserved + Number(variant.inventory?.reserved || 0)
+    }), { stock: 0, reserved: 0 });
 
-  const productStock = [...productsById.values()].map(entry => ({
-    ...entry,
-    available: Math.max(0, entry.stock - entry.reserved)
-  }));
+    return {
+      id: product.id,
+      name: product.name,
+      stock: stock.stock,
+      reserved: stock.reserved,
+      available: Math.max(0, stock.stock - stock.reserved)
+    };
+  });
 
   return {
     productCount,
