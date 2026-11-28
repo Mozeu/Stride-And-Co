@@ -9,11 +9,11 @@
 | **Carrera** | Ingeniería en Computación |
 | **Materia** | Desarrollo de Aplicaciones Web |
 | **Docente** | Mtro. Luis Antonio Ramírez Martínez |
-| **Actividad** | Proyecto 2: Backend completo, internacionalizado y desplegado sin costo  |
+| **Actividad** | Proyecto 3: Interfaz web con renderizado del lado del servidor (SSR)  |
 | **Equipo** | Equipo 3 |
 | **Alumnos** | Kevin Andrés Rosales Rodríguez<br>Edwin Noé Zaragoza Alvarado<br>Nohemí Posada Atayde<br>Manuel Ramirez Contreras |
 | **Matrículas** | 385814<br>385609<br>385520<br>385703 |
-| **Fecha de entrega** | 08/11/2026 |
+| **Fecha de entrega** | 29/11/2026 |
 
 ## Descripción
 
@@ -21,21 +21,19 @@ Stride & Co. es una tienda deportiva que actualmente gestiona parte de sus venta
 
 El proyecto busca digitalizar la operación de la tienda mediante una aplicación web que permita centralizar la información del catálogo, controlar el inventario, registrar pedidos y facilitar la administración de usuarios, roles, permisos, clientes y productos.
 
-Este repositorio corresponde al backend de la aplicación. En esta primera etapa se configuró la arquitectura inicial utilizando Node.js y Express, separando las rutas de los controladores y utilizando respuestas mock para comprobar el funcionamiento de la API.
-El repositorio contiene una aplicación desarrollada con Node.js y Express, organizada por módulos y rutas, con lógica de negocio separada en controladores y soporte para autenticación mediante JWT.
+Este repositorio contiene la aplicación completa desarrollada con Node.js y Express siendo una API REST y una interfaz web (tienda y panel administrativo) renderizada en el servidor con Express y Pug. Ambas comparten los modelos, los servicios, la autenticación con JWT, el control de acceso basado en roles y la internacionalización.
 
 La aplicación está orientada a servir como base para un sistema de administración de una tienda deportiva y a facilitar operaciones como alta de usuarios, gestión de productos, control de inventario y registro de pedidos.
 
 ## Objetivo
 
-Configurar la base técnica inicial del backend de Stride & Co. utilizando Node.js y Express.
-
-Se busca aplicar una arquitectura organizada basada en la separación de responsabilidades entre rutas y controladores, preparar los principales endpoints REST de la aplicación, incorporar logging de solicitudes HTTP, análisis de calidad de código, pruebas automatizadas y un flujo de trabajo colaborativo utilizando Git y GitHub.
-
+Se busca aplicar una arquitectura organizada basada en la separación de responsabilidades entre rutas y controladores, preparar los principales endpoints REST de la aplicación, incorporar logging de solicitudes HTTP, análisis de calidad de código, pruebas automatizadas y un flujo de trabajo colaborativo utilizando Git y GitHub. Ademas de ahora convertir el prototipo estático de Stride & Co. en una aplicación real con renderizado del lado del servidor, que lea y escriba datos en PostgreSQL y MongoDB, protegida con el mismo JWT y RBAC de la API, traducida a español e inglés, probada con Jest y Supertest y desplegada en Render.
+ 
 La arquitectura general utilizada es:
-
+ 
 ```text
-HTTP Request -> Express -> Route -> Controller -> Sequelize/Mongoose -> Database
+API: HTTP Request -> Express -> authenticate -> authorize -> Controller -> Service/Model -> Database -> JSON
+Web: HTTP Request -> Express -> loadSession -> requireLogin/authorize -> Controller web -> Service -> Database -> Pug -> HTML
 ```
 
 ## Tecnologías utilizadas
@@ -46,6 +44,8 @@ HTTP Request -> Express -> Route -> Controller -> Sequelize/Mongoose -> Database
 - Express.js
 - JavaScript
 - Pug
+- Bootstrap 5 y Bootstrap Icons
+- cookie-parser
 
 ### Base de datos
 - PostgreSQL con Sequelize
@@ -191,16 +191,26 @@ El despliegue de producción utiliza Docker y Render.
 
 | Dato | Valor |
 |---|---|
-| URL pública | [https://stride-and-co.onrender.com](https://stride-and-co.onrender.com) |
+| Tienda web | [https://stride-and-co.onrender.com/](https://stride-and-co.onrender.com/) |
+| Panel administrativo | [https://stride-and-co.onrender.com/admin](https://stride-and-co.onrender.com/admin) |
+| Inicio de sesión | [https://stride-and-co.onrender.com/login](https://stride-and-co.onrender.com/login) |
 | Health check y Health Check Path en Render | `GET /health` |
 | Variable de entorno configurada | `NODE_ENV=production` |
-| Tienda web | [https://stride-and-co.onrender.com/](https://stride-and-co.onrender.com/) |
 
 El endpoint de salud responde `200` con `{"status":"UP"}`. Los usuarios de
 demostración y sus credenciales están documentados en la
 [matriz RBAC](#control-de-acceso-basado-en-roles).
 
-Para probar F1 (inicio de sesión web) en `/login` se usa la cuenta `user@stride.test`; sus credenciales están en la [matriz RBAC](#control-de-acceso-basado-en-roles).
+##### Usuario de demostración por funcionalidad
+
+| Funcionalidad | URL | Usuario para probar |
+|---|---|---|
+| F1 Inicio y cierre de sesión | `/login` | Cualquiera |
+| F2 Inicio y catálogo | `/`, `/products` | Sin sesión |
+| F4 Bolsa de compra | `/cart` | Sin sesión (también funciona con sesión) |
+| F6 Mis pedidos | `/my/orders` | `user@stride.test` |
+| F7 Dashboard | `/admin` | `admin@stride.test` o `sales@stride.test` (`user` recibe 403) |
+| F8 Administración de productos | `/admin/products` | `admin@stride.test` (`sales` y `user` reciben 403) |
 
 ##### Bases de datos
 
@@ -273,9 +283,12 @@ La ejecucion completa requiere conexiones válidas a PostgreSQL y MongoDB.
 | `npm run dev` | Inicia el servidor en modo desarrollo |
 | `npm run seed` | Crea roles, permisos y datos de demostración en PostgreSQL y MongoDB |
 | `npm test` | Ejecuta las pruebas unitarias |
+| `npm run setup:local` | Prepara las bases de datos y la configuración de desarrollo |
+| `npm run setup:test` | Prepara las bases de datos de pruebas |
 | `npm run lint` | Ejecuta ESLint para analizar la calidad del código |
 | `npm run test:unit` | Ejecuta las pruebas unitarias con mocks |
 | `npm run test:integration` | Ejecuta las pruebas de integración con bases de prueba |
+| `npm run test:e2e` | Ejecuta las pruebas E2E contra la aplicación en ejecución |
 | `npm run seed:products` | Crea productos de demostración en PostgreSQL |
 
 ## Recursos de la API
@@ -606,51 +619,58 @@ Actualmente, el proyecto solo utiliza este middleware en `routes/users.js`, ya q
 
 | ID | Funcionalidad | Rutas | Permiso | Responsable | Evidencia |
 |---|---|---|---|---|---|
-| F2 | Inicio y catálogo | `GET /`, `GET /products` | Pública | Kevin Andrés Rosales Rodríguez | [Inicio](docs/ssr/f2-inicio-productos-destacados.png) · [Búsqueda y filtro](docs/ssr/f2-catalogo-busqueda-y-filtro.png) · [Página 2](docs/ssr/f2-catalogo-pagina-2.png) · [HTML](docs/ssr/f2-catalogo-codigo-fuente.png) |
-| F1 | Inicio y cierre de sesión | `/login`, `/logout` | Pública | Edwin Noé Zaragoza Alvarado | [docs/ssr/f1/](docs/ssr/f1/) |
-| F7 | Dashboard administrativo | `GET /admin` | `products:read:any`, `orders:read:any` | Manuel Ramirez Contreras | [Dashboard](docs/ssr/f7/admin-dashborard.png) · [Ventas](docs/ssr/f7/sales-dashboard.png) · [Acceso denegado](docs/ssr/f7/user-dashboard.png) · [HTML](docs/ssr/f7/view-source.png) · [Pruebas](docs/ssr/f7/pruebas.png) |
-| F4 | Bolsa de compra | `GET /cart`, `POST /cart/items`, `POST /cart/items/:variantId`, `POST /cart/items/:variantId/delete` | Pública | Kevin Andrés Rosales Rodríguez | [Validación](docs/ssr/f4-bolsa-cantidad-supera-existencias.png) · [Bolsa vacía](docs/ssr/f4-bolsa-vacia-tras-retirar.png) · [HTML](docs/ssr/f4-bolsa-codigo-fuente.png) |
-| F8 | Administración de productos | `GET /admin/products`, `GET /admin/products/new`, `POST /admin/products`, `GET /admin/products/:id/edit`, `POST /admin/products/:id`, `POST /admin/products/:id/active`, `POST /admin/products/:id/delete` | `products:read:any` + `products:update:any` (lista y edición), `products:create:any`, `products:delete:any` | Nohemi Posada Atayde | [Prototipo vs implementación](docs/ssr/f8/f8-prototipo-vs-implementacion.png) · [Implementacion](docs/ssr/f8/f8-productos-listado.png) · [Crear](docs/ssr/f8/f8-crear.png) · [Validación](docs/ssr/f8/f8-validacion.png) · [Editar](docs/ssr/f8/f8-editar.png) · [Activar](docs/ssr/f8/f8-activado1.png) · [Activado](docs/ssr/f8/f8-activado2.png) · [Desactivar](docs/ssr/f8/f8-desactivar1.png) · [Desactivado](docs/ssr/f8/f8-desactivar2.png) · [Eliminar](docs/ssr/f8/f8-eliminar1.png) · [Aviso con variantes](docs/ssr/f8/f8-eliminarAvisoVariante.png) · [Eliminar con variantes](docs/ssr/f8/f8-eliminarConVariante.png) · [Inglés](docs/ssr/f8/f8-ingles.png) · [HTML](docs/ssr/f8/f8-codigoFuente.png) |
+| F1 | Inicio y cierre de sesión | `GET /login`, `POST /login`, `POST /logout` | Pública | Edwin Noé Zaragoza Alvarado | [Prototipo](docs/ssr/f1/prototype.png) · [Implementación](docs/ssr/f1/implementation.png) · [HTML](docs/ssr/f1/view-soruce.png) · [Cookie](docs/ssr/f1/cookie.png) · [Cierre de sesión](docs/ssr/f1/logout.png) |
+| F2 | Inicio y catálogo | `GET /`, `GET /products` | Pública | Kevin Andrés Rosales Rodríguez | [Inicio](docs/ssr/f2/f2-inicio-productos-destacados.png) · [Búsqueda y filtro](docs/ssr/f2/f2-catalogo-busqueda-y-filtro.png) · [Página 2](docs/ssr/f2/f2-catalogo-pagina-2.png) · [HTML](docs/ssr/f2/f2-catalogo-codigo-fuente.png) |
+| F4 | Bolsa de compra | `GET /cart`, `POST /cart/items`, `POST /cart/items/:variantId`, `POST /cart/items/:variantId/delete` | Pública | Kevin Andrés Rosales Rodríguez | [Validación](docs/ssr/f4/f4-bolsa-cantidad-supera-existencias.png) · [Bolsa vacía](docs/ssr/f4/f4-bolsa-vacia-tras-retirar.png) · [HTML](docs/ssr/f4/f4-bolsa-codigo-fuente.png) |
+| F6 | Mis pedidos | `GET /my/orders`, `GET /my/orders/:id` | `orders:read:own` | Kevin Andrés Rosales Rodríguez | [Listado](docs/ssr/f6/f6-mis-pedidos-listado.png) · [Detalle](docs/ssr/f6/f6-mis-pedidos-detalle.png) · [Acceso denegado](docs/ssr/f6/f6-mis-pedidos-acceso-denegado.png) · [HTML](docs/ssr/f6/f6-mis-pedidos-codigo-fuente.png) |
+| F7 | Dashboard administrativo | `GET /admin` | `products:read:any`, `orders:read:any` | Manuel Ramirez Contreras | [Prototipo](docs/ssr/f7/prototipo.png) · [Implementación](docs/ssr/f7/admin-dashborard.png) · [Ventas](docs/ssr/f7/sales-dashboard.png) · [Acceso denegado](docs/ssr/f7/user-dashboard.png) · [HTML](docs/ssr/f7/view-source.png) · [Pruebas](docs/ssr/f7/pruebas.png) |
+| F8 | Administración de productos | `GET /admin/products`, `GET /admin/products/new`, `POST /admin/products`, `GET /admin/products/:id/edit`, `POST /admin/products/:id`, `POST /admin/products/:id/active`, `POST /admin/products/:id/delete` | `products:read:any` + `products:update:any` (lista y edición), `products:create:any`, `products:delete:any` | Nohemí Posada Atayde | [Prototipo vs implementación](docs/ssr/f8/f8-prototipo-vs-implementacion.png) · [Implementacion](docs/ssr/f8/f8-productos-listado.png) · [Crear](docs/ssr/f8/f8-crear.png) · [Validación](docs/ssr/f8/f8-validacion.png) · [Editar](docs/ssr/f8/f8-editar.png) · [Activar](docs/ssr/f8/f8-activado1.png) · [Activado](docs/ssr/f8/f8-activado2.png) · [Desactivar](docs/ssr/f8/f8-desactivar1.png) · [Desactivado](docs/ssr/f8/f8-desactivar2.png) · [Eliminar](docs/ssr/f8/f8-eliminar1.png) · [Aviso con variantes](docs/ssr/f8/f8-eliminarAvisoVariante.png) · [Eliminar con variantes](docs/ssr/f8/f8-eliminarConVariante.png) · [Inglés](docs/ssr/f8/f8-ingles.png) · [HTML](docs/ssr/f8/f8-codigoFuente.png) |
 
-### F6 · Mis pedidos
-
-| ID | Funcionalidad | Rutas | Permiso | Responsable | Evidencia |
-|---|---|---|---|---|---|
-| F6 | Historial y detalle de pedidos propios | `GET /my/orders`, `GET /my/orders/:id` | `orders:read:own` | Kevin Andrés Rosales Rodríguez | [Listado](docs/ssr/f6-mis-pedidos-listado.png) · [Detalle](docs/ssr/f6-mis-pedidos-detalle.png) · [Acceso denegado](docs/ssr/f6-mis-pedidos-acceso-denegado.png) · [HTML](docs/ssr/f6-mis-pedidos-codigo-fuente.png) |
-
-Con PostgreSQL y MongoDB configurados, ejecuta `NODE_ENV=development npm run seed` para cargar los usuarios y pedidos de demostración, y `NODE_ENV=development npm start` para abrir la tienda. Inicia sesión como `user@stride.test` con las credenciales de la [matriz RBAC](#control-de-acceso-basado-en-roles). Abre **Mis pedidos** y pulsa **Ver detalle**.
-
-Para comprobar el 403, inicia sesión como `sales@stride.test`, copia la URL de su pedido, cierra sesión y ábrela como `user@stride.test`. Para comprobar el 404, abre el detalle con un identificador válido que no exista. Las vistas usan los importes guardados en el pedido y muestran el nombre actual del producto cuando sigue en el catálogo.
 
 ### Cómo se guarda la sesión
-
+ 
 1. `POST /login` valida el correo y la contraseña con `services/auth.service.js` (el mismo servicio que usa la API), rechaza a los usuarios inactivos y guarda el JWT en la cookie `access_token`.
 2. `middleware/session.js` (`loadSession`) lee la cookie en cada petición web, carga al usuario con su rol y permisos, y lo deja en `req.user` y `res.locals.user`. Si el token no es válido o expiró, borra la cookie.
 3. `requireLogin` redirige a `/login?returnTo=<url>` cuando no hay sesión; después de iniciar sesión se regresa a esa página. Solo se aceptan rutas internas en `returnTo`.
 4. `POST /logout` elimina la cookie y regresa a `/`.
 5. Los mensajes de confirmación (por ejemplo, "Inicio de sesión exitoso") viajan en una cookie de un solo uso que lee `middleware/flash.js`.
-
 El JWT expira a los 15 minutos (`jwt.expiresIn`); después, el usuario aparece como sin sesión y debe iniciar sesión de nuevo.
-
-### F4 · Bolsa de compra
-
-En `/cart` se pueden agregar variantes, cambiar su cantidad y retirarlas. La cookie firmada guarda sus identificadores y cantidades. El servidor consulta PostgreSQL para calcular los importes y la disponibilidad (`stock - reserved`). Las líneas que excedan las existencias se conservan para su revisión y se excluyen del subtotal. La bolsa no reserva stock.
-
-La bolsa funciona con o sin sesión y reutiliza los mensajes de confirmación del layout de F1. Las capturas manuales muestran el flujo de la bolsa con la cabecera previa a F1.
-
+ 
 ### Cómo agregar una pantalla nueva
-
+ 
 1. **Servicio:** mover o crear la consulta en `services/<nombre>.service.js` (Sequelize / Mongoose).
 2. **Controller:** crear `controllers/web/<nombre>.js` con `res.render(...)` o `res.redirect(...)`; los errores van a `next(err)`.
-3. **Ruta:** definirla en `routes/web/<nombre>.js` y registrarla en `app.js`. Si es protegida: `requireLogin` y luego `authorize(recurso, acción, alcance)`.
+3. **Ruta:** definirla en `routes/web/<nombre>.js` y registrarla en `app.js` (o en un router ya registrado). Agregar `storeLanguage` para el selector de idioma. Si es protegida: `requireLogin` y luego `authorize(recurso, acción, alcance)`.
 4. **Vista:** crear `views/<carpeta>/<nombre>.pug` que extienda `layout`, y pasar `title` y `metaDescription` desde el controller.
 5. **Traducciones:** agregar las claves en `locales/es.json` y `locales/en.json` al mismo tiempo; en Pug se usa `__('clave')`.
 
+### F1 · Inicio y cierre de sesión
+
+`/login` valida el correo y la contraseña en el servidor: con datos inválidos responde 400 y conserva el correo, y con credenciales incorrectas o un usuario inactivo responde 401. Si son válidas, guarda el JWT en la cookie `access_token` y redirige a la página solicitada. Prueba con `user@stride.test` y `/login?lang=en`.
+
 ### F2 · Inicio y catálogo
-
-El inicio destaca los cuatro productos activos más recientes. El catálogo busca por nombre o marca, filtra por `category_id` y muestra 12 productos por página. Las categorías de prueba son Zapatos (1), Ropa (2) y Mochilas (3); el seeder las agrega al selector y asigna los productos por tipo. Prueba `/products?q=runner&category=1&page=2&lang=es`.
-
-Las capturas manuales se tomaron antes de incorporar la cabecera de F1 y documentan el flujo del catálogo.
+ 
+El inicio destaca los cuatro productos activos más recientes. El catálogo busca por nombre o marca, filtra por `category_id` y muestra 12 productos por página. Las categorías de prueba son Zapatos (1), Ropa (2) y Mochilas (3); `npm run seed:products` crea productos para cada una. Prueba `/products?q=runner&category=1&lang=es`.
+ 
+Las capturas de F2 se tomaron antes de incorporar la cabecera de F1.
+ 
+### F4 · Bolsa de compra
+ 
+En `/cart` se pueden agregar variantes, cambiar su cantidad y retirarlas. La cookie firmada guarda sus identificadores y cantidades. El servidor consulta PostgreSQL para calcular los importes y la disponibilidad (`stock - reserved`). Las líneas que excedan las existencias se conservan para su revisión y se excluyen del subtotal. La bolsa no reserva stock.
+ 
+La bolsa funciona con o sin sesión. Las capturas de F4 se tomaron antes de incorporar la cabecera de F1.
+ 
+### F6 · Mis pedidos
+ 
+Inicia sesión como `user@stride.test`, abre **Mis pedidos** y pulsa **Ver detalle**. Para comprobar el 403, inicia sesión como `sales@stride.test`, copia la URL de su pedido, cierra sesión y ábrela como `user@stride.test`. Para comprobar el 404, abre el detalle con un identificador válido que no exista. Las vistas usan los importes guardados en el pedido y muestran el nombre actual del producto cuando sigue en el catálogo.
+ 
+### F7 · Dashboard administrativo
+ 
+`/admin` muestra el número de productos, variantes, unidades disponibles y pedidos, los cinco pedidos más recientes, las existencias por producto y los pedidos por estado.
+ 
+### F8 · Administración de productos
+ 
+`/admin/products` permite buscar, crear, editar, activar, desactivar y eliminar productos. Los formularios se validan en el servidor. Un producto con variantes no se puede eliminar: se desactiva.
 
 ## Internacionalización (i18n)
 
@@ -821,10 +841,10 @@ El proceso de generación de las pruebas con Antigravity está documentado en [d
 
 ### Resultados verificados
 
-- Pruebas unitarias: 74/74 exitosas.
+- Pruebas unitarias: 154/154 exitosas.
 - Pruebas de integración: 10/10 exitosas.
-- Pruebas e2e: 139/139 exitosas.
-- ESLint: 0 errores y 15 advertencias.
+- Pruebas e2e: 143/143 exitosas (13/13 suites).
+- ESLint: 0 errores y 18 advertencias.
 
 ### E2E contra Render
 
@@ -836,7 +856,7 @@ E2E_BASE_URL=https://stride-and-co.onrender.com
 NODE_ENV=test npm run test:e2e
 ```
 
-Resultado de la ejecución contra Render:
+Resultado de la ejecución contra Render (Entregable 2):
 
 ![Resultado de npm run test:e2e contra Render](docs/evidence/e2e-render.png)
 
@@ -865,29 +885,28 @@ Las vistas web se renderizan en el servidor con Pug. La ruta `/` muestra el cat�
 
 ```text
 Stride-And-Co/
-├── app.js
-├── Dockerfile
-├── README.md
-├── eslint.config.js
-├── jest.config.js
-├── jest.e2e.config.js
-├── jest.integration.config.js
-├── package.json
-├── package-lock.json
 ├── bin/
 │   └── www
 ├── config/
+│   ├── custom-environment-variables.json
 │   ├── default.json
 │   ├── development.json
-│   ├── test.json
-│   ├── production.json
-│   ├── custom-environment-variables.json
-│   ├── local-development.example.json
+│   ├── i18n.js
 │   ├── jwt.js
+│   ├── local-development.example.json
 │   ├── mongoose.js
+│   ├── product-categories.js
+│   ├── production.json
 │   ├── sequelize.js
-│   └── i18n.js
+│   └── test.json
 ├── controllers/
+│   ├── web/
+│   │   ├── admin-products.js
+│   │   ├── admin.js
+│   │   ├── auth.js
+│   │   ├── cart.js
+│   │   ├── catalog.js
+│   │   └── my-orders.js
 │   ├── auth.js
 │   ├── customers.js
 │   ├── index.js
@@ -898,20 +917,18 @@ Stride-And-Co/
 │   ├── roles.js
 │   ├── users.js
 │   └── variants.js
-│   └── web/
-│       └── auth.js
 ├── docs/
 │   ├── evidence/
-│   │   ├── Evidencia1.png
 │   │   ├── e2e-render.png
+│   │   ├── Evidencia1.png
 │   │   └── evidencias.md
 │   ├── ssr/
-│   │   └── f1/
-│   │       ├── f1-prototype.png
-│   │       ├── f1-implementation.png
-│   │       ├── f1-view-source.png
-│   │       ├── f1-cookie.png
-│   │       └── f1-logout.png
+│   │   ├── f1
+│   │   ├── f2
+│   │   ├── f4
+│   │   ├── f6
+│   │   ├── f7
+│   │   └── f8
 │   └── e2e-antigravity.md
 ├── locales/
 │   ├── en.json
@@ -921,7 +938,8 @@ Stride-And-Co/
 │   ├── authenticate.js
 │   ├── authorize.js
 │   ├── flash.js
-│   └── session.js
+│   ├── session.js
+│   └── storeLanguage.js
 ├── models/
 │   ├── mongo/
 │   │   ├── customer.js
@@ -929,14 +947,16 @@ Stride-And-Co/
 │   │   ├── order.js
 │   │   └── product.js
 │   └── sql/
-│       ├── inventory.js
+│       ├── index.js
+│       ├── Inventory.js
 │       ├── Permissions.js
 │       ├── Product.js
 │       ├── Roles.js
 │       ├── User.js
-│       ├── Variant.js
-│       └── index.js
+│       └── Variant.js
 ├── public/
+│   ├── js/
+│   │   └── confirm-submit.js
 │   └── stylesheets/
 │       └── style.css
 ├── routes/
@@ -952,17 +972,27 @@ Stride-And-Co/
 │   │   ├── users.js
 │   │   └── variants.js
 │   └── web/
+│       ├── admin-products.js
+│       ├── admin.js
 │       ├── auth.js
-│       └── index.js
+│       ├── cart.js
+│       ├── catalog.js
+│       ├── index.js
+│       └── my-orders.js
 ├── scripts/
 │   ├── create-admin.js
-│   ├── seed.js
-│   ├── seed-rbac.js
 │   ├── seed-products.js
+│   ├── seed-rbac.js
+│   ├── seed.js
 │   ├── setup-local.js
 │   └── setup-test.js
 ├── services/
-│   └── auth.service.js
+│   ├── auth.service.js
+│   ├── cart.service.js
+│   ├── dashboard.service.js
+│   ├── orders.service.js
+│   ├── products.service.js
+│   └── variants.service.js
 ├── tests/
 │   ├── e2e/
 │   │   ├── auth.e2e.test.js
@@ -977,16 +1007,22 @@ Stride-And-Co/
 │   │   ├── rbac.e2e.test.js
 │   │   ├── roles.e2e.test.js
 │   │   ├── users.e2e.test.js
-│   │   └── variants.e2e.test.js
+│   │   ├── variants.e2e.test.js
+│   │   └── web.e2e.test.js
 │   ├── helpers/
 │   │   └── authenticated-request.js
 │   ├── integration/
 │   │   └── auth-rbac.integration.test.js
+│   ├── admin-products.test.js
+│   ├── admin.test.js
+│   ├── allowFields.test.js
 │   ├── auth.test.js
+│   ├── cart.test.js
 │   ├── config.test.js
 │   ├── customers.test.js
 │   ├── i18n.test.js
 │   ├── inventory.test.js
+│   ├── my-orders.test.js
 │   ├── orders.test.js
 │   ├── permissions.test.js
 │   ├── products.test.js
@@ -995,14 +1031,21 @@ Stride-And-Co/
 │   ├── setup-unit.js
 │   ├── users.test.js
 │   ├── variants.test.js
+│   ├── web-auth.test.js
 │   └── web.test.js
 ├── utils/
-│   └── checkOwnership.js
+│   ├── checkOwnership.js
 │   └── password.js
 ├── views/
+│   ├── admin/
+│   │   ├── products/
+│   │   │   ├── form.pug
+│   │   │   └── index.pug
+│   │   └── dashboard.pug
 │   ├── auth/
 │   │   └── login.pug
 │   ├── errors/
+│   │   ├── 403.pug
 │   │   ├── 404.pug
 │   │   └── 500.pug
 │   ├── mixins/
@@ -1010,20 +1053,35 @@ Stride-And-Co/
 │   │   ├── form-field.pug
 │   │   ├── product-card.pug
 │   │   └── status-badge.pug
+│   ├── orders/
+│   │   ├── detail.pug
+│   │   └── mine.pug
 │   ├── partials/
+│   │   ├── admin-products-sidebar.pug
 │   │   ├── empty-state.pug
 │   │   ├── flash-message.pug
 │   │   ├── form-errors.pug
 │   │   ├── pagination.pug
 │   │   ├── store-footer.pug
 │   │   └── store-header.pug
+│   ├── store/
+│   │   ├── cart.pug
+│   │   ├── catalog.pug
+│   │   └── home.pug
 │   ├── error.pug
-│   ├── index.pug
 │   └── layout.pug
-└── .dockerignore
-└── .gitignore
+├── .dockerignore
+├── .gitignore
+├── app.js
+├── Dockerfile
+├── eslint.config.js
+├── jest.config.js
+├── jest.e2e.config.js
+├── jest.integration.config.js
+├── package-lock.json
+├── package.json
+└── README.md
 ```
-
 
 ## Control de versiones
 
@@ -1031,22 +1089,13 @@ El proyecto utiliza Git y GitHub para el trabajo colaborativo, ademas los commit
 
 ## Estado actual del proyecto
 
-El backend ya se encuentra en una etapa funcional con estructura modular y rutas REST implementadas para los principales recursos del negocio.
-
-Entre los elementos que están presentes en el proyecto se encuentran:
-
-- API REST con Express
-- Módulos de usuarios, roles y permisos
-- CRUD de productos y variantes
-- Gestión de inventario
-- Registro de clientes
-- Gestión de pedidos
-- Autenticación con JWT
-- Middlewares para protección de rutas
-- Configuración para PostgreSQL y MongoDB
-- Pruebas automatizadas con Jest y Supertest
-- Linting con ESLint
-- Estructura de modelos y configuraciones separadas por responsabilidad
+ELa aplicación cuenta con:
+ 
+- API REST con autenticación JWT y RBAC
+- Interfaz web SSR con seis funcionalidades: inicio de sesión, catálogo, bolsa de compra, mis pedidos, dashboard y administración de productos
+- Interfaz en español e inglés
+- Persistencia en PostgreSQL (Sequelize) y MongoDB (Mongoose)
+- Pruebas automatizadas con Jest y Supertest, y análisis con ESLint
 
 ## Equipo
 
