@@ -216,7 +216,7 @@ demostración y sus credenciales están documentados en la
 
 | Servicio | Plan | Región | Detalles |
 |---|---|---|---|
-| Render PostgreSQL | Gratuito | Oregon (US West) | Fecha de creación reportada: 4 de noviembre de 2026 (por confirmar); fecha de caducidad: 4 de diciembre de 2026 |
+| Render PostgreSQL | Gratuito | Oregon (US West) | Fecha de creación reportada: 4 de noviembre de 2026, fecha de caducidad: 4 de diciembre de 2026 |
 | MongoDB Atlas | Cluster gratuito | AWS, Oregon (`us-west-2`) | Network Access permite `0.0.0.0/0` porque el plan gratuito de Render no tiene IP fija de salida |
 
 La regla `0.0.0.0/0` permite conexiones desde cualquier IP por ello se
@@ -852,13 +852,16 @@ Con la API desplegada en Render, la misma suite se ejecuta cambiando la URL base
 
 ```bash
 curl https://stride-and-co.onrender.com/health
-E2E_BASE_URL=https://stride-and-co.onrender.com 
-NODE_ENV=test npm run test:e2e
+E2E_BASE_URL=https://stride-and-co.onrender.com NODE_ENV=test npm run test:e2e
 ```
 
 Resultado de la ejecución contra Render (Entregable 2):
 
 ![Resultado de npm run test:e2e contra Render](docs/evidence/e2e-render.png)
+
+Resultado de la ejecución contra Render (Entregable 3):
+
+![Resultado de npm run test:e2e contra Render, Entregable 3](docs/evidence/e2e-render-entregable3.png)
 
 ## Calidad de código
 
